@@ -1,0 +1,167 @@
+.lobby-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+}
+
+.loading-text {
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+  animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+.lobby-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 100dvh;
+}
+
+.error-banner {
+  background: rgba(192, 57, 43, 0.15);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #e57373;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(192, 57, 43, 0.2);
+}
+
+.error-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.2rem;
+  padding: 0 var(--space-1);
+}
+
+.error-close:hover {
+  color: #fff;
+}
+
+.lobby-main {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--space-4);
+  align-items: stretch;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .lobby-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lobby-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lobby-section {
+  background-color: rgba(22, 29, 39, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-card);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
+}
+
+.section-title {
+  font-size: 1.25rem;
+}
+
+.player-badge {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 2px var(--space-2);
+  color: var(--color-accent);
+}
+
+.player-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: var(--space-1);
+}
+
+.host-controls {
+  background: linear-gradient(180deg, var(--color-surface) 0%, rgba(22, 29, 39, 0.3) 100%);
+}
+
+.host-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  font-family: var(--font-body);
+}
+
+.btn-start-game {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  width: 100%;
+  transition: var(--transition);
+}
+
+.btn-start-game.ready {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-glow);
+  cursor: pointer;
+}
+
+.btn-start-game.ready:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(232, 160, 39, 0.4);
+}
+
+.lobby-chat-section {
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(22, 29, 39, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden; /* ให้ ChatBox ด้านในไม่ทะลุกรอบ */
+}

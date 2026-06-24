@@ -1,33 +1,29 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext.jsx';
-import bgHome from '../src/assets/background_main.jpg';
+import bgHome from '../src/assets/bgHome.png';
 
-const BG_IMAGE =  bgHome;
-
+const BG_IMAGE = bgHome;
 const API = '/api/rooms';
 
 const NEWS = [
   {
     id: 1,
-    title: 'อัพเดท — Voting System เปิดใช้งานแล้ว',
-    desc:  'โหวตไล่ผู้ต้องสงสัยออกจากเกาะได้แล้ว พร้อม live vote count',
-    date:  'Day 1',
-    opacity: 1,
+    title: 'New Update 1.2.0',
+    desc: 'เพิ่มระบบรายงานผู้เล่น และปรับสมดุลเกม',
+    date: '6/24/2026',
   },
   {
     id: 2,
-    title: 'Phase Timer — นับถอยหลังทุก phase',
-    desc:  'Night 30s · Day 60s · Voting 30s · Results 10s',
-    date:  'Day 2',
-    opacity: 0.55,
+    title: 'Event : Werewolf Night',
+    desc: 'เล่นครบ 3 เกม รับของรางวัลพิเศษ !',
+    date: '6/24/2026',
   },
   {
     id: 3,
-    title: 'Coming Soon — Night Actions',
-    desc:  'หมาป่า, หมอดู, บอดี้การ์ด ใช้ความสามารถกลางคืน',
-    date:  'เร็วๆ นี้',
-    opacity: 0.3,
+    title: 'Maintenance',
+    desc: 'ปรับปรุงเซิร์ฟเวอร์ในวันที่ 6/24/2026',
+    date: '6/24/2026',
   },
 ];
 
@@ -35,22 +31,22 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { setIdentity, joinRoom } = useGame();
 
-  const [mode,     setMode]     = useState(null);
+  const [mode, setMode] = useState(null);
   const [nickname, setNickname] = useState('');
   const [roomName, setRoomName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   async function handleCreate(e) {
     e.preventDefault();
     if (!nickname.trim() || !roomName.trim()) return;
     setLoading(true); setError(null);
     try {
-      const res  = await fetch(API, {
-        method:  'POST',
+      const res = await fetch(API, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ hostNickname: nickname.trim(), roomName: roomName.trim() }),
+        body: JSON.stringify({ hostNickname: nickname.trim(), roomName: roomName.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'สร้างห้องไม่สำเร็จ');
@@ -67,10 +63,10 @@ export default function HomePage() {
     if (!nickname.trim() || !code) return;
     setLoading(true); setError(null);
     try {
-      const res  = await fetch(`${API}/${code}/join`, {
-        method:  'POST',
+      const res = await fetch(`${API}/${code}/join`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ nickname: nickname.trim() }),
+        body: JSON.stringify({ nickname: nickname.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'เข้าร่วมห้องไม่สำเร็จ');
@@ -84,111 +80,111 @@ export default function HomePage() {
   function reset() { setMode(null); setError(null); setNickname(''); setRoomName(''); setRoomCode(''); }
 
   return (
-    <div style={{
-      ...s.page,
-      backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined,
-    }}>
+    <div style={{ ...s.page, backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
       <div style={s.overlay} />
 
-      <div style={s.grid}>
-
-        <div style={s.left}>
-          <div style={{ marginBottom: 4 }}>
-            <h1 style={s.title}>WE'RE <span style={s.titleNot}>not</span> WOLF</h1>
-            <p style={s.tagline}>🏝️ เกาะลึกลับ · ใต้ท้องฟ้ากลางคืน · ไม่มีใครรู้ความจริง</p>
-          </div>
-
-          <div style={s.sep} />
-
-          {!mode && (
-            <div style={s.menuList}>
-              <MenuBtn icon="🏠" title="Create Room"   sub="สร้างห้องใหม่และเชิญเพื่อน"           onClick={() => setMode('create')} />
-              <MenuBtn icon="🚢" title="Join Room"     sub="เข้าร่วมด้วยรหัสห้อง"                onClick={() => setMode('join')} />
-              <MenuBtn icon="🐺" title="วิธีเล่น"      sub="กฎและบทบาทของผู้เล่น"  red />
-              <MenuBtn icon="⚙️" title="ตั้งค่า"       sub="ปรับเสียงและการแสดงผล" />
-            </div>
-          )}
-
-          {mode === 'create' && (
-            <form onSubmit={handleCreate} style={s.form}>
-              <h2 style={s.formTitle}>🏠 สร้างห้องใหม่</h2>
-              {error && <ErrorBox msg={error} />}
-              <Field label="ชื่อของคุณ"    id="nick"  value={nickname} onChange={e => setNickname(e.target.value)}  placeholder="เช่น สมชาย, มาลี..."   max={32} autoFocus />
-              <Field label="ชื่อห้อง"       id="room"  value={roomName} onChange={e => setRoomName(e.target.value)}  placeholder="เช่น เกาะประหลาด..."   max={64} />
-              <div style={s.btnRow}>
-                <button type="submit" style={s.btnPrimary} disabled={loading || !nickname.trim() || !roomName.trim()}>
-                  {loading ? '⏳ กำลังสร้าง...' : '🌙 สร้างห้อง'}
-                </button>
-                <button type="button" style={s.btnBack} onClick={reset}>← กลับ</button>
-              </div>
-            </form>
-          )}
-
-          {mode === 'join' && (
-            <form onSubmit={handleJoin} style={s.form}>
-              <h2 style={s.formTitle}>🚢 เข้าร่วมห้อง</h2>
-              {error && <ErrorBox msg={error} />}
-              <Field label="ชื่อของคุณ" id="nick2" value={nickname} onChange={e => setNickname(e.target.value)} placeholder="เช่น สมชาย, มาลี..." max={32} autoFocus />
-              <Field label="รหัสห้อง"   id="code"  value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} placeholder="ABC123" max={8}
-                extraStyle={{ textTransform:'uppercase', letterSpacing:'0.2em', fontSize:'18px', fontWeight:700 }} />
-              <div style={s.btnRow}>
-                <button type="submit" style={s.btnPrimary} disabled={loading || !nickname.trim() || !roomCode.trim()}>
-                  {loading ? '⏳ กำลังเข้า...' : '🛶 เข้าร่วม'}
-                </button>
-                <button type="button" style={s.btnBack} onClick={reset}>← กลับ</button>
-              </div>
-            </form>
-          )}
-
-          {!mode && (
-            <div style={s.playerBar}>
-              <div style={s.playerAva}>🧍</div>
-              <div>
-                <div style={s.playerName}>ตั้งชื่อก่อนเข้าเล่น</div>
-                <div style={s.playerHint}>ชื่อจะแสดงให้ผู้เล่นคนอื่นเห็น</div>
-              </div>
-            </div>
-          )}
+      <div style={s.container}>
+        <div style={s.header}>
+          <h1 style={s.title}>WEREWOLF</h1>
         </div>
 
-        <div style={s.right}>
-          <div style={s.panelHead}>
-            <span>ข่าวสาร</span>
-            <div style={s.panelLine} />
-          </div>
+        <div style={s.grid}>
+          <div style={s.left}>
+            {!mode && (
+              <div style={s.menuList}>
+                <MenuBtn title="Create Room" sub="Create a new room and invite your friends" onClick={() => setMode('create')} />
+                <MenuBtn title="Join Room" sub="Join with room code" onClick={() => setMode('join')} />
+                <MenuBtn title="Customize" sub="Change your profile and preferences" />
+                <MenuBtn title="Settings" sub="Game and audio settings" />
+              </div>
+            )}
 
-          <div style={{ flex: 1 }}>
-            {NEWS.map(n => (
-              <div key={n.id} style={s.newsItem}>
-                <div style={{ ...s.newsDot, opacity: n.opacity }} />
-                <div>
-                  <div style={s.newsTitle}>{n.title}</div>
-                  <div style={s.newsDesc}>{n.desc}</div>
-                  <div style={s.newsDate}>{n.date}</div>
+            {mode === 'create' && (
+              <form onSubmit={handleCreate} style={s.form}>
+                <h2 style={s.formTitle}>สร้างห้องใหม่</h2>
+                {error && <ErrorBox msg={error} />}
+                <Field label="ชื่อของคุณ" id="nick" value={nickname} onChange={e => setNickname(e.target.value)} max={32} autoFocus />
+                <Field label="ชื่อห้อง" id="room" value={roomName} onChange={e => setRoomName(e.target.value)} max={64} />
+                <div style={s.btnRow}>
+                  <button type="submit" style={s.btnPrimary} disabled={loading || !nickname.trim() || !roomName.trim()}>
+                    {loading ? 'กำลังสร้าง...' : 'สร้างห้อง'}
+                  </button>
+                  <button type="button" style={s.btnBack} onClick={reset}>กลับ</button>
+                </div>
+              </form>
+            )}
+
+            {mode === 'join' && (
+              <form onSubmit={handleJoin} style={s.form}>
+                <h2 style={s.formTitle}>เข้าร่วมห้อง</h2>
+                {error && <ErrorBox msg={error} />}
+                <Field label="ชื่อของคุณ" id="nick2" value={nickname} onChange={e => setNickname(e.target.value)} max={32} autoFocus />
+                <Field label="รหัสห้อง" id="code" value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} max={8} extraStyle={{ textTransform:'uppercase', letterSpacing:'0.2em' }} />
+                <div style={s.btnRow}>
+                  <button type="submit" style={s.btnPrimary} disabled={loading || !nickname.trim() || !roomCode.trim()}>
+                    {loading ? 'กำลังเข้า...' : 'เข้าร่วม'}
+                  </button>
+                  <button type="button" style={s.btnBack} onClick={reset}>กลับ</button>
+                </div>
+              </form>
+            )}
+
+            {!mode && (
+              <div style={s.playerBar}>
+                <div style={s.playerAva}>🐺</div>
+                <div style={{ flex: 1 }}>
+                  <div style={s.playerName}>PlayerName</div>
+                  <div style={s.playerLevel}>Level 12</div>
+                  <div style={s.playerExp}>
+                    <div style={{ ...s.playerExpFill, width: '60%' }} />
+                  </div>
                 </div>
               </div>
-            ))}
+            )}
           </div>
 
-          <button style={s.moreBtn}>ดูทั้งหมด →</button>
+          <div style={s.right}>
+            <div style={s.panelBox}>
+              <div style={s.panelHead}>
+                <div style={s.panelLine} />
+                <span style={s.panelTitle}>ข่าวสาร</span>
+                <div style={s.panelLine} />
+              </div>
 
-          <div style={s.footer}>
-            <div style={s.socials}>
-              {['dc', 'fb', '🌐'].map(x => (
-                <div key={x} style={s.socBtn}>{x}</div>
-              ))}
+              <div style={s.newsContainer}>
+                {NEWS.map(n => (
+                  <div key={n.id} style={s.newsItem}>
+                    <div style={s.newsDot}>♦</div>
+                    <div>
+                      <div style={s.newsTitle}>{n.title}</div>
+                      <div style={s.newsDesc}>{n.desc}</div>
+                      <div style={s.newsDate}>{n.date}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={s.moreContainer}>
+                <button style={s.moreBtn}>More <span style={{ marginLeft: 8 }}>{'>'}</span></button>
+              </div>
             </div>
-            <span style={s.version}>v0.6.0 beta</span>
           </div>
         </div>
+      </div>
 
+      <div style={s.footer}>
+        <span style={s.version}>v1.2.0</span>
+        <div style={s.socials}>
+          {['D', 'F', 'W'].map(x => (
+            <div key={x} style={s.socBtn}>{x}</div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-
-function MenuBtn({ icon, title, sub, red, onClick }) {
+function MenuBtn({ title, sub, onClick }) {
   const [hovered, setHovered] = useState(false);
   return (
     <button
@@ -197,8 +193,7 @@ function MenuBtn({ icon, title, sub, red, onClick }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={{ ...s.menuIcon, ...(red ? s.menuIconRed : {}) }}>{icon}</div>
-      <div>
+      <div style={s.menuText}>
         <div style={s.menuTitle}>{title}</div>
         <div style={s.menuSub}>{sub}</div>
       </div>
@@ -214,279 +209,322 @@ function Field({ label, id, value, onChange, placeholder, max, autoFocus, extraS
         id={id} value={value} onChange={onChange}
         placeholder={placeholder} maxLength={max} autoFocus={autoFocus}
         style={{ ...s.input, ...extraStyle }}
-        onFocus={e  => { e.target.style.borderColor = '#e8a027'; }}
-        onBlur={e   => { e.target.style.borderColor = 'rgba(60,80,100,.6)'; }}
+        onFocus={e => { e.target.style.borderColor = '#6b7280'; }}
+        onBlur={e => { e.target.style.borderColor = '#374151'; }}
       />
     </div>
   );
 }
 
 function ErrorBox({ msg }) {
-  return (
-    <div style={s.errorBox}>{msg}</div>
-  );
+  return <div style={s.errorBox}>{msg}</div>;
 }
 
 const s = {
   page: {
-    minHeight:           '100dvh',
-    backgroundSize:      'cover',
-    backgroundPosition:  'center top',
-    backgroundColor:     '#080c14', // fallback ถ้าไม่มีรูป
-    position:            'relative',
-    fontFamily:          "'Sarabun', sans-serif",
-    color:               '#d8c8a8',
+    minHeight: '100dvh',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundColor: '#111827',
+    position: 'relative',
+    fontFamily: "'Sarabun', sans-serif",
+    color: '#d1d5db',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   },
   overlay: {
-    position:   'absolute',
-    inset:       0,
-    background: 'rgba(4,6,12,.6)',
-    zIndex:      0,
+    position: 'absolute',
+    inset: 0,
+    background: 'rgba(15, 20, 25, 0.75)',
+    zIndex: 0,
   },
-  grid: {
-    position:            'relative',
-    zIndex:               1,
-    display:             'grid',
-    gridTemplateColumns: '1fr 1fr',
-    minHeight:           '100dvh',
+  container: {
+    position: 'relative',
+    zIndex: 1,
+    width: '100%',
+    maxWidth: '1000px',
+    padding: '40px 20px',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
   },
-
-  left: {
-    padding:        '40px 28px 32px 40px',
-    display:        'flex',
-    flexDirection:  'column',
-    borderRight:    '1px solid rgba(232,160,39,.12)',
+  header: {
+    textAlign: 'center',
+    marginBottom: '40px',
   },
   title: {
-    fontFamily:  "'Cinzel', 'Creepster', serif",
-    fontSize:    'clamp(1.9rem, 4vw, 2.8rem)',
-    color:       '#e8c878',
-    letterSpacing: '.06em',
-    lineHeight:   1.1,
-    margin:        0,
+    fontFamily: "'Creepster', cursive",
+    fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+    color: '#d1d5db',
+    letterSpacing: '0.1em',
+    margin: 0,
+    textShadow: '0 4px 10px rgba(0,0,0,0.8)',
   },
-  titleNot: {
-    fontSize:    '0.55em',
-    color:       '#6a5030',
-    fontStyle:   'italic',
-    margin:      '0 4px',
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '40px',
+    alignItems: 'start',
   },
-  tagline: {
-    fontSize:     11,
-    color:        '#4a5868',
-    letterSpacing:'.1em',
-    textTransform:'uppercase',
-    marginTop:     6,
-  },
-  sep: {
-    height:     1,
-    background: 'rgba(232,160,39,.18)',
-    margin:     '20px 0',
+  left: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
   },
   menuList: {
-    display:       'flex',
+    display: 'flex',
     flexDirection: 'column',
-    gap:            8,
-    flex:           1,
+    gap: '12px',
+    padding: '20px',
+    background: 'rgba(20, 24, 28, 0.6)',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
   },
   menuBtn: {
-    display:        'flex',
-    alignItems:     'center',
-    gap:             14,
-    padding:        '12px 16px',
-    background:     'rgba(8,12,22,.75)',
-    border:         '1px solid rgba(60,80,100,.5)',
-    borderRadius:    6,
-    cursor:         'pointer',
-    textAlign:      'left',
-    width:          '100%',
-    transition:     'border-color .15s, background .15s',
+    display: 'flex',
+    alignItems: 'center',
+    padding: '16px',
+    background: 'transparent',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    width: '100%',
+    transition: 'all 0.2s',
   },
   menuBtnHover: {
-    borderColor: 'rgba(232,160,39,.45)',
-    background:  'rgba(10,16,30,.9)',
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderColor: '#4b5563',
   },
-  menuIcon: {
-    width:          38,
-    height:         38,
-    borderRadius:    5,
-    background:     'rgba(232,160,39,.1)',
-    border:         '1px solid rgba(232,160,39,.2)',
-    display:        'flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    fontSize:       '1.25rem',
-    flexShrink:      0,
+  menuText: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
   },
-  menuIconRed: {
-    background:  'rgba(120,20,20,.25)',
-    borderColor: 'rgba(180,30,30,.4)',
+  menuTitle: {
+    fontSize: '18px',
+    fontWeight: 'normal',
+    color: '#e5e7eb',
+    fontFamily: "'Cinzel', serif",
   },
-  menuTitle: { fontSize: 14, fontWeight: 700, color: '#d8c8a8', lineHeight: 1.2 },
-  menuSub:   { fontSize: 11, color: '#4a5868', marginTop: 2 },
-
+  menuSub: {
+    fontSize: '13px',
+    color: '#9ca3af',
+  },
   playerBar: {
-    marginTop:   16,
-    padding:     '11px 14px',
-    background:  'rgba(8,12,22,.8)',
-    border:      '1px solid rgba(60,80,100,.45)',
-    borderRadius: 6,
-    display:     'flex',
-    alignItems:  'center',
-    gap:          12,
+    padding: '16px 20px',
+    background: 'rgba(20, 24, 28, 0.6)',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
+    width: '100%',
+    maxWidth: '300px',
+    alignSelf: 'center',
   },
   playerAva: {
-    width:          34,
-    height:         34,
-    borderRadius:  '50%',
-    background:    'rgba(100,20,20,.4)',
-    border:        '1px solid rgba(180,30,30,.4)',
-    display:       'flex',
-    alignItems:    'center',
-    justifyContent:'center',
-    fontSize:      '1rem',
-    flexShrink:     0,
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    background: '#1f2937',
+    border: '1px solid #4b5563',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '24px',
   },
-  playerName: { fontSize: 13, fontWeight: 700, color: '#c8b898' },
-  playerHint: { fontSize: 10, color: '#3a4858', marginTop: 2 },
-
+  playerName: {
+    fontSize: '15px',
+    color: '#e5e7eb',
+    fontFamily: "'Cinzel', serif",
+  },
+  playerLevel: {
+    fontSize: '12px',
+    color: '#9ca3af',
+    marginTop: '2px',
+  },
+  playerExp: {
+    height: '4px',
+    background: '#374151',
+    borderRadius: '2px',
+    marginTop: '6px',
+  },
+  playerExpFill: {
+    height: '100%',
+    background: '#9ca3af',
+    borderRadius: '2px',
+  },
   form: {
-    display:       'flex',
+    display: 'flex',
     flexDirection: 'column',
-    gap:            14,
-    flex:            1,
+    gap: '16px',
+    padding: '24px',
+    background: 'rgba(20, 24, 28, 0.8)',
+    border: '1px solid #374151',
+    borderRadius: '4px',
   },
   formTitle: {
+    fontSize: '20px',
+    color: '#e5e7eb',
+    margin: '0 0 10px 0',
     fontFamily: "'Cinzel', serif",
-    fontSize:   '1.2rem',
-    color:      '#e8c878',
-    margin:      0,
   },
   fieldLabel: {
-    fontSize:      11,
-    fontWeight:    700,
-    color:         '#8a9ab0',
-    textTransform: 'uppercase',
-    letterSpacing: '.07em',
+    fontSize: '13px',
+    color: '#9ca3af',
   },
   input: {
-    width:       '100%',
-    background:  'rgba(10,14,24,.9)',
-    border:      '1.5px solid rgba(60,80,100,.6)',
-    borderRadius: 6,
-    color:       '#d8c8a8',
-    fontFamily:  "'Sarabun', sans-serif",
-    fontSize:     14,
-    padding:     '10px 14px',
-    outline:     'none',
-    transition:  'border-color .15s',
+    width: '100%',
+    background: '#111827',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    color: '#e5e7eb',
+    padding: '12px',
+    outline: 'none',
   },
-  btnRow: { display: 'flex', gap: 10, marginTop: 4 },
+  btnRow: {
+    display: 'flex',
+    gap: '12px',
+    marginTop: '10px',
+  },
   btnPrimary: {
-    flex:        1,
-    padding:    '11px 0',
-    background: '#c89030',
-    border:     'none',
-    borderRadius: 6,
-    color:      '#080c14',
-    fontFamily: "'Sarabun', sans-serif",
-    fontWeight:  700,
-    fontSize:    14,
-    cursor:     'pointer',
+    flex: 1,
+    padding: '12px',
+    background: '#374151',
+    border: '1px solid #4b5563',
+    borderRadius: '4px',
+    color: '#e5e7eb',
+    cursor: 'pointer',
   },
   btnBack: {
-    padding:    '11px 18px',
+    padding: '12px 20px',
     background: 'transparent',
-    border:     '1px solid rgba(60,80,100,.55)',
-    borderRadius: 6,
-    color:      '#6a7a8a',
-    fontFamily: "'Sarabun', sans-serif",
-    fontWeight:  600,
-    fontSize:    13,
-    cursor:     'pointer',
-    whiteSpace: 'nowrap',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    color: '#9ca3af',
+    cursor: 'pointer',
   },
   errorBox: {
-    background:   'rgba(140,30,30,.2)',
-    border:       '1px solid rgba(180,40,40,.4)',
-    borderRadius:  6,
-    padding:      '8px 12px',
-    fontSize:      13,
-    color:        '#e08080',
+    background: 'rgba(153, 27, 27, 0.2)',
+    border: '1px solid rgba(153, 27, 27, 0.5)',
+    padding: '10px',
+    borderRadius: '4px',
+    color: '#fca5a5',
+    fontSize: '14px',
   },
-
   right: {
-    padding:       '40px 36px 32px 28px',
-    display:       'flex',
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+  },
+  panelBox: {
+    background: 'rgba(20, 24, 28, 0.6)',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    padding: '24px',
+    height: '100%',
+    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
+    display: 'flex',
     flexDirection: 'column',
   },
   panelHead: {
-    display:     'flex',
-    alignItems:  'center',
-    gap:          12,
-    fontFamily:  "'Cinzel', 'Creepster', serif",
-    fontSize:    '1.15rem',
-    color:       '#e8c878',
-    marginBottom: 18,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '24px',
+  },
+  panelTitle: {
+    fontFamily: "'Sarabun', sans-serif",
+    fontSize: '18px',
+    color: '#e5e7eb',
+    whiteSpace: 'nowrap',
   },
   panelLine: {
-    flex:       1,
-    height:      1,
-    background: 'rgba(232,160,39,.2)',
+    flex: 1,
+    height: '1px',
+    background: '#374151',
+  },
+  newsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+    flex: 1,
   },
   newsItem: {
-    display:      'flex',
-    gap:           10,
-    padding:      '12px 0',
-    borderBottom: '1px solid rgba(50,65,85,.4)',
+    display: 'flex',
+    gap: '16px',
   },
   newsDot: {
-    width:        5,
-    height:       5,
-    borderRadius: '50%',
-    background:   '#c8a040',
-    marginTop:     6,
-    flexShrink:    0,
+    color: '#9ca3af',
+    fontSize: '12px',
+    marginTop: '2px',
   },
-  newsTitle: { fontSize: 13, fontWeight: 700, color: '#c8b898', lineHeight: 1.3 },
-  newsDesc:  { fontSize: 11, color: '#4a5868', marginTop: 3, lineHeight: 1.4 },
-  newsDate:  { fontSize: 10, color: '#2e3c4c', marginTop: 4 },
-
+  newsTitle: {
+    fontSize: '15px',
+    color: '#d1d5db',
+    marginBottom: '6px',
+  },
+  newsDesc: {
+    fontSize: '13px',
+    color: '#9ca3af',
+    marginBottom: '6px',
+  },
+  newsDate: {
+    fontSize: '12px',
+    color: '#6b7280',
+  },
+  moreContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '32px',
+  },
   moreBtn: {
-    marginTop:   14,
-    padding:      9,
-    width:       '100%',
-    background:  'transparent',
-    border:      '1px solid rgba(60,80,100,.5)',
-    borderRadius: 5,
-    color:       '#5a6878',
-    fontFamily:  "'Sarabun', sans-serif",
-    fontSize:     12,
-    cursor:      'pointer',
-    display:     'flex',
-    alignItems:  'center',
-    justifyContent:'center',
-    gap:           6,
+    background: 'transparent',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    padding: '8px 24px',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
   },
   footer: {
-    display:        'flex',
-    alignItems:     'center',
+    position: 'absolute',
+    bottom: '20px',
+    left: '20px',
+    right: '20px',
+    display: 'flex',
     justifyContent: 'space-between',
-    marginTop:       14,
+    alignItems: 'center',
+    zIndex: 1,
   },
-  socials: { display:'flex', gap:6 },
+  version: {
+    color: '#4b5563',
+    fontSize: '12px',
+  },
+  socials: {
+    display: 'flex',
+    gap: '12px',
+  },
   socBtn: {
-    width:          26,
-    height:         26,
-    borderRadius:  '50%',
-    background:    'rgba(8,12,22,.8)',
-    border:        '1px solid rgba(50,65,85,.5)',
-    display:       'flex',
-    alignItems:    'center',
-    justifyContent:'center',
-    fontSize:       11,
-    color:         '#3a4858',
-    cursor:        'pointer',
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    border: '1px solid #374151',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    fontSize: '14px',
+    background: 'rgba(20, 24, 28, 0.6)',
   },
-  version: { fontSize: 10, color: '#2a3848' },
+  menuSub: {
+    fontSize: '13px',
+    color: '#dedede21',
+  },
 };

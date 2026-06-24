@@ -4,12 +4,13 @@ import { useGame } from '../context/GameContext.jsx';
 import PlayerCard from '../src/components/PlayerCard.jsx';
 import ChatBox    from '../src/components/ChatBox.jsx';
 import Navbar     from '../src/components/Navbar.jsx';
+import '../styles/Lobby.css'; // เรียกใช้ CSS ใหม่
 
 const MIN_PLAYERS = 4;
 
 export default function Lobby() {
-  const { roomId }                              = useParams();
-  const navigate                                = useNavigate();
+  const { roomId } = useParams();
+  const navigate   = useNavigate();
   const {
     room, playerId, nickname, myRole,
     connected, error,
@@ -33,8 +34,8 @@ export default function Lobby() {
 
   if (!room) {
     return (
-      <div style={s.centered}>
-        <p style={{ color:'var(--color-text-muted)' }}>
+      <div className="lobby-centered">
+        <p className="lobby-loading-text">
           {connected ? 'Loading room…' : 'Connecting to island…'}
         </p>
       </div>
@@ -46,24 +47,27 @@ export default function Lobby() {
   const canStart    = isHost && playerCount >= MIN_PLAYERS;
 
   return (
-    <div style={s.page}>
+    <div className="lobby-page">
       <Navbar roomId={room.id} nickname={nickname} connected={connected} onLeave={handleLeave} />
 
       {error && (
-        <div style={s.errorBanner}>
-          {error}
-          <button onClick={clearError} style={s.errorClose}>✕</button>
+        <div className="lobby-error-banner">
+          <span>{error}</span>
+          <button onClick={clearError} className="lobby-error-close">✕</button>
         </div>
       )}
 
-      <main style={s.main}>
-        <aside style={s.aside}>
-          <section style={s.section}>
-            <h3 style={s.sectionTitle}>
+      <main className="lobby-main">
+        {/* Left Aside: Player List & Host Controls */}
+        <aside className="lobby-aside">
+          
+          <section className="lobby-section">
+            <h3 className="lobby-section-title">
               Islanders
-              <span style={s.badge}>{playerCount}</span>
+              <span className="lobby-badge">{playerCount}</span>
             </h3>
-            <div style={s.playerGrid}>
+            
+            <div className="lobby-player-grid custom-scrollbar">
               {room.players?.map(player => (
                 <PlayerCard
                   key={player.id}
@@ -78,8 +82,8 @@ export default function Lobby() {
           </section>
 
           {isHost && (
-            <section style={s.section}>
-              <p style={s.hint}>
+            <section className="lobby-section">
+              <p className="lobby-hint">
                 {playerCount < MIN_PLAYERS
                   ? `Waiting for ${MIN_PLAYERS - playerCount} more player${MIN_PLAYERS - playerCount !== 1 ? 's' : ''}…`
                   : `${playerCount} islanders ready!`}
@@ -87,34 +91,20 @@ export default function Lobby() {
               <button
                 onClick={startGame}
                 disabled={!canStart}
-                style={{ ...s.startBtn, opacity: canStart ? 1 : 0.45, cursor: canStart ? 'pointer' : 'not-allowed' }}
+                className={`lobby-start-btn ${canStart ? 'ready' : ''}`}
               >
                 🌙 Begin the Night
               </button>
             </section>
           )}
+
         </aside>
 
-        <section style={s.chatSection}>
+        {/* Right Section: Chat */}
+        <section className="lobby-chat-section">
           <ChatBox />
         </section>
       </main>
     </div>
   );
 }
-
-const s = {
-  page:        { maxWidth:'960px', margin:'0 auto', padding:'0 16px 24px', display:'flex', flexDirection:'column', gap:'16px', minHeight:'100dvh' },
-  centered:    { display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100dvh' },
-  main:        { display:'grid', gridTemplateColumns:'260px 1fr', gap:'16px', alignItems:'start' },
-  aside:       { display:'flex', flexDirection:'column', gap:'12px' },
-  section:     { background:'var(--color-surface)', border:'1px solid var(--color-border)', borderRadius:'var(--radius-lg)', padding:'16px', display:'flex', flexDirection:'column', gap:'10px' },
-  sectionTitle:{ fontFamily:'var(--font-display)', fontSize:'1.1rem', color:'var(--color-accent)', display:'flex', alignItems:'center', gap:'8px' },
-  badge:       { background:'var(--color-surface-2)', border:'1px solid var(--color-border)', borderRadius:'999px', fontSize:'12px', fontWeight:700, padding:'1px 8px', color:'var(--color-text-muted)' },
-  playerGrid:  { display:'flex', flexDirection:'column', gap:'6px' },
-  hint:        { fontSize:'13px', color:'var(--color-text-muted)', textAlign:'center' },
-  startBtn:    { padding:'12px', borderRadius:'var(--radius-md)', background:'var(--color-accent)', color:'#0d1117', border:'none', fontWeight:700, fontSize:'15px', width:'100%' },
-  chatSection: { minHeight:'500px', display:'flex', flexDirection:'column' },
-  errorBanner: { background:'rgba(192,57,43,.15)', border:'1px solid var(--color-danger)', borderRadius:'var(--radius-md)', padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', color:'#e57373', fontSize:'14px' },
-  errorClose:  { background:'none', border:'none', color:'inherit', cursor:'pointer', fontSize:'16px', padding:'0 4px' },
-};

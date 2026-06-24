@@ -20,6 +20,9 @@ export const SOCKET_EVENTS = Object.freeze({
   VOTE_UPDATE:          'vote:update',
   VOTE_RESULT:          'vote:result',
   ERROR:                'error',
+  NIGHT_ACTION:         'night:action',
+  WOLF_TARGET_UPDATE:   'night:wolf_target',
+  SEER_RESULT:          'night:seer_result',
 });
 
 const initialState = {
@@ -32,6 +35,9 @@ const initialState = {
   voteResult: null,
   connected:  false,
   error:      null,
+  wolfTargets:   {},
+  seerResult:    null,
+  myNightAction: null,
 };
 
 function gameReducer(state, action) {
@@ -93,10 +99,11 @@ function gameReducer(state, action) {
           phaseEndsAt: action.endsAt,
           round:       action.round,
         } : state.room,
-        // เข้า voting → init votes ว่างๆ, เข้าที่อื่น → clear
         votes:      action.phase === 'voting' ? { voteMap: {}, counts: {} } : null,
-        // คง voteResult ไว้ตอน results phase, เคลียร์เมื่อ phase อื่น
         voteResult: action.phase === 'results' ? state.voteResult : null,
+        wolfTargets:   action.phase === 'night' ? {} : state.wolfTargets,
+        seerResult:    action.phase === 'night' ? null : state.seerResult,
+        myNightAction: action.phase === 'night' ? null : state.myNightAction,
       };
 
     case 'VOTE_UPDATE':
