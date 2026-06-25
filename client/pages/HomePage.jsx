@@ -61,7 +61,8 @@ export default function HomePage() {
       const res = await fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hostNickname: nickname.trim(), roomName: roomName.trim() }),
+        credentials: 'include',
+        body: JSON.stringify({ hostNickname: user.username, roomName: roomName.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'สร้างห้องไม่สำเร็จ');
@@ -125,8 +126,8 @@ export default function HomePage() {
             {!mode && (
               <div style={s.menuList}>
                 <MenuBtn title="Create Room" sub="Create a new room and invite your friends" onClick={() => user ? setMode('create') : setShowModal(true)} />
-                <MenuBtn title="Join Room" sub="Join with room code" onClick={() => setMode('join')} />
-                <MenuBtn title="Customize" sub="Change your profile and preferences" />
+                    <MenuBtn title="Join Room" onClick={() => user ? setMode('join') : setShowModal(true)} />
+                    <MenuBtn title="Customize" sub="Change your profile and preferences" />
                 <MenuBtn title="Settings" sub="Game and audio settings" />
               </div>
             )}

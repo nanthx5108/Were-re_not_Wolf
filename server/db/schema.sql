@@ -48,3 +48,12 @@ CREATE INDEX idx_players_room_id   ON players(room_id);
 CREATE INDEX idx_players_socket_id ON players(socket_id);
 CREATE INDEX idx_messages_room_id  ON messages(room_id);
 CREATE INDEX idx_messages_sent_at  ON messages(sent_at);
+
+CREATE TABLE IF NOT EXISTS users (
+    id          VARCHAR(36)     NOT NULL PRIMARY KEY,
+    username    VARCHAR(32)     NOT NULL UNIQUE,
+    password    VARCHAR(255)    NOT NULL,
+    created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);

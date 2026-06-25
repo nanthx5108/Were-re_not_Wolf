@@ -4,7 +4,7 @@ import { useGame } from '../context/GameContext.jsx';
 import PlayerCard from '../src/components/PlayerCard.jsx';
 import ChatBox    from '../src/components/ChatBox.jsx';
 import Navbar     from '../src/components/Navbar.jsx';
-import '../styles/Lobby.css'; // เรียกใช้ CSS ใหม่
+import '../src/styles/Lobby.css'; // เรียกใช้ CSS ใหม่
 
 const MIN_PLAYERS = 4;
 
