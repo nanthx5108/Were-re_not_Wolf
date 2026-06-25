@@ -100,25 +100,42 @@ export default function HomePage() {
       <div style={s.overlay} />
 
       <div style={s.container}>
+        <div style={s.topBar}>
+          <div style={s.brandBlock}>
+            <span style={s.brandLogo}>W</span>
+            <div>
+              <div style={s.brandName}>WE'RE NOT WOLF</div>
+              <div style={s.brandTag}>พบกับโลกของเกมลึกลับและเพื่อนใหม่</div>
+            </div>
+          </div>
+
+          <div style={s.authActions}>
+            {user ? (
+              <div style={s.userDropdownWrap} ref={ddRef}>
+                <button style={s.userPill} onClick={() => setShowDD(v => !v)}>
+                  {user.username}
+                </button>
+                {showDD && (
+                  <div style={s.userDropdown}>
+                    <button style={s.userDropdownBtn} onClick={logout}>ออกจากระบบ</button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <button style={s.authBtnSecondary} onClick={() => navigate('/login')}>
+                  เข้าสู่ระบบ
+                </button>
+                <button style={s.authBtnPrimary} onClick={() => navigate('/register')}>
+                  สมัครสมาชิก
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         <div style={s.header}>
-          <h1 style={s.title}>WEREWOLF</h1>
-          {user ? (
-            <div className="user-dropdown-wrap" ref={ddRef}>
-              <button className="user-pill" onClick={() => setShowDD(v => !v)}>
-                🧍 {user.username} {showDD ? '▲' : '▼'}
-              </button>
-              {showDD && (
-                <div className="user-dropdown">
-                  <button onClick={logout}>🚪 ออกจากระบบ</button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="home-nav-auth">
-              <button onClick={() => navigate('/login')}>เข้าสู่ระบบ</button>
-              <button onClick={() => navigate('/register')}>สมัครสมาชิก</button>
-            </div>
-          )}
+          <h1 style={s.title}>WE'RE NOT <WOLF></WOLF></h1>
         </div>
 
         <div style={s.grid}>
@@ -164,7 +181,7 @@ export default function HomePage() {
 
             {!mode && (
               <div style={s.playerBar}>
-                <div style={s.playerAva}>🐺</div>
+                <div style={s.playerAva}>W</div>
                 <div style={{ flex: 1 }}>
                   <div style={s.playerName}>PlayerName</div>
                   <div style={s.playerLevel}>Level 12</div>
@@ -187,7 +204,7 @@ export default function HomePage() {
               <div style={s.newsContainer}>
                 {NEWS.map(n => (
                   <div key={n.id} style={s.newsItem}>
-                    <div style={s.newsDot}>♦</div>
+                    <div style={s.newsDot}>•</div>
                     <div>
                       <div style={s.newsTitle}>{n.title}</div>
                       <div style={s.newsDesc}>{n.desc}</div>
@@ -284,6 +301,103 @@ const s = {
     display: 'flex',
     flexDirection: 'column',
   },
+  topBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '16px',
+    marginBottom: '32px',
+    flexWrap: 'wrap',
+  },
+  brandBlock: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+  },
+  brandLogo: {
+    width: '58px',
+    height: '58px',
+    borderRadius: '18px',
+    display: 'grid',
+    placeItems: 'center',
+    background: 'linear-gradient(135deg, rgba(245,158,11,0.95), rgba(251,191,36,0.85))',
+    color: '#111827',
+    fontSize: '1.5rem',
+    boxShadow: '0 14px 30px rgba(251,191,36,0.2)',
+    border: '1px solid rgba(255,255,255,0.12)',
+  },
+  brandName: {
+    fontSize: '1.2rem',
+    color: '#f8fafc',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+  },
+  brandTag: {
+    fontSize: '0.92rem',
+    color: '#cbd5e1',
+  },
+  authActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap',
+  },
+  authBtnPrimary: {
+    padding: '12px 22px',
+    border: 'none',
+    borderRadius: '999px',
+    background: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
+    color: '#111827',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 16px 30px rgba(251,191,36,0.25)',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+  },
+  authBtnSecondary: {
+    padding: '12px 20px',
+    border: '1px solid rgba(148,163,184,0.35)',
+    borderRadius: '999px',
+    background: 'rgba(15,23,42,0.72)',
+    color: '#e2e8f0',
+    cursor: 'pointer',
+    transition: 'transform 0.2s, background 0.2s',
+  },
+  userDropdownWrap: {
+    position: 'relative',
+  },
+  userPill: {
+    padding: '12px 18px',
+    borderRadius: '999px',
+    border: '1px solid rgba(148,163,184,0.35)',
+    background: 'rgba(15,23,42,0.72)',
+    color: '#e2e8f0',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  userDropdown: {
+    position: 'absolute',
+    top: 'calc(100% + 10px)',
+    right: 0,
+    background: 'rgba(15,23,42,0.95)',
+    border: '1px solid rgba(148,163,184,0.2)',
+    borderRadius: '14px',
+    boxShadow: '0 18px 40px rgba(15,23,42,0.45)',
+    padding: '10px',
+    minWidth: '180px',
+    zIndex: 2,
+  },
+  userDropdownBtn: {
+    width: '100%',
+    padding: '10px 14px',
+    border: 'none',
+    borderRadius: '10px',
+    background: 'rgba(255,255,255,0.05)',
+    color: '#e2e8f0',
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
   header: {
     textAlign: 'center',
     marginBottom: '40px',
@@ -295,6 +409,15 @@ const s = {
     letterSpacing: '0.1em',
     margin: 0,
     textShadow: '0 4px 10px rgba(0,0,0,0.8)',
+  },
+  subtitle: {
+    marginTop: '18px',
+    color: '#9ca3af',
+    fontSize: '1rem',
+    maxWidth: '720px',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    lineHeight: '1.6',
   },
   grid: {
     display: 'grid',
@@ -557,9 +680,5 @@ const s = {
     cursor: 'pointer',
     fontSize: '14px',
     background: 'rgba(20, 24, 28, 0.6)',
-  },
-  menuSub: {
-    fontSize: '13px',
-    color: '#dedede21',
   },
 };
