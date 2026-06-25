@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext.jsx';
 import bgHome from '../src/assets/bgHome.png';
+import { useAuth }  from '../context/AuthContext.jsx';
+import AuthModal    from '../src/components/AuthModal.jsx';
 
 const BG_IMAGE = bgHome;
 const API = '/api/rooms';
+
 
 const NEWS = [
   {
@@ -30,6 +33,7 @@ const NEWS = [
 export default function HomePage() {
   const navigate = useNavigate();
   const { setIdentity, joinRoom } = useGame();
+  const { user, logout } = useAuth();
 
   const [mode, setMode] = useState(null);
   const [nickname, setNickname] = useState('');
@@ -37,6 +41,17 @@ export default function HomePage() {
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showDD, setShowDD] = useState(false);
+  const ddRef = useRef(null);
+
+  function requireAuth() {
+    if (!user) {
+      setShowModal(true);
+      return false;
+    }
+    return true;
+  }
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -86,13 +101,30 @@ export default function HomePage() {
       <div style={s.container}>
         <div style={s.header}>
           <h1 style={s.title}>WEREWOLF</h1>
+          {user ? (
+            <div className="user-dropdown-wrap" ref={ddRef}>
+              <button className="user-pill" onClick={() => setShowDD(v => !v)}>
+                🧍 {user.username} {showDD ? '▲' : '▼'}
+              </button>
+              {showDD && (
+                <div className="user-dropdown">
+                  <button onClick={logout}>🚪 ออกจากระบบ</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="home-nav-auth">
+              <button onClick={() => navigate('/login')}>เข้าสู่ระบบ</button>
+              <button onClick={() => navigate('/register')}>สมัครสมาชิก</button>
+            </div>
+          )}
         </div>
 
         <div style={s.grid}>
           <div style={s.left}>
             {!mode && (
               <div style={s.menuList}>
-                <MenuBtn title="Create Room" sub="Create a new room and invite your friends" onClick={() => setMode('create')} />
+                <MenuBtn title="Create Room" sub="Create a new room and invite your friends" onClick={() => user ? setMode('create') : setShowModal(true)} />
                 <MenuBtn title="Join Room" sub="Join with room code" onClick={() => setMode('join')} />
                 <MenuBtn title="Customize" sub="Change your profile and preferences" />
                 <MenuBtn title="Settings" sub="Game and audio settings" />
@@ -180,6 +212,8 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {showModal && <AuthModal onClose={() => setShowModal(false)} />}
     </div>
   );
 }
