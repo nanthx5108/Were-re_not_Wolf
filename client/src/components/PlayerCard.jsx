@@ -2,17 +2,17 @@ import React from 'react';
 import '../styles/PlayerCard.css';
 
 const ROLE_ICONS = {
-  villager:  '🏘️',
-  werewolf:  '🐺',
-  seer:      '👁️',
-  bodyguard: '🛡️',
-  fool:      '🃏',
+  villager:  'Villager',
+  werewolf:  'Werewolf',
+  seer:      'Seer',
+  bodyguard: 'Bodyguard',
+  fool:      'Fool',
 };
 
 export default function PlayerCard({ player, isMe, isHost, myRole, showRole = false }) {
   return (
     <div className={`player-card ${player.isAlive ? 'alive' : 'dead'} ${isMe ? 'is-me' : ''}`}>
-      <span className="player-avatar">{player.isAlive ? '🧍' : '💀'}</span>
+      <span className="player-avatar">{player.isAlive ? 'Alive' : 'Dead'}</span>
       
       <div className="player-info">
         <span className="player-name">
@@ -27,7 +27,7 @@ export default function PlayerCard({ player, isMe, isHost, myRole, showRole = fa
 
       {showRole && myRole && (
         <span className="player-role" title={myRole}>
-          {ROLE_ICONS[myRole] || '❓'}
+          {ROLE_ICONS[myRole] || '?'}
         </span>
       )}
     </div>

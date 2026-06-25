@@ -53,7 +53,7 @@ export default function Lobby() {
       {error && (
         <div className="lobby-error-banner">
           <span>{error}</span>
-          <button onClick={clearError} className="lobby-error-close">✕</button>
+          <button onClick={clearError} className="lobby-error-close">Close</button>
         </div>
       )}
 
@@ -93,7 +93,7 @@ export default function Lobby() {
                 disabled={!canStart}
                 className={`lobby-start-btn ${canStart ? 'ready' : ''}`}
               >
-                🌙 Begin the Night
+                Begin the Night
               </button>
             </section>
           )}

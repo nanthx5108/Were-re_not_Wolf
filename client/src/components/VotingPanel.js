@@ -15,7 +15,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
     <div style={s.panel}>
       {/* Header */}
       <div style={s.header}>
-        <span style={s.icon}>🗳️</span>
+        <span style={s.icon}>Vote</span>
         <div>
           <p style={s.title}>โหวตคนที่สงสัย</p>
           <p style={s.sub}>ใครคือหมาป่าที่ซ่อนอยู่?</p>
@@ -34,7 +34,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
 
       {alreadyVoted && (
         <div style={s.myVoteBox}>
-          ✅ คุณโหวต:{' '}
+          คุณโหวต:{' '}
           <strong style={{ color: 'var(--color-accent)' }}>
             {players.find(p => p.id === myVote)?.nickname ?? '?'}
           </strong>
@@ -54,14 +54,14 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
               borderColor: isMyTarget ? 'var(--color-accent)' : 'var(--color-border)',
             }}>
               <div style={s.playerInfo}>
-                <span style={s.avatar}>🧍</span>
+                <span style={s.avatar}>Player</span>
                 <span style={s.name}>{p.nickname}</span>
                 {hasVoted && <span style={s.votedBadge}>โหวตแล้ว</span>}
               </div>
 
               <div style={s.right}>
                 {voteCount > 0 && (
-                  <span style={s.voteCount}>{voteCount} 🗳️</span>
+                  <span style={s.voteCount}>{voteCount} votes</span>
                 )}
                 <button
                   onClick={() => !alreadyVoted && onVote(p.id)}
@@ -72,7 +72,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
                     ...(alreadyVoted ? s.voteBtnDisabled : {}),
                   }}
                 >
-                  {isMyTarget ? '✓ เลือกแล้ว' : 'โหวต'}
+                  {isMyTarget ? 'เลือกแล้ว' : 'โหวต'}
                 </button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import '../../src/styles/AuthModal.css';
+import '../styles/AuthModel.css';
 
 export default function AuthModal({ onClose, message }) {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export default function AuthModal({ onClose, message }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={e => e.stopPropagation()}>
-        <div className="modal-icon">🐺</div>
+        <div className="modal-icon">W</div>
         <h3 className="modal-title">ต้องเข้าสู่ระบบก่อน</h3>
         <p className="modal-body">
           {message || 'คุณต้องเข้าสู่ระบบก่อนจึงจะสร้างหรือเข้าร่วมห้องได้'}
@@ -27,7 +27,7 @@ export default function AuthModal({ onClose, message }) {
           <button className="modal-btn modal-btn-primary"   onClick={goLogin}>เข้าสู่ระบบ</button>
           <button className="modal-btn modal-btn-secondary" onClick={goRegister}>สมัครสมาชิก</button>
         </div>
-        <button className="modal-close" onClick={onClose}>✕</button>
+        <button className="modal-close" onClick={onClose}>Close</button>
       </div>
     </div>
   );

@@ -25,9 +25,9 @@ export const PHASE_DURATIONS_SEC = Object.freeze({
 });
 
 export const PHASE_CONFIG = Object.freeze({
-  night:   { label: '🌙 Night',   color: '#c0392b' },
-  day:     { label: '☀️ Day',     color: '#e8a027' },
-  voting:  { label: '🗳️ Voting',  color: '#7c6bbf' },
-  results: { label: '📜 Results', color: '#27ae60' },
-  lobby:   { label: '🏝️ Lobby',   color: '#8a9ab0' },
+  night:   { label: 'Night',   color: '#c0392b' },
+  day:     { label: 'Day',     color: '#e8a027' },
+  voting:  { label: 'Voting',  color: '#7c6bbf' },
+  results: { label: 'Results', color: '#27ae60' },
+  lobby:   { label: 'Lobby',   color: '#8a9ab0' },
 });

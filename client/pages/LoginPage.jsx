@@ -68,7 +68,7 @@ export default function LoginPage() {
             type="submit" className="auth-btn auth-btn-primary"
             disabled={loading || !username.trim() || !password}
           >
-            {loading ? 'กำลังเข้าสู่ระบบ...' : '🏝️ เข้าสู่ระบบ'}
+            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
 

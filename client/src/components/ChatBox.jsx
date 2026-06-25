@@ -38,7 +38,7 @@ export default function ChatBox({ showWerewolfChannel = false }) {
         {messages.map(msg => (
           <div key={msg.id} style={s.message}>
             <span style={{ ...s.sender, color: CHANNEL_COLOR[msg.channel] || 'var(--color-text)' }}>
-              {msg.channel === 'system' ? '🔔' : msg.nickname}
+              {msg.channel === 'system' ? 'SYSTEM' : msg.nickname}
             </span>
             <span style={s.content}>{msg.content}</span>
             <span style={s.time}>
@@ -52,15 +52,15 @@ export default function ChatBox({ showWerewolfChannel = false }) {
       <form onSubmit={handleSend} style={s.form}>
         {canWerewolf && (
           <select value={channel} onChange={e => setChannel(e.target.value)} style={s.select}>
-            <option value="village">🏘️ Village</option>
-            <option value="werewolf">🐺 Pack</option>
+            <option value="village">Village</option>
+            <option value="werewolf">Werewolf</option>
           </select>
         )}
         <input
           type="text" value={input} onChange={e => setInput(e.target.value)}
           placeholder="Say something…" maxLength={300} style={s.input}
         />
-        <button type="submit" disabled={!input.trim()} style={s.sendBtn}>➤</button>
+        <button type="submit" disabled={!input.trim()} style={s.sendBtn}>Send</button>
       </form>
     </div>
   );
