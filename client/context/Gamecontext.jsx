@@ -171,12 +171,13 @@ export function GameProvider({ children }) {
     if (!socket.connected) socket.connect();
     socket.emit(SOCKET_EVENTS.ROOM_JOIN, { roomId, playerId, nickname });
   }, []);
-  const leaveRoom     = useCallback(() => { socket.emit(SOCKET_EVENTS.ROOM_LEAVE); socket.disconnect(); dispatch({ type: 'RESET' }); }, []);
-  const sendMessage   = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
-  const startGame     = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
-  const advancePhase  = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
-  const castVote      = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []); // ← ใหม่
-  const clearError    = useCallback(() => dispatch({ type: 'CLEAR_ERROR' }), []);
+  const leaveRoom        = useCallback(() => { socket.emit(SOCKET_EVENTS.ROOM_LEAVE); socket.disconnect(); dispatch({ type: 'RESET' }); }, []);
+  const sendMessage      = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
+  const startGame        = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
+  const advancePhase     = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
+  const castVote         = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
+  const submitNightAction = useCallback((targetId) => socket.emit(SOCKET_EVENTS.NIGHT_ACTION, { targetId }), []);
+  const clearError       = useCallback(() => dispatch({ type: 'CLEAR_ERROR' }), []);
 
   return (
     <GameContext.Provider value={{
