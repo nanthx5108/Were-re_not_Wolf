@@ -102,12 +102,18 @@ export default function HomePage() {
       <div style={s.container}>
         <div style={s.topBar}>
           <div style={s.brandBlock}>
+            <span style={s.brandLogo}>W</span>
+            <div>
+              <div style={s.brandName}>WE'RE NOT WOLF</div>
+              <div style={s.brandTag}>พบกับโลกของเกมลึกลับและเพื่อนใหม่</div>
+            </div>
           </div>
 
           <div style={s.authActions}>
             {user ? (
               <div style={s.userDropdownWrap} ref={ddRef}>
                 <button style={s.userPill} onClick={() => setShowDD(v => !v)}>
+                  <span style={s.userLevelBadge}>Lv.{user.level ?? 1}</span>
                   {user.username}
                 </button>
                 {showDD && (
@@ -130,7 +136,7 @@ export default function HomePage() {
         </div>
 
         <div style={s.header}>
-          <h1 style={s.title}>WE'RE NOT WOLF</h1>
+          <h1 style={s.title}>WE'RE NOT <WOLF></WOLF></h1>
         </div>
 
         <div style={s.grid}>
@@ -370,6 +376,16 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
+  },
+  userLevelBadge: {
+    padding: '2px 8px',
+    borderRadius: '999px',
+    background: 'rgba(232,160,39,0.18)',
+    border: '1px solid #e8a027',
+    color: '#e8a027',
+    fontSize: '0.75rem',
+    fontWeight: 700,
+    fontFamily: 'var(--font-display)',
   },
   userDropdown: {
     position: 'absolute',
