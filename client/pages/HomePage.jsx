@@ -135,7 +135,7 @@ export default function HomePage() {
         </div>
 
         <div style={s.header}>
-          <h1 style={s.title}>WE'RE NOT <WOLF></WOLF></h1>
+          <h1 style={s.title}>WE'RE NOT WOLF</h1>
         </div>
 
         <div style={s.grid}>
