@@ -8,6 +8,7 @@ import { distributeRoles }   from '../game/Roledistributor.js';
 import { PLAYER_LIMITS, CHANNELS, PHASES } from '../game/constants.js';
 import { startPhaseTimer, advancePhase, clearPhaseTimer } from '../game/phaseManager.js';
 import { castVote, hasAllVoted } from '../game/voteManager.js';
+import { initNightActions, submitNightAction } from '../game/nightActions.js';
 
 export function registerSocketHandlers(socket, io) {
 
@@ -93,6 +94,7 @@ export function registerSocketHandlers(socket, io) {
     }
 
     updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT, round: 1 });
+    initNightActions(roomId);
     await pool.query(`UPDATE rooms SET status = 'in_progress' WHERE id = ?`, [roomId]);
 
     const endsAt = startPhaseTimer(io, roomId, PHASES.NIGHT);
@@ -108,6 +110,25 @@ export function registerSocketHandlers(socket, io) {
       content: '🌙 ค่ำคืนมาถึง... หมู่บ้านหลับใหล',
       sentAt: new Date().toISOString(),
     });
+  });
+
+  socket.on('night:action', ({ targetId }) => {
+    const { roomId, playerId } = socket.data || {};
+    if (!roomId || !playerId) return;
+
+    const room = getRoom(roomId);
+    if (!room) return socket.emit('error', { message: 'Room not found.' });
+    if (room.phase !== PHASES.NIGHT) return socket.emit('error', { message: 'Not night phase.' });
+
+    const player = room.players.get(playerId);
+    if (!player?.isAlive) return socket.emit('error', { message: 'Dead players cannot act.' });
+
+    const action = submitNightAction(roomId, playerId, { targetId });
+    if (!action) return socket.emit('error', { message: 'Invalid night action.' });
+
+    const payload = { playerId, nickname: player.nickname, role: player.role, targetId };
+    socket.emit('night:action:ack', payload);
+    io.to(roomId).emit('night:action:update', payload);
   });
 
   socket.on('vote:cast', ({ targetId }) => {

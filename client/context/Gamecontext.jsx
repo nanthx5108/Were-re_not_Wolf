@@ -21,8 +21,10 @@ export const SOCKET_EVENTS = Object.freeze({
   VOTE_RESULT:          'vote:result',
   ERROR:                'error',
   NIGHT_ACTION:         'night:action',
-  WOLF_TARGET_UPDATE:   'night:wolf_target',
-  SEER_RESULT:          'night:seer_result',
+  NIGHT_ACTION_ACK:     'night:action:ack',
+  NIGHT_ACTION_UPDATE:  'night:action:update',
+  NIGHT_RESULT:         'night:result',
+  GAME_ENDED:           'game:ended',
 });
 
 const initialState = {
@@ -38,6 +40,8 @@ const initialState = {
   wolfTargets:   {},
   seerResult:    null,
   myNightAction: null,
+  nightResult:   null,
+  gameResult:    null,
 };
 
 function gameReducer(state, action) {
@@ -126,6 +130,15 @@ function gameReducer(state, action) {
     case 'SET_ERROR':
       return { ...state, error: action.error };
 
+    case 'NIGHT_ACTION_ACK':
+      return { ...state, myNightAction: action.payload, nightResult: null };
+
+    case 'NIGHT_RESULT':
+      return { ...state, nightResult: action.payload };
+
+    case 'GAME_ENDED':
+      return { ...state, gameResult: { winner: action.winner, message: action.message } };
+
     case 'CLEAR_ERROR':
       return { ...state, error: null };
 
@@ -154,8 +167,9 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.GAME_STARTED]:         (data)          => dispatch({ type: 'GAME_STARTED', ...data }),
       [SOCKET_EVENTS.PHASE_CHANGED]:        (data)          => dispatch({ type: 'PHASE_CHANGED', ...data }),
       [SOCKET_EVENTS.ERROR]:                ({ message })   => dispatch({ type: 'SET_ERROR', error: message }),
-
-      // ← ใหม่
+      [SOCKET_EVENTS.NIGHT_ACTION_ACK]:     (payload)       => dispatch({ type: 'NIGHT_ACTION_ACK', payload }),
+      [SOCKET_EVENTS.NIGHT_RESULT]:         (payload)       => dispatch({ type: 'NIGHT_RESULT', payload }),
+      [SOCKET_EVENTS.GAME_ENDED]:           ({ winner, message }) => dispatch({ type: 'GAME_ENDED', winner, message }),
       [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
       [SOCKET_EVENTS.VOTE_RESULT]: (data) => dispatch({ type: 'VOTE_RESULT', ...data }),
     };
@@ -171,20 +185,20 @@ export function GameProvider({ children }) {
     if (!socket.connected) socket.connect();
     socket.emit(SOCKET_EVENTS.ROOM_JOIN, { roomId, playerId, nickname });
   }, []);
-  const leaveRoom        = useCallback(() => { socket.emit(SOCKET_EVENTS.ROOM_LEAVE); socket.disconnect(); dispatch({ type: 'RESET' }); }, []);
-  const sendMessage      = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
-  const startGame        = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
-  const advancePhase     = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
-  const castVote         = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
+  const leaveRoom     = useCallback(() => { socket.emit(SOCKET_EVENTS.ROOM_LEAVE); socket.disconnect(); dispatch({ type: 'RESET' }); }, []);
+  const sendMessage   = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
+  const startGame     = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
+  const advancePhase  = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
+  const castVote      = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
   const submitNightAction = useCallback((targetId) => socket.emit(SOCKET_EVENTS.NIGHT_ACTION, { targetId }), []);
-  const clearError       = useCallback(() => dispatch({ type: 'CLEAR_ERROR' }), []);
+  const clearError    = useCallback(() => dispatch({ type: 'CLEAR_ERROR' }), []);
 
   return (
     <GameContext.Provider value={{
       ...state,
       setIdentity, joinRoom, leaveRoom,
       sendMessage, startGame, advancePhase,
-      castVote,
+      castVote, submitNightAction,
       clearError,
     }}>
       {children}

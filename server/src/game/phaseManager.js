@@ -7,6 +7,8 @@ import { PHASES, CHANNELS } from './constants.js';
 import {
   resolveVotes, clearVoting, initVoting,
 } from './voteManager.js';
+import { initNightActions, resolveNightActions } from './nightActions.js';
+import { evaluateWinCondition, endGame } from './winConditions.js';
 
 export const PHASE_DURATIONS_MS = Object.freeze({
   [PHASES.NIGHT]:   30_000,
@@ -53,11 +55,44 @@ export async function advancePhase(io, roomId) {
   const room = getRoom(roomId);
   if (!room || room.status !== 'in_progress') return;
 
+  if (room.phase === PHASES.NIGHT) {
+    const nightResult = await _resolveNightActionsAndBroadcast(io, roomId);
+    const win = evaluateWinCondition(roomId);
+    if (win) {
+      endGame(roomId, win.winner, win.message);
+      io.to(roomId).emit('game:ended', { winner: win.winner, message: win.message });
+      io.to(roomId).emit('chat:message', {
+        id: `sys-end-${Date.now()}`,
+        channel: CHANNELS.SYSTEM,
+        content: win.message,
+        sentAt: new Date().toISOString(),
+      });
+      return;
+    }
+    updateRoom(roomId, { nightResult });
+  }
+
   if (room.phase === PHASES.VOTING) {
     await _resolveVotingAndBroadcast(io, roomId);
+    const win = evaluateWinCondition(roomId);
+    if (win) {
+      endGame(roomId, win.winner, win.message);
+      io.to(roomId).emit('game:ended', { winner: win.winner, message: win.message });
+      io.to(roomId).emit('chat:message', {
+        id: `sys-end-${Date.now()}`,
+        channel: CHANNELS.SYSTEM,
+        content: win.message,
+        sentAt: new Date().toISOString(),
+      });
+      return;
+    }
   }
 
   const nextPhase = NEXT_PHASE[room.phase] ?? PHASES.DAY;
+
+  if (nextPhase === PHASES.NIGHT) {
+    initNightActions(roomId);
+  }
 
   if (nextPhase === PHASES.VOTING) {
     initVoting(roomId);

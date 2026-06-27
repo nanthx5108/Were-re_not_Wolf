@@ -25,6 +25,9 @@ export function submitNightAction(roomId, playerId, action) {
   const targetId = action?.targetId;
   if (!targetId) return null;
 
+  const target = room.players.get(targetId);
+  if (!target || !target.isAlive || targetId === playerId) return null;
+
   const current = room.nightActions || { werewolf: {}, seer: null, bodyguard: null };
   const next = {
     werewolf: { ...(current.werewolf || {}) },

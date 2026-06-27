@@ -1,188 +1,98 @@
-import React, {
-  createContext, useContext, useReducer,
-  useEffect, useCallback,
-} from 'react';
-import { socket } from '../src/socket/socket.jsx';
-
-export const SOCKET_EVENTS = Object.freeze({
-  ROOM_JOIN:            'room:join',
-  ROOM_LEAVE:           'room:leave',
-  ROOM_STATE:           'room:state',
-  ROOM_PLAYERS_UPDATED: 'room:players_updated',
-  ROOM_HOST_CHANGED:    'room:host_changed',
-  CHAT_SEND:            'chat:send',
-  CHAT_MESSAGE:         'chat:message',
-  GAME_START:           'game:start',
-  GAME_STARTED:         'game:started',
-  PHASE_CHANGED:        'phase:changed',
-  PHASE_ADVANCE:        'phase:advance',
-  VOTE_CAST:            'vote:cast',
-  VOTE_UPDATE:          'vote:update',
-  VOTE_RESULT:          'vote:result',
-  ERROR:                'error',
-});
-
-const initialState = {
-  playerId:   null,
-  nickname:   null,
-  room:       null,
-  myRole:     null,
-  messages:   [],
-  votes:      null,
-  voteResult: null,
-  connected:  false,
-  error:      null,
-};
-
-function gameReducer(state, action) {
-  switch (action.type) {
-
-    case 'SET_IDENTITY':
-      return { ...state, playerId: action.playerId, nickname: action.nickname };
-
-    case 'SOCKET_CONNECTED':
-      return { ...state, connected: true, error: null };
-
-    case 'SOCKET_DISCONNECTED':
-      return { ...state, connected: false };
-
-    case 'ROOM_STATE':
-      return {
-        ...state,
-        room:   action.room,
-        myRole: action.room.myRole ?? state.myRole,
-      };
-
-    case 'PLAYERS_UPDATED':
-      return {
-        ...state,
-        room: state.room ? { ...state.room, players: action.players } : state.room,
-      };
-
-    case 'HOST_CHANGED':
-      return {
-        ...state,
-        room: state.room ? { ...state.room, hostId: action.newHostId } : state.room,
-      };
-
-    case 'CHAT_MESSAGE':
-      return {
-        ...state,
-        messages: [...state.messages, action.message].slice(-200),
-      };
-
-    case 'GAME_STARTED':
-      return {
-        ...state,
-        myRole: action.myRole,
-        room: state.room ? {
-          ...state.room,
-          status:      'in_progress',
-          phase:       action.phase,
-          phaseEndsAt: action.endsAt,
-          round:       action.round ?? 1,
-        } : state.room,
-      };
-
-    case 'PHASE_CHANGED':
-      return {
-        ...state,
-        room: state.room ? {
-          ...state.room,
-          phase:       action.phase,
-          phaseEndsAt: action.endsAt,
-          round:       action.round,
-        } : state.room,
-        votes:      action.phase === 'voting' ? { voteMap: {}, counts: {} } : null,
-        voteResult: action.phase === 'results' ? state.voteResult : null,
-      };
-
-    case 'VOTE_UPDATE':
-      return {
-        ...state,
-        votes: { voteMap: action.voteMap, counts: action.counts },
-      };
-
-    case 'VOTE_RESULT':
-      return {
-        ...state,
-        voteResult: {
-          eliminatedId:       action.eliminatedId,
-          eliminatedNickname: action.eliminatedNickname,
-          tally:              action.tally,
-          wasTie:             action.wasTie,
-        },
-      };
-
-    case 'SET_ERROR':
-      return { ...state, error: action.error };
-
-    case 'CLEAR_ERROR':
-      return { ...state, error: null };
-
-    case 'RESET':
-      return { ...initialState };
-
-    default:
-      return state;
-  }
-}
-
-const GameContext = createContext(null);
-
-export function GameProvider({ children }) {
-  const [state, dispatch] = useReducer(gameReducer, initialState);
-
-  useEffect(() => {
-    const handlers = {
-      connect:    () => dispatch({ type: 'SOCKET_CONNECTED' }),
-      disconnect: () => dispatch({ type: 'SOCKET_DISCONNECTED' }),
-
-      [SOCKET_EVENTS.ROOM_STATE]:           (room)          => dispatch({ type: 'ROOM_STATE', room }),
-      [SOCKET_EVENTS.ROOM_PLAYERS_UPDATED]: (players)       => dispatch({ type: 'PLAYERS_UPDATED', players }),
-      [SOCKET_EVENTS.ROOM_HOST_CHANGED]:    ({ newHostId }) => dispatch({ type: 'HOST_CHANGED', newHostId }),
-      [SOCKET_EVENTS.CHAT_MESSAGE]:         (message)       => dispatch({ type: 'CHAT_MESSAGE', message }),
-      [SOCKET_EVENTS.GAME_STARTED]:         (data)          => dispatch({ type: 'GAME_STARTED', ...data }),
-      [SOCKET_EVENTS.PHASE_CHANGED]:        (data)          => dispatch({ type: 'PHASE_CHANGED', ...data }),
-      [SOCKET_EVENTS.ERROR]:                ({ message })   => dispatch({ type: 'SET_ERROR', error: message }),
-
-      [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
-      [SOCKET_EVENTS.VOTE_RESULT]: (data) => dispatch({ type: 'VOTE_RESULT', ...data }),
-    };
-
-    for (const [event, handler] of Object.entries(handlers)) socket.on(event, handler);
-    return () => {
-      for (const [event, handler] of Object.entries(handlers)) socket.off(event, handler);
-    };
-  }, []);
-
-  const setIdentity   = useCallback((pid, nick) => dispatch({ type: 'SET_IDENTITY', playerId: pid, nickname: nick }), []);
-  const joinRoom      = useCallback((roomId, playerId, nickname) => {
-    if (!socket.connected) socket.connect();
-    socket.emit(SOCKET_EVENTS.ROOM_JOIN, { roomId, playerId, nickname });
-  }, []);
-  const leaveRoom     = useCallback(() => { socket.emit(SOCKET_EVENTS.ROOM_LEAVE); socket.disconnect(); dispatch({ type: 'RESET' }); }, []);
-  const sendMessage   = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
-  const startGame     = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
-  const advancePhase  = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
-  const castVote      = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
-  const clearError    = useCallback(() => dispatch({ type: 'CLEAR_ERROR' }), []);
-
-  return (
-    <GameContext.Provider value={{
-      ...state,
-      setIdentity, joinRoom, leaveRoom,
-      sendMessage, startGame, advancePhase,
-      castVote,   // ← ใหม่
-      clearError,
-    }}>
-      {children}
-    </GameContext.Provider>
-  );
-}
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useGame } from '../context/GameContext.jsx';
+import PlayerCard from '../src/components/PlayerCard.jsx';
+import ChatBox from '../src/components/ChatBox.jsx';
+import PhaseTimer from '../src/components/PhaseTimer.jsx';
+import VotingPanel from '../src/components/VotingPanel.jsx';
+import NightAction from '../src/components/NightAction.jsx';
+import Navbar from '../src/components/Navbar.jsx';
+import '../src/styles/Lobby.css';
 
 export default function Game() {
-    const ctx = useContext(GameContext);
-  if (!ctx) throw new Error('useGame must be used inside <GameProvider>');
-  return ctx;
+  const { roomId } = useParams();
+  const navigate = useNavigate();
+  const {
+    room,
+    playerId,
+    nickname,
+    myRole,
+    connected,
+    error,
+    leaveRoom,
+    advancePhase,
+    castVote,
+    votes,
+    voteResult,
+    gameResult,
+    clearError,
+  } = useGame();
+
+  function handleLeave() {
+    leaveRoom();
+    navigate('/', { replace: true });
+  }
+
+  if (!room) {
+    return <div className="lobby-centered"><p className="lobby-loading-text">Loading game…</p></div>;
+  }
+
+  const isHost = room.hostId === playerId;
+  const alivePlayers = room.players || [];
+  const isNight = room.phase === 'night';
+  const isVoting = room.phase === 'voting';
+  const isResults = room.phase === 'results';
+
+  return (
+    <div className="lobby-page">
+      <Navbar roomId={room.id} nickname={nickname} connected={connected} onLeave={handleLeave} />
+
+      {error && (
+        <div className="lobby-error-banner">
+          <span>{error}</span>
+          <button onClick={clearError} className="lobby-error-close">Close</button>
+        </div>
+      )}
+
+      {gameResult && (
+        <div className="lobby-error-banner" style={{ background: 'rgba(232, 160, 39, 0.16)' }}>
+          <span><strong>{gameResult.message}</strong></span>
+        </div>
+      )}
+
+      <main className="lobby-main" style={{ alignItems: 'stretch' }}>
+        <aside className="lobby-aside" style={{ gap: '1rem' }}>
+          <section className="lobby-section">
+            <h3 className="lobby-section-title">Players</h3>
+            <div className="lobby-player-grid custom-scrollbar">
+              {alivePlayers.map((player) => (
+                <PlayerCard key={player.id} player={player} isMe={player.id === playerId} isHost={player.id === room.hostId} myRole={player.id === playerId ? myRole : null} showRole={false} />
+              ))}
+            </div>
+          </section>
+
+          <section className="lobby-section">
+            <PhaseTimer phase={room.phase} phaseEndsAt={room.phaseEndsAt} round={room.round} />
+            {(isNight || isVoting || isResults) && (
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                {isHost && <button className="lobby-start-btn" onClick={advancePhase}>Skip phase</button>}
+              </div>
+            )}
+          </section>
+        </aside>
+
+        <section className="lobby-chat-section" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {isNight && <NightAction />}
+          {isVoting && <VotingPanel players={alivePlayers} playerId={playerId} votes={votes} onVote={castVote} />}
+          {isResults && voteResult && (
+            <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface)' }}>
+              <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-accent)' }}>Results</h3>
+              <p>{voteResult.eliminatedNickname ? `${voteResult.eliminatedNickname} was eliminated.` : 'No one was eliminated.'}</p>
+            </div>
+          )}
+          <ChatBox showWerewolfChannel />
+        </section>
+      </main>
+    </div>
+  );
 }
