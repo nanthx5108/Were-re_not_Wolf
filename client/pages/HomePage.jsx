@@ -102,11 +102,6 @@ export default function HomePage() {
       <div style={s.container}>
         <div style={s.topBar}>
           <div style={s.brandBlock}>
-            <span style={s.brandLogo}>W</span>
-            <div>
-              <div style={s.brandName}>WE'RE NOT WOLF</div>
-              <div style={s.brandTag}>พบกับโลกของเกมลึกลับและเพื่อนใหม่</div>
-            </div>
           </div>
 
           <div style={s.authActions}>
