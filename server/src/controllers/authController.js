@@ -1,4 +1,4 @@
-import { registerService, loginService } from '../services/authService.js';
+import { registerService, loginService, getUserByIdService } from '../services/authService.js';
 
 export async function registerHandler(req, res, next) {
   try {
@@ -16,7 +16,7 @@ export async function registerHandler(req, res, next) {
     req.session.userId   = user.id;
     req.session.username = user.username;
 
-    return res.status(201).json({ user: { id: user.id, username: user.username } });
+    return res.status(201).json({ user });
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);
@@ -35,7 +35,7 @@ export async function loginHandler(req, res, next) {
     req.session.userId   = user.id;
     req.session.username = user.username;
 
-    return res.json({ user: { id: user.id, username: user.username } });
+    return res.json({ user });
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);
@@ -50,11 +50,21 @@ export function logoutHandler(req, res) {
   });
 }
 
-export function meHandler(req, res) {
-  if (!req.session?.userId) {
-    return res.status(401).json({ error: 'Not authenticated.' });
+export async function meHandler(req, res, next) {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: 'Not authenticated.' });
+    }
+
+    const user = await getUserByIdService(req.session.userId);
+    if (!user) {
+      // user ถูกลบไปแล้วแต่ session ยังค้างอยู่
+      req.session.destroy(() => {});
+      return res.status(401).json({ error: 'Not authenticated.' });
+    }
+
+    return res.json({ user });
+  } catch (err) {
+    next(err);
   }
-  return res.json({
-    user: { id: req.session.userId, username: req.session.username },
-  });
 }

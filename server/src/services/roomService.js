@@ -8,9 +8,9 @@ import {
 } from '../game/gameStore.js';
 import { PLAYER_LIMITS } from '../game/constants.js';
 
-export async function createRoomService({ hostNickname, roomName }) {
+export async function createRoomService({ hostNickname, roomName, userId }) {
   const roomId = generateRoomCode();
-  const hostId = uuidv4();
+  const hostId = userId || uuidv4(); // ถ้า login อยู่ ใช้ user.id เป็น playerId เพื่อให้ผูกสถิติ (games_played) กับ account ได้
 
   const conn = await pool.getConnection();
   try {
@@ -61,7 +61,7 @@ export async function getRoomService(roomId) {
   };
 }
 
-export async function joinRoomService({ roomId, nickname }) {
+export async function joinRoomService({ roomId, nickname, userId }) {
   const upperRoomId = roomId.toUpperCase();
 
   const [roomRows] = await pool.query(
@@ -79,7 +79,7 @@ export async function joinRoomService({ roomId, nickname }) {
     throw Object.assign(new Error(`Room is full (max ${PLAYER_LIMITS.MAX} players).`), { status: 409 });
   }
 
-  const playerId = uuidv4();
+  const playerId = userId || uuidv4();
   await pool.query(
     `INSERT INTO players (id, room_id, nickname) VALUES (?, ?, ?)`,
     [playerId, upperRoomId, nickname.trim()]
