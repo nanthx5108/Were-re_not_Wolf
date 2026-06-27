@@ -16,7 +16,11 @@ export async function createRoomHandler(req, res, next) {
       return res.status(400).json({ error: 'Nickname must be 32 characters or fewer.' });
     }
 
-    const { roomId, playerId } = await createRoomService({ hostNickname, roomName });
+    const { roomId, playerId } = await createRoomService({
+      hostNickname,
+      roomName,
+      userId: req.session?.userId || null, // ผูก playerId กับ account ถ้า login อยู่
+    });
 
     return res.status(201).json({
       roomId,
@@ -48,7 +52,11 @@ export async function joinRoomHandler(req, res, next) {
       return res.status(400).json({ error: 'Nickname must be 32 characters or fewer.' });
     }
 
-    const result = await joinRoomService({ roomId: req.params.roomId, nickname });
+    const result = await joinRoomService({
+      roomId: req.params.roomId,
+      nickname,
+      userId: req.session?.userId || null,
+    });
     return res.status(201).json(result);
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
