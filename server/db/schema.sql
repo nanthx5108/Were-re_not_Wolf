@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     host_id     VARCHAR(36)     DEFAULT NULL,
     status      ENUM('waiting','in_progress','finished') NOT NULL DEFAULT 'waiting',
     max_players TINYINT         NOT NULL DEFAULT 8,
+    is_private  BOOLEAN         NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -58,3 +59,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+ 
+-- สำหรับ database ที่สร้าง users/rooms table ไว้ก่อนหน้านี้แล้ว
+ALTER TABLE users ADD COLUMN IF NOT EXISTS games_played INT NOT NULL DEFAULT 0;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT FALSE;

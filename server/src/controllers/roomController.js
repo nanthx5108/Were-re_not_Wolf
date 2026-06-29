@@ -2,12 +2,14 @@ import {
   createRoomService,
   getRoomService,
   joinRoomService,
+  listRoomsService,
 } from '../services/roomService.js';
 import { serializeRoom } from '../game/gameStore.js';
+import { PLAYER_LIMITS } from '../game/constants.js';
 
 export async function createRoomHandler(req, res, next) {
   try {
-    const { hostNickname, roomName } = req.body;
+    const { hostNickname, roomName, maxPlayers, isPrivate } = req.body;
 
     if (!hostNickname?.trim() || !roomName?.trim()) {
       return res.status(400).json({ error: 'hostNickname and roomName are required.' });
@@ -15,11 +17,21 @@ export async function createRoomHandler(req, res, next) {
     if (hostNickname.trim().length > 32) {
       return res.status(400).json({ error: 'Nickname must be 32 characters or fewer.' });
     }
+    if (
+      maxPlayers !== undefined &&
+      (!Number.isInteger(maxPlayers) || maxPlayers < PLAYER_LIMITS.MIN || maxPlayers > PLAYER_LIMITS.MAX)
+    ) {
+      return res.status(400).json({
+        error: `maxPlayers must be between ${PLAYER_LIMITS.MIN} and ${PLAYER_LIMITS.MAX}.`,
+      });
+    }
 
     const { roomId, playerId } = await createRoomService({
       hostNickname,
       roomName,
       userId: req.session?.userId || null, // ผูก playerId กับ account ถ้า login อยู่
+      maxPlayers,
+      isPrivate: !!isPrivate,
     });
 
     return res.status(201).json({
@@ -27,6 +39,15 @@ export async function createRoomHandler(req, res, next) {
       playerId,
       room: serializeRoom(roomId),
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listRoomsHandler(req, res, next) {
+  try {
+    const rooms = await listRoomsService();
+    return res.json({ rooms });
   } catch (err) {
     next(err);
   }
@@ -63,3 +84,11 @@ export async function joinRoomHandler(req, res, next) {
     next(err);
   }
 }
+
+
+
+
+
+
+
+

@@ -1,12 +1,14 @@
 const roomStore = new Map();
 
-export function createRoom({ id, name, hostId }) {
+export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false }) {
   roomStore.set(id, {
     id, name, hostId,
     status:      'waiting',
     phase:       'lobby',
     round:       1,
     phaseEndsAt: null,
+    maxPlayers,
+    isPrivate,
     players:     new Map(),
     nightActions: {},
   });
@@ -77,6 +79,7 @@ export function serializeRoom(roomId) {
     phase:       room.phase,
     round:       room.round,       // เพิ่มใหม่
     phaseEndsAt: room.phaseEndsAt, // เพิ่มใหม่
+    maxPlayers:  room.maxPlayers ?? 8,
     players: getPlayersArray(roomId).map(p => ({
       id:       p.id,
       nickname: p.nickname,
@@ -93,3 +96,11 @@ export function serializeRoomForPlayer(roomId, requestingPlayerId) {
     myRole: room.players.get(requestingPlayerId)?.role || null,
   };
 }
+
+
+
+
+
+
+
+

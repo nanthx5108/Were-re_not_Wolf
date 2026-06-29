@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/Gamecontext.jsx';
 import bgHome from '../src/assets/bgHome.png';
@@ -40,10 +40,15 @@ export default function HomePage() {
   const [nickname, setNickname] = useState('');
   const [roomName, setRoomName] = useState('');
   const [roomCode, setRoomCode] = useState('');
+  const [maxPlayers, setMaxPlayers] = useState(8);
+  const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showDD, setShowDD] = useState(false);
+  const [publicRooms, setPublicRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [selectedRoomCode, setSelectedRoomCode] = useState(null);
   const ddRef = useRef(null);
 
   function requireAuth() {
@@ -63,7 +68,12 @@ export default function HomePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ hostNickname: user.username, roomName: roomName.trim() }),
+        body: JSON.stringify({
+          hostNickname: user.username,
+          roomName: roomName.trim(),
+          maxPlayers,
+          isPrivate,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'สร้างห้องไม่สำเร็จ');
@@ -94,7 +104,32 @@ export default function HomePage() {
     finally { setLoading(false); }
   }
 
-  function reset() { setMode(null); setError(null); setNickname(''); setRoomName(''); setRoomCode(''); }
+  async function fetchPublicRooms() {
+    setLoadingRooms(true);
+    try {
+      const res = await fetch(API, { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) setPublicRooms(data.rooms || []);
+    } catch (err) {
+      // เงียบไว้ — ไม่ต้อง error เต็มจอแค่เพราะ poll ห้องไม่สำเร็จรอบเดียว
+    } finally {
+      setLoadingRooms(false);
+    }
+  }
+
+  useEffect(() => {
+    if (mode !== 'join') return;
+    fetchPublicRooms();
+    const interval = setInterval(fetchPublicRooms, 4000);
+    return () => clearInterval(interval);
+  }, [mode]);
+
+  function selectRoomToJoin(code) {
+    setSelectedRoomCode(code);
+    setRoomCode(code);
+  }
+
+  function reset() { setMode(null); setError(null); setNickname(''); setRoomName(''); setRoomCode(''); setSelectedRoomCode(null); }
 
   return (
     <div style={{ ...s.page, backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
@@ -103,9 +138,11 @@ export default function HomePage() {
       <div style={s.container}>
         <div style={s.topBar}>
           <div style={s.brandBlock}>
+            <span style={s.brandLogo}>W</span>
             <div>
               <div style={s.brandName}>WE'RE NOT WOLF</div>
-                          </div>
+              <div style={s.brandTag}>พบกับโลกของเกมลึกลับและเพื่อนใหม่</div>
+            </div>
           </div>
 
           <div style={s.authActions}>
@@ -155,6 +192,37 @@ export default function HomePage() {
                 {error && <ErrorBox msg={error} />}
                 <Field label="ชื่อของคุณ" id="nick" value={nickname} onChange={e => setNickname(e.target.value)} max={32} autoFocus />
                 <Field label="ชื่อห้อง" id="room" value={roomName} onChange={e => setRoomName(e.target.value)} max={64} />
+
+                <div style={s.settingsRow}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                    <label htmlFor="maxPlayers" style={s.fieldLabel}>จำนวนผู้เล่นสูงสุด</label>
+                    <select
+                      id="maxPlayers"
+                      value={maxPlayers}
+                      onChange={e => setMaxPlayers(Number(e.target.value))}
+                      style={s.input}
+                    >
+                      {[4, 5, 6, 7, 8].map(n => (
+                        <option key={n} value={n}>{n} คน</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <label style={s.privacyToggle}>
+                    <input
+                      type="checkbox"
+                      checked={isPrivate}
+                      onChange={e => setIsPrivate(e.target.checked)}
+                    />
+                    <span>
+                      ห้องส่วนตัว
+                      <span style={s.privacyHint}>
+                        {isPrivate ? 'ต้องใช้รหัสห้องเท่านั้นถึงเข้าได้' : 'ใครก็เห็นในรายการห้องสาธารณะ'}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+
                 <div style={s.btnRow}>
                   <button type="submit" style={s.btnPrimary} disabled={loading || !nickname.trim() || !roomName.trim()}>
                     {loading ? 'กำลังสร้าง...' : 'สร้างห้อง'}
@@ -169,7 +237,59 @@ export default function HomePage() {
                 <h2 style={s.formTitle}>เข้าร่วมห้อง</h2>
                 {error && <ErrorBox msg={error} />}
                 <Field label="ชื่อของคุณ" id="nick2" value={nickname} onChange={e => setNickname(e.target.value)} max={32} autoFocus />
-                <Field label="รหัสห้อง" id="code" value={roomCode} onChange={e => setRoomCode(e.target.value.toUpperCase())} max={8} extraStyle={{ textTransform:'uppercase', letterSpacing:'0.2em' }} />
+
+                <div style={s.roomListHead}>
+                  <span style={s.fieldLabel}>ห้องที่เปิดอยู่</span>
+                  <button type="button" onClick={fetchPublicRooms} style={s.refreshBtn} disabled={loadingRooms}>
+                    {loadingRooms ? 'กำลังโหลด...' : '↻ รีเฟรช'}
+                  </button>
+                </div>
+
+                <div style={s.roomList}>
+                  {publicRooms.length === 0 && !loadingRooms && (
+                    <div style={s.roomListEmpty}>ยังไม่มีห้องสาธารณะเปิดอยู่ตอนนี้</div>
+                  )}
+                  {publicRooms.map(r => {
+                    const full      = r.playerCount >= r.maxPlayers;
+                    const inGame    = r.status !== 'waiting';
+                    const disabled  = full || inGame;
+                    const selected  = selectedRoomCode === r.id;
+                    return (
+                      <button
+                        type="button"
+                        key={r.id}
+                        onClick={() => !disabled && selectRoomToJoin(r.id)}
+                        disabled={disabled}
+                        style={{
+                          ...s.roomRow,
+                          ...(selected ? s.roomRowSelected : {}),
+                          ...(disabled ? s.roomRowDisabled : {}),
+                        }}
+                      >
+                        <div style={s.roomRowMain}>
+                          <span style={s.roomRowName}>{r.name}</span>
+                          <span style={s.roomRowCode}>#{r.id}</span>
+                        </div>
+                        <div style={s.roomRowMeta}>
+                          <span style={{ ...s.roomStatusBadge, ...(inGame ? s.roomStatusBadgePlaying : {}) }}>
+                            {inGame ? 'กำลังเล่น' : 'รอผู้เล่น'}
+                          </span>
+                          <span style={s.roomRowCount}>{r.playerCount}/{r.maxPlayers} คน</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <Field
+                  label="หรือใส่รหัสห้อง (สำหรับห้องส่วนตัว)"
+                  id="code"
+                  value={roomCode}
+                  onChange={e => { setRoomCode(e.target.value.toUpperCase()); setSelectedRoomCode(null); }}
+                  max={8}
+                  extraStyle={{ textTransform:'uppercase', letterSpacing:'0.2em' }}
+                />
+
                 <div style={s.btnRow}>
                   <button type="submit" style={s.btnPrimary} disabled={loading || !nickname.trim() || !roomCode.trim()}>
                     {loading ? 'กำลังเข้า...' : 'เข้าร่วม'}
@@ -378,6 +498,115 @@ const s = {
   },
   userDropdownWrap: {
     position: 'relative',
+  },
+  settingsRow: {
+    display: 'flex',
+    gap: '16px',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+  },
+  privacyToggle: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '8px',
+    fontSize: '13px',
+    color: '#e5e7eb',
+    cursor: 'pointer',
+    paddingTop: '22px',
+    flex: 1,
+  },
+  privacyHint: {
+    display: 'block',
+    fontSize: '11px',
+    color: '#9ca3af',
+    marginTop: '2px',
+  },
+  roomListHead: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  refreshBtn: {
+    background: 'transparent',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    color: '#9ca3af',
+    fontSize: '12px',
+    padding: '4px 10px',
+    cursor: 'pointer',
+  },
+  roomList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    maxHeight: '220px',
+    overflowY: 'auto',
+  },
+  roomListEmpty: {
+    fontSize: '13px',
+    color: '#6b7280',
+    padding: '14px',
+    textAlign: 'center',
+    border: '1px dashed #374151',
+    borderRadius: '4px',
+  },
+  roomRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    padding: '10px 14px',
+    background: '#111827',
+    border: '1px solid #374151',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
+  roomRowSelected: {
+    borderColor: '#fbbf24',
+    boxShadow: '0 0 0 1px rgba(251,191,36,0.4)',
+  },
+  roomRowDisabled: {
+    opacity: 0.45,
+    cursor: 'not-allowed',
+  },
+  roomRowMain: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  roomRowName: {
+    fontSize: '14px',
+    color: '#e5e7eb',
+    fontFamily: "'Cinzel', serif",
+  },
+  roomRowCode: {
+    fontSize: '11px',
+    color: '#6b7280',
+    letterSpacing: '0.1em',
+  },
+  roomRowMeta: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '4px',
+  },
+  roomStatusBadge: {
+    fontSize: '10px',
+    padding: '2px 8px',
+    borderRadius: '999px',
+    background: 'rgba(232,160,39,0.18)',
+    border: '1px solid #e8a027',
+    color: '#e8a027',
+  },
+  roomStatusBadgePlaying: {
+    background: 'rgba(220,38,38,0.18)',
+    border: '1px solid #dc2626',
+    color: '#f87171',
+  },
+  roomRowCount: {
+    fontSize: '12px',
+    color: '#9ca3af',
   },
   userPill: {
     padding: '12px 18px',
