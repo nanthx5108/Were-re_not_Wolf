@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../context/GameContext.jsx';
+import { useGame } from '../context/Gamecontext.jsx';
 import bgHome from '../src/assets/bgHome.png';
 import { useAuth }  from '../context/AuthContext.jsx';
 import AuthModal    from '../src/components/AuthModal.jsx';
 
 const BG_IMAGE = bgHome;
 const API = '/api/rooms';
+const GAMES_PER_LEVEL = 5;
 
 
 const NEWS = [
@@ -136,7 +137,7 @@ export default function HomePage() {
         </div>
 
         <div style={s.header}>
-          <h1 style={s.title}>WE'RE NOT <WOLF></WOLF></h1>
+          <h1 style={s.title}>WE'RE NOT WOLF</h1>
         </div>
 
         <div style={s.grid}>
@@ -182,13 +183,27 @@ export default function HomePage() {
 
             {!mode && (
               <div style={s.playerBar}>
-                <div style={s.playerAva}>W</div>
+                <div style={s.playerAva}>{user ? user.username.charAt(0).toUpperCase() : 'W'}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={s.playerName}>PlayerName</div>
-                  <div style={s.playerLevel}>Level 12</div>
-                  <div style={s.playerExp}>
-                    <div style={{ ...s.playerExpFill, width: '60%' }} />
-                  </div>
+                  {user ? (
+                    <>
+                      <div style={s.playerName}>{user.username}</div>
+                      <div style={s.playerLevel}>Level {user.level ?? 1}</div>
+                      <div style={s.playerExp}>
+                        <div
+                          style={{
+                            ...s.playerExpFill,
+                            width: `${(((user.gamesPlayed ?? 0) % GAMES_PER_LEVEL) / GAMES_PER_LEVEL) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={s.playerName}>ยังไม่ได้เข้าสู่ระบบ</div>
+                      <div style={s.playerLevel}>เข้าสู่ระบบเพื่อบันทึกระดับและสถิติ</div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
