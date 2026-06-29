@@ -133,9 +133,18 @@ export default function HomePage() {
   return (
     <div style={{ ...s.page, backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
       <div style={s.overlay} />
+      <div style={s.fogLayer} />
 
       <div style={s.container}>
         <div style={s.topBar}>
+          <div style={s.brandBlock}>
+            <span style={s.brandLogo}>W</span>
+            <div>
+              <div style={s.brandName}>WE'RE NOT WOLF</div>
+              <div style={s.brandTag}>พบกับโลกของเกมลึกลับและเพื่อนใหม่</div>
+            </div>
+          </div>
+
           <div style={s.authActions}>
             {user ? (
               <div style={s.userDropdownWrap} ref={ddRef}>
@@ -170,9 +179,9 @@ export default function HomePage() {
           <div style={s.left}>
             {!mode && (
               <div style={s.menuList}>
-                <MenuBtn title="Create Room" sub="Create a new room and invite your friends" onClick={() => user ? setMode('create') : setShowModal(true)} />
-                    <MenuBtn title="Join Room" onClick={() => user ? setMode('join') : setShowModal(true)} />
-                    <MenuBtn title="Customize" sub="Change your profile and preferences" />
+                <MenuBtn primary title="Create Room" sub="Create a new room and invite your friends" onClick={() => user ? setMode('create') : setShowModal(true)} />
+                <MenuBtn title="Join Room" onClick={() => user ? setMode('join') : setShowModal(true)} />
+                <MenuBtn title="Customize" sub="Change your profile and preferences" />
                 <MenuBtn title="Settings" sub="Game and audio settings" />
               </div>
             )}
@@ -327,16 +336,7 @@ export default function HomePage() {
               </div>
 
               <div style={s.newsContainer}>
-                {NEWS.map(n => (
-                  <div key={n.id} style={s.newsItem}>
-                    <div style={s.newsDot}>•</div>
-                    <div>
-                      <div style={s.newsTitle}>{n.title}</div>
-                      <div style={s.newsDesc}>{n.desc}</div>
-                      <div style={s.newsDate}>{n.date}</div>
-                    </div>
-                  </div>
-                ))}
+                {NEWS.map(n => <NewsRow key={n.id} news={n} />)}
               </div>
 
               <div style={s.moreContainer}>
@@ -361,17 +361,38 @@ export default function HomePage() {
   );
 }
 
-function MenuBtn({ title, sub, onClick }) {
+function NewsRow({ news }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      style={{ ...s.newsItem, ...(hovered ? s.newsItemHover : {}) }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div>
+        <div style={s.newsTitle}>{news.title}</div>
+        <div style={s.newsDesc}>{news.desc}</div>
+        <div style={s.newsDate}>{news.date}</div>
+      </div>
+    </div>
+  );
+}
+
+function MenuBtn({ title, sub, onClick, primary = false }) {
   const [hovered, setHovered] = useState(false);
   return (
     <button
       onClick={onClick}
-      style={{ ...s.menuBtn, ...(hovered ? s.menuBtnHover : {}) }}
+      style={{
+        ...s.menuBtn,
+        ...(primary ? s.menuBtnPrimary : {}),
+        ...(hovered ? (primary ? s.menuBtnPrimaryHover : s.menuBtnHover) : {}),
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       <div style={s.menuText}>
-        <div style={s.menuTitle}>{title}</div>
+        <div style={{ ...s.menuTitle, ...(primary ? s.menuTitlePrimary : {}) }}>{title}</div>
         <div style={s.menuSub}>{sub}</div>
       </div>
     </button>
@@ -413,8 +434,22 @@ const s = {
   overlay: {
     position: 'absolute',
     inset: 0,
-    background: 'rgba(15, 17, 21, 0.78)',
+    background: `
+      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(212,162,76,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 90% 70% at 50% 100%, rgba(0,0,0,0.55) 0%, transparent 65%),
+      linear-gradient(180deg, rgba(15,17,21,0.86) 0%, rgba(15,17,21,0.78) 40%, rgba(15,17,21,0.9) 100%)
+    `,
     zIndex: 0,
+  },
+  fogLayer: {
+    position: 'absolute',
+    inset: 0,
+    background: `
+      radial-gradient(ellipse 50% 30% at 15% 85%, rgba(180,190,200,0.035) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 25% at 85% 15%, rgba(180,190,200,0.025) 0%, transparent 70%)
+    `,
+    zIndex: 0,
+    pointerEvents: 'none',
   },
   container: {
     position: 'relative',
@@ -428,7 +463,7 @@ const s = {
   },
   topBar: {
     display: 'flex',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     gap: '16px',
     marginBottom: '32px',
@@ -667,7 +702,7 @@ const s = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: '1.08fr 0.92fr',
     gap: '40px',
     alignItems: 'start',
   },
@@ -701,6 +736,18 @@ const s = {
   menuBtnHover: {
     background: 'rgba(255, 255, 255, 0.04)',
     borderColor: 'var(--color-accent-dim)',
+  },
+  menuBtnPrimary: {
+    background: 'rgba(212,162,76,0.07)',
+    borderColor: 'var(--color-accent)',
+    boxShadow: '0 0 0 1px rgba(212,162,76,0.15)',
+  },
+  menuBtnPrimaryHover: {
+    background: 'rgba(212,162,76,0.13)',
+    borderColor: 'var(--color-accent)',
+  },
+  menuTitlePrimary: {
+    color: 'var(--color-accent)',
   },
   menuText: {
     display: 'flex',
@@ -866,6 +913,15 @@ const s = {
   newsItem: {
     display: 'flex',
     gap: '16px',
+    padding: '12px 14px 12px 16px',
+    borderLeft: '2px solid var(--color-border)',
+    background: 'rgba(255,255,255,0.015)',
+    borderRadius: 'var(--radius-sm)',
+    transition: 'border-color var(--transition), background-color var(--transition)',
+  },
+  newsItemHover: {
+    borderColor: 'var(--color-accent)',
+    background: 'rgba(212,162,76,0.04)',
   },
   newsDot: {
     color: 'var(--color-accent)',
