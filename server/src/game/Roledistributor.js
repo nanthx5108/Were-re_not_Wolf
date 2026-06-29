@@ -9,10 +9,6 @@ function shuffle(arr) {
   return a;
 }
 
-/**
- * @param {Array<{ id: string, nickname: string }>} players
- * @returns {Array<{ id: string, nickname: string, role: string }>}
- */
 export function distributeRoles(players) {
   const count = players.length;
   if (count < PLAYER_LIMITS.MIN || count > PLAYER_LIMITS.MAX) {

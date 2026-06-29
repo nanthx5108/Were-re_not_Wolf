@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import pool from '../../db/connection.js';
 
 const SALT_ROUNDS = 12;
-const GAMES_PER_LEVEL = 5; // เล่นจบทุกๆ 5 เกม level จะขึ้น 1
+const GAMES_PER_LEVEL = 5;
 
 export function calculateLevel(gamesPlayed) {
   return Math.floor((gamesPlayed ?? 0) / GAMES_PER_LEVEL) + 1;

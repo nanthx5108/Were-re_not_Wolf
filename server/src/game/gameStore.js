@@ -77,8 +77,8 @@ export function serializeRoom(roomId) {
     hostId:      room.hostId,
     status:      room.status,
     phase:       room.phase,
-    round:       room.round,       // เพิ่มใหม่
-    phaseEndsAt: room.phaseEndsAt, // เพิ่มใหม่
+    round:       room.round,
+    phaseEndsAt: room.phaseEndsAt,
     maxPlayers:  room.maxPlayers ?? 8,
     players: getPlayersArray(roomId).map(p => ({
       id:       p.id,

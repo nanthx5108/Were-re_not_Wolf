@@ -58,7 +58,6 @@ export async function meHandler(req, res, next) {
 
     const user = await getUserByIdService(req.session.userId);
     if (!user) {
-      // user ถูกลบไปแล้วแต่ session ยังค้างอยู่
       req.session.destroy(() => {});
       return res.status(401).json({ error: 'Not authenticated.' });
     }

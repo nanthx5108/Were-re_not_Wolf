@@ -11,7 +11,7 @@ import { PLAYER_LIMITS } from '../game/constants.js';
 
 export async function createRoomService({ hostNickname, roomName, userId, maxPlayers, isPrivate }) {
   const roomId = generateRoomCode();
-  const hostId = userId || uuidv4(); // ถ้า login อยู่ ใช้ user.id เป็น playerId เพื่อให้ผูกสถิติ (games_played) กับ account ได้
+  const hostId = userId || uuidv4();
 
   const safeMaxPlayers = clampMaxPlayers(maxPlayers);
   const safeIsPrivate  = !!isPrivate;
@@ -46,7 +46,6 @@ function clampMaxPlayers(value) {
   return Math.min(PLAYER_LIMITS.MAX, Math.max(PLAYER_LIMITS.MIN, n));
 }
 
-// ดึงรายชื่อห้อง "สาธารณะ" ที่ยังไม่จบเกม สำหรับหน้า Join Room (เรียงห้องใหม่สุดก่อน)
 export async function listRoomsService() {
   const [rows] = await pool.query(
     `SELECT r.id, r.name, r.status, r.max_players,

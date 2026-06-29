@@ -12,7 +12,7 @@
 .home-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(13, 17, 23, 0.85); /* ใช้สี bg มืดๆ บังภาพ */
+  background: rgba(13, 17, 23, 0.85);
   mix-blend-mode: multiply;
   z-index: 0;
 }

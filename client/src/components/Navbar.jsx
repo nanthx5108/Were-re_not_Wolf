@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/Navbar.css'; // อย่าลืมสร้างไฟล์นี้แล้วเรียกใช้
+import '../styles/Navbar.css';
 
 export default function Navbar({ roomId, nickname, connected, onLeave }) {
   return (
