@@ -118,6 +118,37 @@
   padding-right: var(--space-1);
 }
 
+.lobby-rules {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rules-item {
+  position: relative;
+  padding-left: var(--space-4);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+}
+
+.rules-item::before {
+  content: '•';
+  position: absolute;
+  left: 2px;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
 .host-controls {
   background: linear-gradient(180deg, var(--color-surface) 0%, rgba(22, 29, 39, 0.3) 100%);
 }
@@ -163,5 +194,5 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  overflow: hidden; /* ให้ ChatBox ด้านในไม่ทะลุกรอบ */
+  overflow: hidden;
 }
