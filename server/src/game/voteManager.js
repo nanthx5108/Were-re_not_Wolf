@@ -4,9 +4,6 @@ export function initVoting(roomId) {
   voteStore.set(roomId, new Map());
 }
 
-/**
- * @returns {{ voteMap, counts }}
- */
 export function castVote(roomId, voterId, targetId) {
   const roomVotes = voteStore.get(roomId);
   if (!roomVotes) return null;
@@ -25,10 +22,6 @@ export function getVoteData(roomId) {
   return { voteMap, counts };
 }
 
-/**
- * @param {string[]} alivePlayerIds
- * @returns {{ eliminatedId: string|null, tally: object, wasTie: boolean }}
- */
 export function resolveVotes(roomId, alivePlayerIds) {
   const { counts } = getVoteData(roomId);
 

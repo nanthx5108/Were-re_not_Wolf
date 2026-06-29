@@ -13,7 +13,6 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
 
   return (
     <div style={s.panel}>
-      {/* Header */}
       <div style={s.header}>
         <span style={s.icon}>Vote</span>
         <div>
@@ -80,7 +79,6 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
         })}
       </div>
 
-      {/* Hint */}
       {!alreadyVoted && (
         <p style={s.hint}>กดโหวต 1 ครั้ง — เปลี่ยนใจไม่ได้</p>
       )}

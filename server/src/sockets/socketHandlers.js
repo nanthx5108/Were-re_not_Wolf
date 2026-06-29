@@ -150,10 +150,8 @@ export function registerSocketHandlers(socket, io) {
     const voteData = castVote(roomId, playerId, targetId);
     if (!voteData) return socket.emit('error', { message: 'Voting not initialized.' });
 
-    // broadcast vote update ให้ทุกคน
     io.to(roomId).emit('vote:update', voteData);
 
-    // ถ้าทุกคนโหวตแล้ว → advance phase ก่อนกำหนด
     const alivePlayers = getPlayersArray(roomId).filter(p => p.isAlive);
     if (hasAllVoted(roomId, alivePlayers.map(p => p.id))) {
       advancePhase(io, roomId).catch(err =>

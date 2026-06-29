@@ -29,7 +29,7 @@ export async function createRoomHandler(req, res, next) {
     const { roomId, playerId } = await createRoomService({
       hostNickname,
       roomName,
-      userId: req.session?.userId || null, // ผูก playerId กับ account ถ้า login อยู่
+      userId: req.session?.userId || null,
       maxPlayers,
       isPrivate: !!isPrivate,
     });

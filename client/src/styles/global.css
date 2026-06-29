@@ -22,7 +22,6 @@
   --font-body:     'Noto Sans Thai', sans-serif; 
   --font-mono:     'JetBrains Mono', monospace;
 
-  /* === Spacing === */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -106,7 +105,6 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(212,162,76,0.15);
 }
 
-/* การ์ดมาตรฐาน — ใช้ border คั่นมากกว่าเงา ตาม spec */
 .card {
   background:    var(--color-surface-2);
   border:        1px solid var(--color-border);
@@ -132,7 +130,6 @@ input:focus, select:focus, textarea:focus {
   border:     0;
 }
 
-/* === Subtle entrance animation utility (150–250ms, no bounce/elastic) === */
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
