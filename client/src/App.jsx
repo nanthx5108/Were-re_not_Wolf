@@ -7,6 +7,9 @@ import LoginPage    from '../pages/LoginPage.jsx';
 import RegisterPage from '../pages/RegisterPage.jsx';
 import Lobby        from '../pages/Lobby.jsx';
 import Game         from '../pages/Game.jsx';
+import CustomizePage from '../pages/CustomizePage.jsx';
+import SettingsPage from '../pages/SettingsPage.jsx';
+import NewsPage from '../pages/NewsPage.jsx';
 
 export default function App() {
   return (
@@ -19,6 +22,9 @@ export default function App() {
             <Route path="/register"      element={<RegisterPage />} />
             <Route path="/lobby/:roomId" element={<Lobby />} />
             <Route path="/game/:roomId"  element={<Game />} />
+            <Route path="/customize"    element={<CustomizePage />} />
+            <Route path="/settings"     element={<SettingsPage />} />
+            <Route path="/news"         element={<NewsPage />} />
             <Route path="*"             element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
