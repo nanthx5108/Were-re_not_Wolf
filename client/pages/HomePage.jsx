@@ -245,8 +245,18 @@ export default function HomePage() {
                      onClick={() => user ? setMode('create') : setShowModal(true)} />
                 <MenuBtn icon={<IconJoin />} title="Join Room" sub="Join with room code"
                      onClick={() => user ? setMode('join') : setShowModal(true)} />
-                <MenuBtn icon={<IconCustomize />} title="Customize" sub="Change your profile and preferences" />
-                <MenuBtn icon={<IconSettings />} title="Settings" sub="Game and audio settings" />
+                <MenuBtn
+                  icon={<IconCustomize />}
+                  title="Customize"
+                  sub="Change your profile and preferences"
+                  onClick={() => user ? navigate('/customize') : setShowModal(true)}
+                />
+                <MenuBtn
+                  icon={<IconSettings />}
+                  title="Settings"
+                  sub="Game and audio settings"
+                  onClick={() => navigate('/settings')}
+                />              
               </div>
             )}
 
@@ -403,22 +413,29 @@ export default function HomePage() {
               </div>
 
               <div className="more-container">
-                <button className="more-btn">More <span className="more-arrow">›</span></button>
+                <button className="more-btn" onClick={() => navigate('/news')}>
+                  More <span className="more-arrow">›</span>
+                </button>
+              </div>            
               </div>
-            </div>
           </div>
         </div>
       </div>
 
-      <footer className="home-footer">
-        <span className="version">v1.2.0</span>
-        <div className="socials">
-          <button type="button" className="soc-btn" title="Discord" href="https://discord.gg/your-invite-code" target="_blank" rel="noopener noreferrer" ><IconDiscord /></button>
-          <button type="button" className="soc-btn" title="Facebook" href="https://www.facebook.com/share/g/18jdh5exKb/" target="_blank" rel="noopener noreferrer"><IconFacebook /></button>
-          <button type="button" className="soc-btn" title="Website" href="https://www.technicrayong.ac.th/rytc/" target="_blank" rel="noopener noreferrer"><IconGlobe /></button>
-        </div>
-      </footer>
-
+        <footer className="home-footer">
+          <span className="version">v1.2.0</span>
+          <div className="socials">
+            <a className="soc-btn" title="Discord" href="https://discord.gg/PLACEHOLDER" target="_blank" rel="noopener noreferrer">
+              <IconDiscord />
+            </a>
+            <a className="soc-btn" title="Facebook" href="https://facebook.com/PLACEHOLDER" target="_blank" rel="noopener noreferrer">
+              <IconFacebook />
+            </a>
+            <a className="soc-btn" title="Website" href="https://PLACEHOLDER.com" target="_blank" rel="noopener noreferrer">
+              <IconGlobe />
+            </a>
+          </div>
+        </footer>
       {showModal && <AuthModal onClose={() => setShowModal(false)} />}
     </div>
   );
