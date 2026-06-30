@@ -1,14 +1,16 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/Gamecontext.jsx';
 import bgHome from '../src/assets/bgHome.png';
 import { useAuth }  from '../context/AuthContext.jsx';
 import AuthModal    from '../src/components/AuthModal.jsx';
+import '../src/styles/HomePage.css';
+
 
 const BG_IMAGE = bgHome;
 const API = '/api/rooms';
 const GAMES_PER_LEVEL = 5;
-
 
 const NEWS = [
   {
@@ -30,6 +32,83 @@ const NEWS = [
     date: '6/24/2026',
   },
 ];
+function IconWolf() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+      <ellipse cx="15" cy="17" rx="10" ry="8" fill="#1a1712" stroke="#4a3f2e" strokeWidth="1.2"/>
+      <circle cx="15" cy="13" r="7" fill="#222018" stroke="#4a3f2e" strokeWidth="1.2"/>
+      <path d="M10 10 L7 4 L11 9" fill="#1e1c18" stroke="#4a3f2e" strokeWidth="1"/>
+      <path d="M20 10 L23 4 L19 9" fill="#1e1c18" stroke="#4a3f2e" strokeWidth="1"/>
+      <circle cx="12.5" cy="13" r="1.5" fill="#c8b89a" opacity="0.7"/>
+      <circle cx="17.5" cy="13" r="1.5" fill="#c8b89a" opacity="0.7"/>
+    </svg>
+  );
+}
+
+function IconCreate() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="11" cy="11" r="5" stroke="#c8b89a" strokeWidth="1.8"/>
+      <circle cx="21" cy="11" r="5" stroke="#c8b89a" strokeWidth="1.8"/>
+      <path d="M2 28c0-6 4-9 9-9h10c5 0 9 3 9 9" stroke="#c8b89a" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function IconJoin() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <rect x="5" y="4" width="18" height="24" rx="1" stroke="#c8b89a" strokeWidth="1.8"/>
+      <line x1="23" y1="12" x2="30" y2="12" stroke="#c8b89a" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="27" y1="8" x2="30" y2="12" stroke="#c8b89a" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="27" y1="16" x2="30" y2="12" stroke="#c8b89a" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function IconCustomize() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="11" stroke="#c8b89a" strokeWidth="1.8"/>
+      <circle cx="16" cy="16" r="5" stroke="#c8b89a" strokeWidth="1.8"/>
+      <line x1="16" y1="5" x2="16" y2="2" stroke="#c8b89a" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="16" y1="30" x2="16" y2="27" stroke="#c8b89a" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="5" y1="16" x2="2" y2="16" stroke="#c8b89a" strokeWidth="1.8" strokeLinecap="round"/>
+      <line x1="30" y1="16" x2="27" y2="16" stroke="#c8b89a" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function IconSettings() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <rect x="8" y="4" width="16" height="20" rx="1" stroke="#c8b89a" strokeWidth="1.8"/>
+      <line x1="11" y1="9" x2="21" y2="9" stroke="#c8b89a" strokeWidth="1.4" strokeLinecap="round"/>
+      <line x1="11" y1="13" x2="21" y2="13" stroke="#c8b89a" strokeWidth="1.4" strokeLinecap="round"/>
+      <line x1="11" y1="17" x2="17" y2="17" stroke="#c8b89a" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconDiscord() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.04.001-.088-.041-.104a13.201 13.201 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+    </svg>
+  );
+}
+function IconFacebook() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+    </svg>
+  );
+}
+function IconGlobe() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  );
+}
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -50,14 +129,6 @@ export default function HomePage() {
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [selectedRoomCode, setSelectedRoomCode] = useState(null);
   const ddRef = useRef(null);
-
-  function requireAuth() {
-    if (!user) {
-      setShowModal(true);
-      return false;
-    }
-    return true;
-  }
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -131,76 +202,69 @@ export default function HomePage() {
   function reset() { setMode(null); setError(null); setNickname(''); setRoomName(''); setRoomCode(''); setSelectedRoomCode(null); }
 
   return (
-    <div style={{ ...s.page, backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
-      <div style={s.overlay} />
-      <div style={s.fogLayer} />
+    <div className="home-page" style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
+      <div className="home-overlay" />
+      <div className="home-fog" />
 
-      <div style={s.container}>
-        <div style={s.topBar}>
-          <div style={s.brandBlock}>
-            <span style={s.brandLogo}>W</span>
-            <div>
-              <div style={s.brandName}>WE'RE NOT WOLF</div>
-              <div style={s.brandTag}>พบกับโลกของเกมลึกลับและเพื่อนใหม่</div>
-            </div>
+      <div className="home-container">
+<div className="home-topbar">
+  <div className="home-auth-actions">
+    {user ? (
+      <div className="user-dropdown-wrap" ref={ddRef}>
+        <button className="user-pill" onClick={() => setShowDD(v => !v)}>
+          <span className="user-level-badge">Lv.{user.level ?? 1}</span>
+          {user.username}
+        </button>
+        {showDD && (
+          <div className="user-dropdown fade-in">
+            <button className="user-dropdown-btn" onClick={logout}>ออกจากระบบ</button>
           </div>
-
-          <div style={s.authActions}>
-            {user ? (
-              <div style={s.userDropdownWrap} ref={ddRef}>
-                <button style={s.userPill} onClick={() => setShowDD(v => !v)}>
-                  <span style={s.userLevelBadge}>Lv.{user.level ?? 1}</span>
-                  {user.username}
-                </button>
-                {showDD && (
-                  <div style={s.userDropdown}>
-                    <button style={s.userDropdownBtn} onClick={logout}>ออกจากระบบ</button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <button style={s.authBtnSecondary} onClick={() => navigate('/login')}>
-                  เข้าสู่ระบบ
-                </button>
-                <button style={s.authBtnPrimary} onClick={() => navigate('/register')}>
-                  สมัครสมาชิก
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div style={s.header}>
-          <h1 style={s.title}>WE'RE NOT WOLF</h1>
-        </div>
-
-        <div style={s.grid}>
-          <div style={s.left}>
+        )}
+      </div>
+    ) : (
+      <>
+        <button className="auth-btn auth-btn-secondary" onClick={() => navigate('/login')}>
+          เข้าสู่ระบบ
+        </button>
+        <button className="auth-btn auth-btn-primary" onClick={() => navigate('/register')}>
+          สมัครสมาชิก
+        </button>
+      </>
+    )}
+  </div>
+</div>
+        <div className="home-header">
+  <h1 className="home-title">WEREWOLF</h1>
+</div>
+        <div className="home-grid">
+          <div className="home-left">
             {!mode && (
-              <div style={s.menuList}>
-                <MenuBtn primary title="Create Room" sub="Create a new room and invite your friends" onClick={() => user ? setMode('create') : setShowModal(true)} />
-                <MenuBtn title="Join Room" onClick={() => user ? setMode('join') : setShowModal(true)} />
-                <MenuBtn title="Customize" sub="Change your profile and preferences" />
-                <MenuBtn title="Settings" sub="Game and audio settings" />
+              <div className="menu-panel">
+                <MenuBtn primary icon={<IconCreate />} title="Create Room"
+                    sub="Create a new room and invite your friends"
+                     onClick={() => user ? setMode('create') : setShowModal(true)} />
+                <MenuBtn icon={<IconJoin />} title="Join Room" sub="Join with room code"
+                     onClick={() => user ? setMode('join') : setShowModal(true)} />
+                <MenuBtn icon={<IconCustomize />} title="Customize" sub="Change your profile and preferences" />
+                <MenuBtn icon={<IconSettings />} title="Settings" sub="Game and audio settings" />
               </div>
             )}
 
             {mode === 'create' && (
-              <form onSubmit={handleCreate} style={s.form}>
-                <h2 style={s.formTitle}>สร้างห้องใหม่</h2>
+              <form onSubmit={handleCreate} className="home-form fade-in">
+                <h2 className="form-title">สร้างห้องใหม่</h2>
                 {error && <ErrorBox msg={error} />}
                 <Field label="ชื่อของคุณ" id="nick" value={nickname} onChange={e => setNickname(e.target.value)} max={32} autoFocus />
                 <Field label="ชื่อห้อง" id="room" value={roomName} onChange={e => setRoomName(e.target.value)} max={64} />
 
-                <div style={s.settingsRow}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                    <label htmlFor="maxPlayers" style={s.fieldLabel}>จำนวนผู้เล่นสูงสุด</label>
+                <div className="settings-row">
+                  <div className="field-col">
+                    <label htmlFor="maxPlayers" className="field-label">จำนวนผู้เล่นสูงสุด</label>
                     <select
                       id="maxPlayers"
                       value={maxPlayers}
                       onChange={e => setMaxPlayers(Number(e.target.value))}
-                      style={s.input}
+                      className="field-input"
                     >
                       {[4, 5, 6, 7, 8].map(n => (
                         <option key={n} value={n}>{n} คน</option>
@@ -208,7 +272,7 @@ export default function HomePage() {
                     </select>
                   </div>
 
-                  <label style={s.privacyToggle}>
+                  <label className="privacy-toggle">
                     <input
                       type="checkbox"
                       checked={isPrivate}
@@ -216,38 +280,38 @@ export default function HomePage() {
                     />
                     <span>
                       ห้องส่วนตัว
-                      <span style={s.privacyHint}>
+                      <span className="privacy-hint">
                         {isPrivate ? 'ต้องใช้รหัสห้องเท่านั้นถึงเข้าได้' : 'ใครก็เห็นในรายการห้องสาธารณะ'}
                       </span>
                     </span>
                   </label>
                 </div>
 
-                <div style={s.btnRow}>
-                  <button type="submit" style={s.btnPrimary} disabled={loading || !nickname.trim() || !roomName.trim()}>
+                <div className="btn-row">
+                  <button type="submit" className="btn-primary" disabled={loading || !nickname.trim() || !roomName.trim()}>
                     {loading ? 'กำลังสร้าง...' : 'สร้างห้อง'}
                   </button>
-                  <button type="button" style={s.btnBack} onClick={reset}>กลับ</button>
+                  <button type="button" className="btn-back" onClick={reset}>กลับ</button>
                 </div>
               </form>
             )}
 
             {mode === 'join' && (
-              <form onSubmit={handleJoin} style={s.form}>
-                <h2 style={s.formTitle}>เข้าร่วมห้อง</h2>
+              <form onSubmit={handleJoin} className="home-form fade-in">
+                <h2 className="form-title">เข้าร่วมห้อง</h2>
                 {error && <ErrorBox msg={error} />}
                 <Field label="ชื่อของคุณ" id="nick2" value={nickname} onChange={e => setNickname(e.target.value)} max={32} autoFocus />
 
-                <div style={s.roomListHead}>
-                  <span style={s.fieldLabel}>ห้องที่เปิดอยู่</span>
-                  <button type="button" onClick={fetchPublicRooms} style={s.refreshBtn} disabled={loadingRooms}>
+                <div className="room-list-head">
+                  <span className="field-label">ห้องที่เปิดอยู่</span>
+                  <button type="button" onClick={fetchPublicRooms} className="refresh-btn" disabled={loadingRooms}>
                     {loadingRooms ? 'กำลังโหลด...' : '↻ รีเฟรช'}
                   </button>
                 </div>
 
-                <div style={s.roomList}>
+                <div className="room-list custom-scrollbar">
                   {publicRooms.length === 0 && !loadingRooms && (
-                    <div style={s.roomListEmpty}>ยังไม่มีห้องสาธารณะเปิดอยู่ตอนนี้</div>
+                    <div className="room-list-empty">ยังไม่มีห้องสาธารณะเปิดอยู่ตอนนี้</div>
                   )}
                   {publicRooms.map(r => {
                     const full      = r.playerCount >= r.maxPlayers;
@@ -260,21 +324,17 @@ export default function HomePage() {
                         key={r.id}
                         onClick={() => !disabled && selectRoomToJoin(r.id)}
                         disabled={disabled}
-                        style={{
-                          ...s.roomRow,
-                          ...(selected ? s.roomRowSelected : {}),
-                          ...(disabled ? s.roomRowDisabled : {}),
-                        }}
+                        className={`room-row ${selected ? 'is-selected' : ''} ${disabled ? 'is-disabled' : ''}`}
                       >
-                        <div style={s.roomRowMain}>
-                          <span style={s.roomRowName}>{r.name}</span>
-                          <span style={s.roomRowCode}>#{r.id}</span>
+                        <div className="room-row-main">
+                          <span className="room-row-name">{r.name}</span>
+                          <span className="room-row-code">#{r.id}</span>
                         </div>
-                        <div style={s.roomRowMeta}>
-                          <span style={{ ...s.roomStatusBadge, ...(inGame ? s.roomStatusBadgePlaying : {}) }}>
+                        <div className="room-row-meta">
+                          <span className={`room-status-badge ${inGame ? 'is-playing' : ''}`}>
                             {inGame ? 'กำลังเล่น' : 'รอผู้เล่น'}
                           </span>
-                          <span style={s.roomRowCount}>{r.playerCount}/{r.maxPlayers} คน</span>
+                          <span className="room-row-count">{r.playerCount}/{r.maxPlayers} คน</span>
                         </div>
                       </button>
                     );
@@ -287,74 +347,77 @@ export default function HomePage() {
                   value={roomCode}
                   onChange={e => { setRoomCode(e.target.value.toUpperCase()); setSelectedRoomCode(null); }}
                   max={8}
-                  extraStyle={{ textTransform:'uppercase', letterSpacing:'0.2em' }}
+                  extraClassName="field-input-code"
                 />
 
-                <div style={s.btnRow}>
-                  <button type="submit" style={s.btnPrimary} disabled={loading || !nickname.trim() || !roomCode.trim()}>
+                <div className="btn-row">
+                  <button type="submit" className="btn-primary" disabled={loading || !nickname.trim() || !roomCode.trim()}>
                     {loading ? 'กำลังเข้า...' : 'เข้าร่วม'}
                   </button>
-                  <button type="button" style={s.btnBack} onClick={reset}>กลับ</button>
+                  <button type="button" className="btn-back" onClick={reset}>กลับ</button>
                 </div>
               </form>
             )}
 
-            {!mode && (
-              <div style={s.playerBar}>
-                <div style={s.playerAva}>{user ? user.username.charAt(0).toUpperCase() : 'W'}</div>
-                <div style={{ flex: 1 }}>
-                  {user ? (
-                    <>
-                      <div style={s.playerName}>{user.username}</div>
-                      <div style={s.playerLevel}>Level {user.level ?? 1}</div>
-                      <div style={s.playerExp}>
-                        <div
-                          style={{
-                            ...s.playerExpFill,
-                            width: `${(((user.gamesPlayed ?? 0) % GAMES_PER_LEVEL) / GAMES_PER_LEVEL) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div style={s.playerName}>ยังไม่ได้เข้าสู่ระบบ</div>
-                      <div style={s.playerLevel}>เข้าสู่ระบบเพื่อบันทึกระดับและสถิติ</div>
-                    </>
-                  )}
-                </div>
+          {!mode && (
+            <div className="player-bar">
+              <div className="player-ava">
+                {user ? user.username.charAt(0).toUpperCase() : <IconWolf />}
               </div>
-            )}
+              <div className="player-info">
+                {user ? (
+                  <>
+                    <div className="player-name">{user.username}</div>
+                    <div className="player-level">Level {user.level ?? 1}</div>
+                    <div className="player-exp">
+                      <div
+                        className="player-exp-fill"
+                        style={{ width: `${(((user.gamesPlayed ?? 0) % GAMES_PER_LEVEL) / GAMES_PER_LEVEL) * 100}%` }}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+              <div className="player-name">PlayerName</div>
+              <div className="player-level">Level 1</div>
+              <div className="player-exp">
+                <div className="player-exp-fill" style={{ width: '30%' }} />
+              </div>
+            </>
+           )}
+          </div>
+         </div>
+          )}
           </div>
 
-          <div style={s.right}>
-            <div style={s.panelBox}>
-              <div style={s.panelHead}>
-                <div style={s.panelLine} />
-                <span style={s.panelTitle}>ข่าวสาร</span>
-                <div style={s.panelLine} />
+          <div className="home-right">
+            <div className="panel-box">
+              <div className="panel-head">
+                <span className="panel-line" />
+                <span className="panel-title">ข่าวสาร</span>
+                <span className="panel-line" />
               </div>
 
-              <div style={s.newsContainer}>
+              <div className="news-container">
                 {NEWS.map(n => <NewsRow key={n.id} news={n} />)}
               </div>
 
-              <div style={s.moreContainer}>
-                <button style={s.moreBtn}>More <span style={{ marginLeft: 8 }}>{'>'}</span></button>
+              <div className="more-container">
+                <button className="more-btn">More <span className="more-arrow">›</span></button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div style={s.footer}>
-        <span style={s.version}>v1.2.0</span>
-        <div style={s.socials}>
-          {['D', 'F', 'W'].map(x => (
-            <div key={x} style={s.socBtn}>{x}</div>
-          ))}
+      <footer className="home-footer">
+        <span className="version">v1.2.0</span>
+        <div className="socials">
+          <button type="button" className="soc-btn" title="Discord"><IconDiscord /></button>
+          <button type="button" className="soc-btn" title="Facebook"><IconFacebook /></button>
+          <button type="button" className="soc-btn" title="Website"><IconGlobe /></button>
         </div>
-      </div>
+      </footer>
 
       {showModal && <AuthModal onClose={() => setShowModal(false)} />}
     </div>
@@ -362,631 +425,40 @@ export default function HomePage() {
 }
 
 function NewsRow({ news }) {
-  const [hovered, setHovered] = useState(false);
   return (
-    <div
-      style={{ ...s.newsItem, ...(hovered ? s.newsItemHover : {}) }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div>
-        <div style={s.newsTitle}>{news.title}</div>
-        <div style={s.newsDesc}>{news.desc}</div>
-        <div style={s.newsDate}>{news.date}</div>
-      </div>
+    <div className="news-item">
+      <div className="news-title">{news.title}</div>
+      <div className="news-desc">{news.desc}</div>
+      <div className="news-date">{news.date}</div>
     </div>
   );
 }
 
-function MenuBtn({ title, sub, onClick, primary = false }) {
-  const [hovered, setHovered] = useState(false);
+function MenuBtn({ title, onClick, primary = false, icon }) {
   return (
-    <button
-      onClick={onClick}
-      style={{
-        ...s.menuBtn,
-        ...(primary ? s.menuBtnPrimary : {}),
-        ...(hovered ? (primary ? s.menuBtnPrimaryHover : s.menuBtnHover) : {}),
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div style={s.menuText}>
-        <div style={{ ...s.menuTitle, ...(primary ? s.menuTitlePrimary : {}) }}>{title}</div>
-        <div style={s.menuSub}>{sub}</div>
+    <button type="button" onClick={onClick} disabled={!onClick}
+      className={`menu-btn ${primary ? 'is-primary' : ''}`}>
+      <div className="menu-icon">{icon}</div>
+      <div className="menu-text">
+        <div className="menu-title">{title}</div>
       </div>
     </button>
   );
 }
 
-function Field({ label, id, value, onChange, placeholder, max, autoFocus, extraStyle = {} }) {
+function Field({ label, id, value, onChange, placeholder, max, autoFocus, extraClassName = '' }) {
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-      <label htmlFor={id} style={s.fieldLabel}>{label}</label>
+    <div className="field-col">
+      <label htmlFor={id} className="field-label">{label}</label>
       <input
         id={id} value={value} onChange={onChange}
         placeholder={placeholder} maxLength={max} autoFocus={autoFocus}
-        style={{ ...s.input, ...extraStyle }}
-        onFocus={e => { e.target.style.borderColor = 'var(--color-accent-dim)'; }}
-        onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; }}
+        className={`field-input ${extraClassName}`}
       />
     </div>
   );
 }
 
 function ErrorBox({ msg }) {
-  return <div style={s.errorBox}>{msg}</div>;
+  return <div className="error-box">{msg}</div>;
 }
-
-const s = {
-  page: {
-    minHeight: '100dvh',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundColor: 'var(--color-bg)',
-    position: 'relative',
-    fontFamily: 'var(--font-body)',
-    color: 'var(--color-text)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  overlay: {
-    position: 'absolute',
-    inset: 0,
-    background: `
-      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(212,162,76,0.05) 0%, transparent 60%),
-      radial-gradient(ellipse 90% 70% at 50% 100%, rgba(0,0,0,0.55) 0%, transparent 65%),
-      linear-gradient(180deg, rgba(15,17,21,0.86) 0%, rgba(15,17,21,0.78) 40%, rgba(15,17,21,0.9) 100%)
-    `,
-    zIndex: 0,
-  },
-  fogLayer: {
-    position: 'absolute',
-    inset: 0,
-    background: `
-      radial-gradient(ellipse 50% 30% at 15% 85%, rgba(180,190,200,0.035) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 25% at 85% 15%, rgba(180,190,200,0.025) 0%, transparent 70%)
-    `,
-    zIndex: 0,
-    pointerEvents: 'none',
-  },
-  container: {
-    position: 'relative',
-    zIndex: 1,
-    width: '100%',
-    maxWidth: '1000px',
-    padding: '40px 20px',
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  topBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '32px',
-    flexWrap: 'wrap',
-  },
-  brandBlock: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-  },
-  brandLogo: {
-    width: '58px',
-    height: '58px',
-    borderRadius: 'var(--radius-lg)',
-    display: 'grid',
-    placeItems: 'center',
-    background: 'linear-gradient(150deg, var(--color-accent), var(--color-accent-dim))',
-    color: 'var(--color-bg)',
-    fontSize: '1.5rem',
-    fontFamily: 'var(--font-display)',
-    fontWeight: 700,
-    boxShadow: 'var(--shadow-card)',
-    border: '1px solid var(--color-border)',
-  },
-  brandName: {
-    fontSize: '1.2rem',
-    color: 'var(--color-text)',
-    fontFamily: 'var(--font-display)',
-    fontWeight: 700,
-    letterSpacing: '0.04em',
-  },
-  brandTag: {
-    fontSize: '0.92rem',
-    color: 'var(--color-text-muted)',
-  },
-  authActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    flexWrap: 'wrap',
-  },
-  authBtnPrimary: {
-    padding: '12px 22px',
-    border: '1px solid var(--color-accent)',
-    borderRadius: 'var(--radius-sm)',
-    background: 'var(--color-accent)',
-    color: 'var(--color-bg)',
-    fontWeight: 700,
-    cursor: 'pointer',
-    boxShadow: 'var(--shadow-card)',
-  },
-  authBtnSecondary: {
-    padding: '12px 20px',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-sm)',
-    background: 'var(--color-surface)',
-    color: 'var(--color-text)',
-    cursor: 'pointer',
-  },
-  userDropdownWrap: {
-    position: 'relative',
-  },
-  settingsRow: {
-    display: 'flex',
-    gap: '16px',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap',
-  },
-  privacyToggle: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '8px',
-    fontSize: '13px',
-    color: 'var(--color-text)',
-    cursor: 'pointer',
-    paddingTop: '22px',
-    flex: 1,
-  },
-  privacyHint: {
-    display: 'block',
-    fontSize: '11px',
-    color: 'var(--color-text-muted)',
-    marginTop: '2px',
-  },
-  roomListHead: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  refreshBtn: {
-    background: 'transparent',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-sm)',
-    color: 'var(--color-text-muted)',
-    fontSize: '12px',
-    padding: '4px 10px',
-    cursor: 'pointer',
-  },
-  roomList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    maxHeight: '220px',
-    overflowY: 'auto',
-  },
-  roomListEmpty: {
-    fontSize: '13px',
-    color: 'var(--color-disabled)',
-    padding: '14px',
-    textAlign: 'center',
-    border: '1px dashed var(--color-border)',
-    borderRadius: 'var(--radius-sm)',
-  },
-  roomRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    padding: '10px 14px',
-    background: 'var(--color-bg-2)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-sm)',
-    cursor: 'pointer',
-    textAlign: 'left',
-  },
-  roomRowSelected: {
-    borderColor: 'var(--color-accent)',
-    boxShadow: '0 0 0 1px var(--color-accent)',
-  },
-  roomRowDisabled: {
-    opacity: 0.45,
-    cursor: 'not-allowed',
-  },
-  roomRowMain: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-  },
-  roomRowName: {
-    fontSize: '14px',
-    color: 'var(--color-text)',
-    fontFamily: 'var(--font-display)',
-  },
-  roomRowCode: {
-    fontSize: '11px',
-    color: 'var(--color-text-muted)',
-    letterSpacing: '0.1em',
-  },
-  roomRowMeta: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '4px',
-  },
-  roomStatusBadge: {
-    fontSize: '10px',
-    padding: '2px 8px',
-    borderRadius: 'var(--radius-sm)',
-    background: 'rgba(212,162,76,0.16)',
-    border: '1px solid var(--color-accent)',
-    color: 'var(--color-accent)',
-  },
-  roomStatusBadgePlaying: {
-    background: 'rgba(229,57,53,0.16)',
-    border: '1px solid var(--color-danger)',
-    color: 'var(--color-danger)',
-  },
-  roomRowCount: {
-    fontSize: '12px',
-    color: 'var(--color-text-muted)',
-  },
-  userPill: {
-    padding: '12px 18px',
-    borderRadius: 'var(--radius-sm)',
-    border: '1px solid var(--color-border)',
-    background: 'var(--color-surface)',
-    color: 'var(--color-text)',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  userLevelBadge: {
-    padding: '2px 8px',
-    borderRadius: 'var(--radius-sm)',
-    background: 'rgba(212,162,76,0.16)',
-    border: '1px solid var(--color-accent)',
-    color: 'var(--color-accent)',
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    fontFamily: 'var(--font-display)',
-  },
-  userDropdown: {
-    position: 'absolute',
-    top: 'calc(100% + 10px)',
-    right: 0,
-    background: 'var(--color-surface)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-md)',
-    boxShadow: 'var(--shadow-card)',
-    padding: '10px',
-    minWidth: '180px',
-    zIndex: 2,
-  },
-  userDropdownBtn: {
-    width: '100%',
-    padding: '10px 14px',
-    border: 'none',
-    borderRadius: 'var(--radius-sm)',
-    background: 'rgba(255,255,255,0.04)',
-    color: 'var(--color-text)',
-    cursor: 'pointer',
-    textAlign: 'left',
-  },
-  header: {
-    textAlign: 'center',
-    marginBottom: '40px',
-  },
-  title: {
-    fontFamily: 'var(--font-display)',
-    fontWeight: 900,
-    fontSize: 'clamp(2.4rem, 5vw, 3.6rem)',
-    color: 'var(--color-text)',
-    letterSpacing: '0.03em',
-    margin: 0,
-    textShadow: '0 4px 16px rgba(0,0,0,0.6)',
-  },
-  subtitle: {
-    marginTop: '18px',
-    color: 'var(--color-text-muted)',
-    fontSize: '1rem',
-    maxWidth: '720px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    lineHeight: '1.6',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: '1.08fr 0.92fr',
-    gap: '40px',
-    alignItems: 'start',
-  },
-  left: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-  },
-  menuList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    padding: '20px',
-    background: 'var(--color-surface)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-md)',
-    boxShadow: 'var(--shadow-card)',
-  },
-  menuBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '16px',
-    background: 'transparent',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-sm)',
-    cursor: 'pointer',
-    textAlign: 'left',
-    width: '100%',
-    transition: 'background-color var(--transition), border-color var(--transition)',
-  },
-  menuBtnHover: {
-    background: 'rgba(255, 255, 255, 0.04)',
-    borderColor: 'var(--color-accent-dim)',
-  },
-  menuBtnPrimary: {
-    background: 'rgba(212,162,76,0.07)',
-    borderColor: 'var(--color-accent)',
-    boxShadow: '0 0 0 1px rgba(212,162,76,0.15)',
-  },
-  menuBtnPrimaryHover: {
-    background: 'rgba(212,162,76,0.13)',
-    borderColor: 'var(--color-accent)',
-  },
-  menuTitlePrimary: {
-    color: 'var(--color-accent)',
-  },
-  menuText: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  menuTitle: {
-    fontSize: '17px',
-    fontWeight: 700,
-    color: 'var(--color-text)',
-    fontFamily: 'var(--font-display)',
-  },
-  menuSub: {
-    fontSize: '13px',
-    color: 'var(--color-text-muted)',
-  },
-  playerBar: {
-    padding: '16px 20px',
-    background: 'var(--color-surface)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-md)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    boxShadow: 'var(--shadow-card)',
-    width: '100%',
-    maxWidth: '300px',
-    alignSelf: 'center',
-  },
-  playerAva: {
-    width: '48px',
-    height: '48px',
-    borderRadius: 'var(--radius-md)',
-    background: 'var(--color-bg-2)',
-    border: '1px solid var(--color-border)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '22px',
-    fontFamily: 'var(--font-display)',
-    color: 'var(--color-accent)',
-  },
-  playerName: {
-    fontSize: '15px',
-    color: 'var(--color-text)',
-    fontFamily: 'var(--font-display)',
-    fontWeight: 700,
-  },
-  playerLevel: {
-    fontSize: '12px',
-    color: 'var(--color-text-muted)',
-    marginTop: '2px',
-  },
-  playerExp: {
-    height: '4px',
-    background: 'var(--color-border)',
-    borderRadius: '2px',
-    marginTop: '6px',
-  },
-  playerExpFill: {
-    height: '100%',
-    background: 'var(--color-accent)',
-    borderRadius: '2px',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    padding: '24px',
-    background: 'var(--color-surface)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-md)',
-    boxShadow: 'var(--shadow-card)',
-  },
-  formTitle: {
-    fontSize: '20px',
-    color: 'var(--color-text)',
-    margin: '0 0 10px 0',
-    fontFamily: 'var(--font-display)',
-  },
-  fieldLabel: {
-    fontSize: '13px',
-    color: 'var(--color-text-muted)',
-  },
-  input: {
-    width: '100%',
-    background: 'var(--color-bg-2)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-sm)',
-    color: 'var(--color-text)',
-    padding: '12px',
-    outline: 'none',
-  },
-  btnRow: {
-    display: 'flex',
-    gap: '12px',
-    marginTop: '10px',
-  },
-  btnPrimary: {
-    flex: 1,
-    padding: '12px',
-    background: 'var(--color-accent)',
-    border: '1px solid var(--color-accent)',
-    borderRadius: 'var(--radius-sm)',
-    color: 'var(--color-bg)',
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
-  btnBack: {
-    padding: '12px 20px',
-    background: 'transparent',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-sm)',
-    color: 'var(--color-text-muted)',
-    cursor: 'pointer',
-  },
-  errorBox: {
-    background: 'rgba(229,57,53,0.14)',
-    border: '1px solid var(--color-danger)',
-    padding: '10px',
-    borderRadius: 'var(--radius-sm)',
-    color: '#ffb4b0',
-    fontSize: '14px',
-  },
-  right: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-  },
-  panelBox: {
-    background: 'var(--color-surface)',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-md)',
-    padding: '24px',
-    height: '100%',
-    boxShadow: 'var(--shadow-card)',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  panelHead: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    marginBottom: '24px',
-  },
-  panelTitle: {
-    fontFamily: 'var(--font-display)',
-    fontSize: '18px',
-    color: 'var(--color-text)',
-    whiteSpace: 'nowrap',
-  },
-  panelLine: {
-    flex: 1,
-    height: '1px',
-    background: 'var(--color-border)',
-  },
-  newsContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '24px',
-    flex: 1,
-  },
-  newsItem: {
-    display: 'flex',
-    gap: '16px',
-    padding: '12px 14px 12px 16px',
-    borderLeft: '2px solid var(--color-border)',
-    background: 'rgba(255,255,255,0.015)',
-    borderRadius: 'var(--radius-sm)',
-    transition: 'border-color var(--transition), background-color var(--transition)',
-  },
-  newsItemHover: {
-    borderColor: 'var(--color-accent)',
-    background: 'rgba(212,162,76,0.04)',
-  },
-  newsDot: {
-    color: 'var(--color-accent)',
-    fontSize: '12px',
-    marginTop: '2px',
-  },
-  newsTitle: {
-    fontSize: '15px',
-    color: 'var(--color-text)',
-    marginBottom: '6px',
-    fontWeight: 600,
-  },
-  newsDesc: {
-    fontSize: '13px',
-    color: 'var(--color-text-muted)',
-    marginBottom: '6px',
-  },
-  newsDate: {
-    fontSize: '12px',
-    color: 'var(--color-disabled)',
-  },
-  moreContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginTop: '32px',
-  },
-  moreBtn: {
-    background: 'transparent',
-    border: '1px solid var(--color-border)',
-    borderRadius: 'var(--radius-sm)',
-    padding: '8px 24px',
-    color: 'var(--color-text-muted)',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: '20px',
-    left: '20px',
-    right: '20px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  version: {
-    color: 'var(--color-disabled)',
-    fontSize: '12px',
-  },
-  socials: {
-    display: 'flex',
-    gap: '12px',
-  },
-  socBtn: {
-    width: '32px',
-    height: '32px',
-    borderRadius: 'var(--radius-md)',
-    border: '1px solid var(--color-border)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'var(--color-text-muted)',
-    cursor: 'pointer',
-    fontSize: '14px',
-    background: 'var(--color-surface)',
-  },
-};
