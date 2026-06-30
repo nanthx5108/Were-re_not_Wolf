@@ -413,9 +413,9 @@ export default function HomePage() {
       <footer className="home-footer">
         <span className="version">v1.2.0</span>
         <div className="socials">
-          <button type="button" className="soc-btn" title="Discord"><IconDiscord /></button>
-          <button type="button" className="soc-btn" title="Facebook"><IconFacebook /></button>
-          <button type="button" className="soc-btn" title="Website"><IconGlobe /></button>
+          <button type="button" className="soc-btn" title="Discord" href="https://discord.gg/your-invite-code" target="_blank" rel="noopener noreferrer" ><IconDiscord /></button>
+          <button type="button" className="soc-btn" title="Facebook" href="https://www.facebook.com/share/g/18jdh5exKb/" target="_blank" rel="noopener noreferrer"><IconFacebook /></button>
+          <button type="button" className="soc-btn" title="Website" href="https://www.technicrayong.ac.th/rytc/" target="_blank" rel="noopener noreferrer"><IconGlobe /></button>
         </div>
       </footer>
 

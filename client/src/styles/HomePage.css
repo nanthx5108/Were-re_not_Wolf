@@ -1,18 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Eater&family=Creepster&display=swap');
 
-/* =========================================================
-   Werewolf Homepage — revised to match reference design
-   Key changes from previous version:
-   1. Topbar pushed down, no longer crowding the title
-   2. Title font changed to scratchy horror style, white/grey (no gold)
-   3. Overlay lightened so background art (moon/wolf/houses) shows through
-   4. Accent gold desaturated/muted across the whole page
-   5. Primary menu button border subtler, no bright glow
-   6. News ◆ markers muted to match new accent
-   ========================================================= */
 
 .home-page {
-  /* Muted gold override — replaces bright --color-accent usage on this page */
   --hp-accent:      #a8895a;
   --hp-accent-dim:  #6b5436;
   --hp-sepia:       #c9bba0;
@@ -31,7 +20,6 @@
   padding-bottom: 96px;
 }
 
-/* === Overlay — lightened to reveal background illustration === */
 .home-overlay {
   position: absolute;
   inset: 0;
@@ -69,9 +57,8 @@
   flex-direction: column;
 }
 
-/* === Topbar — repositioned with breathing room from title === */
 .home-topbar {
-  position: absolute;
+  position: fixed;
   top: var(--space-5);
   right: var(--space-5);
   display: flex;
@@ -79,7 +66,7 @@
   align-items: center;
   gap: var(--space-3);
   flex-wrap: wrap;
-  z-index: 2;
+  z-index: 50;
 }
 
 .home-brand { display: none; }

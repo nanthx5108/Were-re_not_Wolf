@@ -9,8 +9,10 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     fetch(`${API}/me`, { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.user) setUser(data.user); })
+      .then(async r => {
+        const data = await r.json().catch(() => null);
+        if (r.ok && data?.user) setUser(data.user);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -21,8 +23,8 @@ export function AuthProvider({ children }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Register failed.');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || 'Register failed.');
     setUser(data.user);
     return data.user;
   }, []);
@@ -33,8 +35,8 @@ export function AuthProvider({ children }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Login failed.');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || 'Login failed.');
     setUser(data.user);
     return data.user;
   }, []);
