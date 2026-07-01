@@ -53,7 +53,8 @@ export default function Lobby() {
 
   const isHost      = room.hostId === playerId;
   const playerCount = room.players?.length ?? 0;
-  const canStart    = isHost && playerCount >= MIN_PLAYERS;
+  const roomCapacity = Number.isInteger(room.maxPlayers) ? room.maxPlayers : 8;
+  const canStart    = isHost && playerCount >= MIN_PLAYERS && playerCount <= roomCapacity;
 
   return (
     <div className="lobby-page">
@@ -72,7 +73,7 @@ export default function Lobby() {
           <section className="lobby-section">
             <div className="section-header">
               <h3 className="section-title">Islanders</h3>
-              <span className="player-badge">{playerCount}/8</span>
+              <span className="player-badge">{playerCount}/{roomCapacity}</span>
             </div>
 
             <div className="player-grid custom-scrollbar">
