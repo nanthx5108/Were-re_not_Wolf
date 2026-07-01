@@ -140,7 +140,7 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          hostNickname: user.username,
+          hostNickname: nickname.trim(),
           roomName: roomName.trim(),
           maxPlayers,
           isPrivate,
@@ -164,6 +164,7 @@ export default function HomePage() {
       const res = await fetch(`${API}/${code}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ nickname: nickname.trim() }),
       });
       const data = await res.json();
