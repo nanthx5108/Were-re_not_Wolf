@@ -6,6 +6,7 @@ import {
 } from '../game/gameStore.js';
 import { distributeRoles }   from '../game/Roledistributor.js';
 import { PLAYER_LIMITS, CHANNELS, PHASES } from '../game/constants.js';
+import { canJoinRoom } from '../game/roomCapacity.js';
 import { startPhaseTimer, advancePhase, clearPhaseTimer } from '../game/phaseManager.js';
 import { castVote, hasAllVoted } from '../game/voteManager.js';
 import { initNightActions, submitNightAction } from '../game/nightActions.js';
@@ -15,9 +16,9 @@ export function registerSocketHandlers(socket, io) {
   socket.on('room:join', async ({ roomId, playerId, nickname }) => {
     try {
       const room = getRoom(roomId);
-      if (!room)                             return socket.emit('error', { message: 'Room not found.' });
-      if (room.status !== 'waiting')         return socket.emit('error', { message: 'Game already in progress.' });
-      if (room.players.size >= PLAYER_LIMITS.MAX) return socket.emit('error', { message: 'Room is full.' });
+      if (!room) return socket.emit('error', { message: 'Room not found.' });
+      if (room.status !== 'waiting') return socket.emit('error', { message: 'Game already in progress.' });
+      if (!canJoinRoom(room, room.players.size)) return socket.emit('error', { message: 'Room is full.' });
 
       addPlayerToRoom(roomId, { id: playerId, nickname, socketId: socket.id });
       await pool.query(`UPDATE players SET socket_id = ? WHERE id = ?`, [socket.id, playerId]);
