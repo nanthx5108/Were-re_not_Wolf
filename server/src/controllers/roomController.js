@@ -9,17 +9,24 @@ import { PLAYER_LIMITS } from '../game/constants.js';
 
 export async function createRoomHandler(req, res, next) {
   try {
-    const { hostNickname, roomName, maxPlayers, isPrivate } = req.body;
+    const rawHostNickname = req.body?.hostNickname;
+    const rawRoomName = req.body?.roomName;
+    const rawMaxPlayers = req.body?.maxPlayers;
+    const isPrivate = req.body?.isPrivate;
 
-    if (!hostNickname?.trim() || !roomName?.trim()) {
+    const hostNickname = typeof rawHostNickname === 'string' ? rawHostNickname.trim() : rawHostNickname;
+    const roomName = typeof rawRoomName === 'string' ? rawRoomName.trim() : rawRoomName;
+    const parsedMaxPlayers = typeof rawMaxPlayers === 'string' ? Number.parseInt(rawMaxPlayers, 10) : rawMaxPlayers;
+
+    if (!hostNickname || !roomName) {
       return res.status(400).json({ error: 'hostNickname and roomName are required.' });
     }
-    if (hostNickname.trim().length > 32) {
+    if (hostNickname.length > 32) {
       return res.status(400).json({ error: 'Nickname must be 32 characters or fewer.' });
     }
     if (
-      maxPlayers !== undefined &&
-      (!Number.isInteger(maxPlayers) || maxPlayers < PLAYER_LIMITS.MIN || maxPlayers > PLAYER_LIMITS.MAX)
+      parsedMaxPlayers !== undefined &&
+      (!Number.isInteger(parsedMaxPlayers) || parsedMaxPlayers < PLAYER_LIMITS.MIN || parsedMaxPlayers > PLAYER_LIMITS.MAX)
     ) {
       return res.status(400).json({
         error: `maxPlayers must be between ${PLAYER_LIMITS.MIN} and ${PLAYER_LIMITS.MAX}.`,
@@ -30,7 +37,7 @@ export async function createRoomHandler(req, res, next) {
       hostNickname,
       roomName,
       userId: req.session?.userId || null,
-      maxPlayers,
+      maxPlayers: parsedMaxPlayers,
       isPrivate: !!isPrivate,
     });
 

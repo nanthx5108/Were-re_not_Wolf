@@ -8,6 +8,7 @@ import {
   serializeRoom,
 } from '../game/gameStore.js';
 import { PLAYER_LIMITS } from '../game/constants.js';
+import { getRoomPlayerLimit } from '../game/roomCapacity.js';
 
 export async function createRoomService({ hostNickname, roomName, userId, maxPlayers, isPrivate }) {
   const roomId = generateRoomCode();
@@ -36,6 +37,7 @@ export async function createRoomService({ hostNickname, roomName, userId, maxPla
   }
 
   createRoom({ id: roomId, name: roomName.trim(), hostId, maxPlayers: safeMaxPlayers, isPrivate: safeIsPrivate });
+  addPlayerToRoom(roomId, { id: hostId, nickname: hostNickname.trim() });
 
   return { roomId, playerId: hostId };
 }
@@ -93,7 +95,7 @@ export async function getRoomService(roomId) {
 }
 
 export async function joinRoomService({ roomId, nickname, userId }) {
-  const upperRoomId = roomId.toUpperCase();
+  const upperRoomId = String(roomId).toUpperCase();
 
   const [roomRows] = await pool.query(
     `SELECT id, status, max_players FROM rooms WHERE id = ?`,
@@ -106,8 +108,9 @@ export async function joinRoomService({ roomId, nickname, userId }) {
     `SELECT COUNT(*) AS cnt FROM players WHERE room_id = ?`,
     [upperRoomId]
   );
-  if (countRows[0].cnt >= roomRows[0].max_players) {
-    throw Object.assign(new Error(`Room is full (max ${roomRows[0].max_players} players).`), { status: 409 });
+  const roomLimit = getRoomPlayerLimit({ maxPlayers: roomRows[0].max_players });
+  if (countRows[0].cnt >= roomLimit) {
+    throw Object.assign(new Error(`Room is full (max ${roomLimit} players).`), { status: 409 });
   }
 
   const playerId = userId || uuidv4();

@@ -80,6 +80,7 @@ export function serializeRoom(roomId) {
     round:       room.round,
     phaseEndsAt: room.phaseEndsAt,
     maxPlayers:  room.maxPlayers ?? 8,
+    playerCount: getPlayersArray(roomId).length,
     players: getPlayersArray(roomId).map(p => ({
       id:       p.id,
       nickname: p.nickname,
