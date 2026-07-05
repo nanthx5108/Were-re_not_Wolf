@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import bgHome from '../src/assets/bgHome.png';
 import '../src/styles/Auth.css';
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const from      = location.state?.from || '/';
+  const { login }   = useAuth();
+  const navigate    = useNavigate();
+  const location    = useLocation();
+  const from        = location.state?.from || '/';
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -29,17 +30,25 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-backdrop" />
+    <div
+      className="auth-page"
+      style={{ backgroundImage: bgHome ? `url(${bgHome})` : undefined }}
+    >
+      <div className="auth-overlay" />
+      <div className="auth-fog" />
+
       <div className="auth-card">
+        {/* Logo */}
         <div className="auth-logo">
           <span className="auth-logo-wolf">WE'RE</span>
           <span className="auth-logo-not"> not </span>
           <span className="auth-logo-wolf">WOLF</span>
         </div>
 
-        <h2 className="auth-title">เข้าสู่เกาะ</h2>
-        <p className="auth-sub">ใครเชื่อถือได้บ้าง? เข้าสู่ระบบเพื่อเล่น</p>
+        <div className="auth-divider" />
+
+        <h2 className="auth-title">เข้าสู่หมู่บ้าน</h2>
+        <p className="auth-sub">ใครเชื่อถือได้บ้าง? คงต้องเข้ามาดูเอง</p>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -47,34 +56,50 @@ export default function LoginPage() {
           <div className="auth-field">
             <label className="auth-label" htmlFor="username">ชื่อผู้ใช้</label>
             <input
-              id="username" type="text" className="auth-input"
+              id="username"
+              type="text"
+              className="auth-input"
               placeholder="ชื่อที่คนอื่นจะเห็น..."
-              value={username} onChange={e => setUsername(e.target.value)}
-              maxLength={32} autoFocus autoComplete="username"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              maxLength={32}
+              autoFocus
+              autoComplete="username"
             />
           </div>
 
           <div className="auth-field">
             <label className="auth-label" htmlFor="password">รหัสผ่าน</label>
             <input
-              id="password" type="password" className="auth-input"
-              placeholder="รหัสลับของคุณ..."
-              value={password} onChange={e => setPassword(e.target.value)}
+              id="password"
+              type="password"
+              className="auth-input"
+              placeholder="รหัสลับที่คุณซ่อนไว้..."
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               autoComplete="current-password"
             />
           </div>
 
           <button
-            type="submit" className="auth-btn auth-btn-primary"
+            type="submit"
+            className="auth-btn auth-btn-primary"
             disabled={loading || !username.trim() || !password}
           >
-            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+            {loading ? 'กำลังเข้าสู่หมู่บ้าน...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
 
         <p className="auth-switch">
-          ยังไม่มีบัญชี? <Link to="/register" state={{ from }}>สมัครสมาชิก</Link>
+          ยังไม่มีบัญชี?{' '}
+          <Link to="/register" state={{ from }}>สมัครสมาชิก</Link>
         </p>
+
+        <div className="auth-back">
+          <button className="auth-back-btn" onClick={() => navigate('/')}>
+            ← กลับหน้าหลัก
+          </button>
+        </div>
       </div>
     </div>
   );
