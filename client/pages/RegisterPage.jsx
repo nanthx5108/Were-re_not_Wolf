@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import bgHome from '../src/assets/bgHome.png';
 import '../src/styles/Auth.css';
 
 export default function RegisterPage() {
@@ -32,21 +33,29 @@ export default function RegisterPage() {
     }
   }
 
-  const strength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
+  const strength      = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
   const strengthLabel = ['', 'อ่อนแอ', 'พอใช้', 'แข็งแกร่ง'][strength];
   const strengthClass = ['', 'weak',   'fair',  'strong'][strength];
 
   return (
-    <div className="auth-page">
-      <div className="auth-backdrop" />
+    <div
+      className="auth-page"
+      style={{ backgroundImage: bgHome ? `url(${bgHome})` : undefined }}
+    >
+      <div className="auth-overlay" />
+      <div className="auth-fog" />
+
       <div className="auth-card">
+        {/* Logo */}
         <div className="auth-logo">
           <span className="auth-logo-wolf">WE'RE</span>
           <span className="auth-logo-not"> not </span>
           <span className="auth-logo-wolf">WOLF</span>
         </div>
 
-        <h2 className="auth-title">เข้าร่วมเกาะ</h2>
+        <div className="auth-divider" />
+
+        <h2 className="auth-title">เข้าร่วมหมู่บ้าน</h2>
         <p className="auth-sub">สร้างตัวตนของคุณ — แต่ระวัง ความลับมักถูกเปิดเผย</p>
 
         {error && <div className="auth-error">{error}</div>}
@@ -55,10 +64,15 @@ export default function RegisterPage() {
           <div className="auth-field">
             <label className="auth-label" htmlFor="username">ชื่อผู้ใช้</label>
             <input
-              id="username" type="text" className="auth-input"
+              id="username"
+              type="text"
+              className="auth-input"
               placeholder="3–32 ตัวอักษร"
-              value={username} onChange={e => setUsername(e.target.value)}
-              maxLength={32} autoFocus autoComplete="username"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              maxLength={32}
+              autoFocus
+              autoComplete="username"
             />
             {username.length > 0 && (
               <span className="auth-hint">
@@ -72,9 +86,12 @@ export default function RegisterPage() {
           <div className="auth-field">
             <label className="auth-label" htmlFor="password">รหัสผ่าน</label>
             <input
-              id="password" type="password" className="auth-input"
+              id="password"
+              type="password"
+              className="auth-input"
               placeholder="อย่างน้อย 6 ตัวอักษร"
-              value={password} onChange={e => setPassword(e.target.value)}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               autoComplete="new-password"
             />
             {strength > 0 && (
@@ -88,9 +105,12 @@ export default function RegisterPage() {
           <div className="auth-field">
             <label className="auth-label" htmlFor="password2">ยืนยันรหัสผ่าน</label>
             <input
-              id="password2" type="password" className="auth-input"
+              id="password2"
+              type="password"
+              className="auth-input"
               placeholder="พิมพ์รหัสผ่านอีกครั้ง"
-              value={password2} onChange={e => setPassword2(e.target.value)}
+              value={password2}
+              onChange={e => setPassword2(e.target.value)}
               autoComplete="new-password"
             />
             {password2.length > 0 && (
@@ -101,16 +121,24 @@ export default function RegisterPage() {
           </div>
 
           <button
-            type="submit" className="auth-btn auth-btn-primary"
+            type="submit"
+            className="auth-btn auth-btn-primary"
             disabled={loading || username.trim().length < 3 || password.length < 6}
           >
-            {loading ? 'กำลังสมัคร...' : '🌴 สมัครสมาชิก'}
+            {loading ? 'กำลังสมัคร...' : 'สมัครสมาชิก'}
           </button>
         </form>
 
         <p className="auth-switch">
-          มีบัญชีอยู่แล้ว? <Link to="/login" state={{ from }}>เข้าสู่ระบบ</Link>
+          มีบัญชีอยู่แล้ว?{' '}
+          <Link to="/login" state={{ from }}>เข้าสู่ระบบ</Link>
         </p>
+
+        <div className="auth-back">
+          <button className="auth-back-btn" onClick={() => navigate('/')}>
+            ← กลับหน้าหลัก
+          </button>
+        </div>
       </div>
     </div>
   );
