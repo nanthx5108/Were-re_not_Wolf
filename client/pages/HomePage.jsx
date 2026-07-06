@@ -99,9 +99,8 @@ function IconGlobe() {
   );
 }
 
-/* ── Audio paths — placeholders, replace with real files when ready ── */
-const BGM_SRC = null;        // e.g. import bgm from '../src/assets/audio/bgm.mp3'
-const HOVER_SFX_SRC = null;  // e.g. import hoverSfx from '../src/assets/audio/hover.mp3'
+const BGM_SRC = null;
+const HOVER_SFX_SRC = null;
 
 /* ── Main Component ── */
 export default function HomePage() {
@@ -112,7 +111,6 @@ export default function HomePage() {
   const bgmRef = useRef(null);
   const hoverSfxRef = useRef(null);
 
-  /* Background music — plays once on entrance, respects browser autoplay policy */
   useEffect(() => {
     if (!BGM_SRC) return; // silent until a real file is wired in
     const audio = new Audio(BGM_SRC);
@@ -120,7 +118,6 @@ export default function HomePage() {
     audio.volume = 0.35;
     bgmRef.current = audio;
     audio.play().catch(() => {
-      // Autoplay blocked — will start on first user interaction instead
       const resume = () => {
         audio.play().catch(() => {});
         document.removeEventListener('click', resume);
@@ -131,7 +128,7 @@ export default function HomePage() {
   }, []);
 
   function playHoverSfx() {
-    if (!HOVER_SFX_SRC) return; // silent until a real file is wired in
+    if (!HOVER_SFX_SRC) return;
     if (!hoverSfxRef.current) hoverSfxRef.current = new Audio(HOVER_SFX_SRC);
     const sfx = hoverSfxRef.current.cloneNode();
     sfx.volume = 0.4;
@@ -153,7 +150,6 @@ export default function HomePage() {
   const [selectedRoomCode, setSelectedRoomCode] = useState(null);
   const ddRef = useRef(null);
 
-  /* Close dropdown on outside click */
   useEffect(() => {
     function handleClick(e) {
       if (ddRef.current && !ddRef.current.contains(e.target)) setShowDD(false);
@@ -278,7 +274,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ── Grid ── */}
         <div className="home-grid">
 
           {/* LEFT */}
