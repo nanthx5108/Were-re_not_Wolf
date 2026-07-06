@@ -81,6 +81,15 @@
   backdrop-filter: blur(0px);
 }
 
+.home-topbar,
+.home-auth-actions {
+  flex-wrap: nowrap;
+}
+
+.auth-btn {
+  white-space: nowrap;
+}
+
 .home-brand { display: none; }
 
 .home-auth-actions {
@@ -593,9 +602,6 @@
   animation: shake 300ms ease;
 }
 
-/* =====================================================
-   ROOM LIST
-   ===================================================== */
 .room-list-head { display: flex; justify-content: space-between; align-items: center; }
 
 .refresh-btn {
@@ -673,9 +679,6 @@
 }
 .room-row-count { font-size: 0.72rem; color: var(--text-muted); }
 
-/* =====================================================
-   PLAYER BAR
-   ===================================================== */
 .player-bar {
   position: relative;
   padding: 14px 18px;
@@ -746,9 +749,6 @@
   transition: width 600ms ease;
 }
 
-/* =====================================================
-   NEWS PANEL
-   ===================================================== */
 .home-right { display: flex; flex-direction: column; }
 
 .panel-box {
@@ -777,7 +777,6 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-/* Narrator style label */
 .panel-narrator {
   font-size: 0.68rem;
   color: var(--gold-dim);
@@ -893,9 +892,6 @@
 .more-arrow { transition: transform var(--ease); }
 .more-btn:hover .more-arrow { transform: translateX(3px); }
 
-/* =====================================================
-   FOOTER
-   ===================================================== */
 .home-footer {
   position: relative;
   z-index: 1;

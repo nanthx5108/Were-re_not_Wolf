@@ -14,42 +14,10 @@ const ALL_NEWS = [
   },
   {
     id: 2,
-    tag: 'กิจกรรม',
-    title: 'กิจกรรม : คืนหมาป่า',
-    desc: 'เล่นครบ 3 เกม รับของรางวัลพิเศษ ! ชาวบ้านขอให้มีรางวัล เราก็ทำตาม',
-    date: '24/06/2026',
-    devNote: 'ชาวบ้านขอ เราให้ แต่หมาป่าก็ได้ด้วย',
-  },
-  {
-    id: 3,
-    tag: 'ประกาศ',
-    title: 'ปิดปรับปรุงระบบ',
-    desc: 'ปรับปรุงเซิร์ฟเวอร์ในวันที่ 30/06/2026 ตั้งแต่ 02:00 - 06:00 น.',
-    date: '24/06/2026',
-    devNote: 'เซิร์ฟเวอร์ก็โกหกเป็นเหมือนกัน',
-  },
-  {
-    id: 4,
-    tag: 'แพทช์',
-    title: 'แพทช์โน้ต 1.1.8',
-    desc: 'แก้ไขบัคที่ทำให้ Fool สามารถชนะโดยถูกหมาป่ากำจัดได้ — นั่นไม่ใช่ intention',
-    date: '10/06/2026',
-    devNote: 'Fool ชนะได้แค่ตอนถูกโหวต ไม่ใช่ตอนถูกฆ่า',
-  },
-  {
-    id: 5,
-    tag: 'ชุมชน',
-    title: 'ผู้เล่นสะสมครบ 10,000 คน',
-    desc: 'หมู่บ้านเติบโตขึ้น มีคนโกหกกันมากขึ้น ขอบคุณทุกคนที่เข้ามาร่วม... หรือมาเพื่อโกหก',
-    date: '01/06/2026',
-    devNote: 'ในจำนวนนั้นมีหมาป่าอยู่เท่าไหร่? เราไม่บอก',
-  },
-  {
-    id: 6,
     tag: 'อัปเดต',
     title: 'เพิ่มระบบ Silencer',
     desc: 'Role ใหม่ Silencer ฝ่ายหมู่บ้าน สามารถปิดปากผู้เล่น 1 คนในวันถัดไปได้',
-    date: '15/05/2026',
+    date: '06/07/2026',
     devNote: 'บางทีความเงียบคือคำตอบที่ดีที่สุด',
   },
 ];
@@ -86,18 +54,16 @@ export default function NewsPage() {
           </button>
         </div>
 
-        {/* Header */}
         <div className="news-header">
           <div className="news-header-ornament">
             <span className="news-ornament-line" />
             <span className="news-ornament-diamond" />
             <span className="news-ornament-line" />
           </div>
-          <h1 className="news-title">กระดานประกาศหมู่บ้าน</h1>
-          <p className="news-subtitle">ข่าวสารจากหมู่บ้านที่ทุกคนรู้จักกัน... แต่ไม่มีใครไว้ใจกัน</p>
+          <h1 className="news-title">กระดานประกาศข่าวสาร</h1>
+          <p className="news-subtitle">ข่าวสารการอัพเดตทั้งหมด</p>
         </div>
 
-        {/* Filter tabs */}
         <div className="news-filters">
           {tags.map(tag => (
             <button
@@ -110,7 +76,6 @@ export default function NewsPage() {
           ))}
         </div>
 
-        {/* News grid */}
         <div className="news-grid">
           {filtered.map(news => (
             <div
@@ -119,7 +84,6 @@ export default function NewsPage() {
               onMouseEnter={() => setHovered(news.id)}
               onMouseLeave={() => setHovered(null)}
             >
-              {/* Corner ornaments */}
               <span className="news-card-corner tl" />
               <span className="news-card-corner br" />
 
@@ -146,7 +110,7 @@ export default function NewsPage() {
 
         {/* Narrator footer */}
         <div className="news-narrator">
-          <span>— นกส่งสาร กล่าวว่า "อ่านแล้วอย่าเพิ่งเชื่อทั้งหมด" —</span>
+          <span>— ข่าวสารการอัพเดตทั้งหมด " —</span>
         </div>
       </div>
     </div>
