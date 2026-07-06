@@ -240,7 +240,7 @@ export default function HomePage() {
           <div className="home-auth-actions">
             {user ? (
               <div className="user-dropdown-wrap" ref={ddRef}>
-                <button className="user-pill" onClick={() => setShowDD(v => !v)}>
+                <button className="user-pill" onClick={() => navigate('/profile')}>
                   <span className="user-level-badge">Lv.{user.level ?? 1}</span>
                   {user.username}
                 </button>

@@ -10,6 +10,7 @@ import Game         from '../pages/Game.jsx';
 import CustomizePage from '../pages/CustomizePage.jsx';
 import SettingsPage from '../pages/SettingsPage.jsx';
 import NewsPage from '../pages/NewsPage.jsx';
+import ProfilePage from '../pages/ProfilePage.jsx';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/customize"    element={<CustomizePage />} />
             <Route path="/settings"     element={<SettingsPage />} />
             <Route path="/news"         element={<NewsPage />} />
+            <Route path="/profile"      element={<ProfilePage />} />
             <Route path="*"             element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
