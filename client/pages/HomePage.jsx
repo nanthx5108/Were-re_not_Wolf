@@ -10,37 +10,13 @@ const BG_IMAGE = bgHome;
 const API = '/api/rooms';
 const GAMES_PER_LEVEL = 5;
 
-/* Sarcastic narrator messages — southern village voice */
-const TAGLINES = [
-  'ทุกคนบริสุทธิ์ใจ อย่างแน่นอน',
-  'อย่าไว้ใจใคร โดยเฉพาะตัวเอง',
-  'หมู่บ้านรอคุณอยู่นานแล้ว',
-  'มีคนโกหกอยู่ที่นี่ น่าจะเป็นคุณ',
-  'เรือกลับมาแล้ว แต่ไม่มีใครขึ้นฝั่ง',
-  'โคมไฟยังติดอยู่ ทั้งที่ไม่มีใครอยู่บ้าน',
-];
-
 const NEWS = [
   {
     id: 1,
     tag: 'อัปเดต',
-    title: 'อัปเดตเวอร์ชัน 1.2.0',
-    desc: 'เพิ่มระบบรายงานผู้เล่น และปรับสมดุลเกม',
-    date: '24/06/2026',
-  },
-  {
-    id: 2,
-    tag: 'กิจกรรม',
-    title: 'กิจกรรม : คืนหมาป่า',
-    desc: 'เล่นครบ 3 เกม รับของรางวัลพิเศษ !',
-    date: '24/06/2026',
-  },
-  {
-    id: 3,
-    tag: 'ประกาศ',
-    title: 'ปิดปรับปรุงระบบ',
-    desc: 'ปรับปรุงเซิร์ฟเวอร์ในวันที่ 30/06/2026',
-    date: '24/06/2026',
+    title: 'อัปเดตเวอร์ชัน 1.0.1',
+    desc: 'อัพเดตUIของหน้าHomepage ให้ดูดีขึ้น',
+    date: '06/07/2026',
   },
 ];
 
@@ -264,7 +240,6 @@ export default function HomePage() {
       <div className="home-fog" />
 
       <div className="home-container">
-        {/* ── Topbar ── */}
         <div className="home-topbar">
           <div className="home-auth-actions">
             {user ? (
@@ -294,7 +269,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ── Title ── */}
         <div className="home-header entrance-logo">
           <h1 className="home-title">WE'RE NOT WOLF</h1>
           <div className="title-ornament">
@@ -444,7 +418,7 @@ export default function HomePage() {
                 </div>
                 <div className="player-info">
                   <div className="player-name">
-                    {user ? user.username : 'คนแปลกหน้า'}
+                    {user ? user.username : 'ยังไม่ได้เข้าสู่ระบบ'}
                   </div>
                   <div className="player-level">
                     {user ? `ระดับ ${user.level ?? 1}` : 'เข้าสู่ระบบเพื่อบันทึกความคืบหน้า'}
@@ -487,14 +461,11 @@ export default function HomePage() {
       <footer className="home-footer">
         <span className="version">v1.2.0</span>
         <div className="socials">
-          <a className="soc-btn" title="Discord" href="https://discord.gg/PLACEHOLDER" target="_blank" rel="noopener noreferrer">
+          <a className="soc-btn" title="Discord" href="https://discord.gg/gvDNBHQKT" target="_blank" rel="noopener noreferrer">
             <IconDiscord />
           </a>
           <a className="soc-btn" title="Facebook" href="https://facebook.com/PLACEHOLDER" target="_blank" rel="noopener noreferrer">
             <IconFacebook />
-          </a>
-          <a className="soc-btn" title="Website" href="https://PLACEHOLDER.com" target="_blank" rel="noopener noreferrer">
-            <IconGlobe />
           </a>
         </div>
       </footer>

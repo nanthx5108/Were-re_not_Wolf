@@ -45,10 +45,10 @@ CREATE TABLE IF NOT EXISTS messages (
         ON DELETE CASCADE
 );
 
-CREATE INDEX idx_players_room_id   ON players(room_id);
-CREATE INDEX idx_players_socket_id ON players(socket_id);
-CREATE INDEX idx_messages_room_id  ON messages(room_id);
-CREATE INDEX idx_messages_sent_at  ON messages(sent_at);
+CREATE INDEX IF NOT EXISTS idx_players_room_id   ON players(room_id);
+CREATE INDEX IF NOT EXISTS idx_players_socket_id ON players(socket_id);
+CREATE INDEX IF NOT EXISTS idx_messages_room_id  ON messages(room_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sent_at  ON messages(sent_at);
 
 CREATE TABLE IF NOT EXISTS users (
     id           VARCHAR(36)     NOT NULL PRIMARY KEY,
