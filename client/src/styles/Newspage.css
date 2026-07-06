@@ -1,0 +1,336 @@
+/* =========================================================
+   WE'RE NOT WOLF — News Page (Village Bulletin Board)
+   Same carved-wood + peg-corner + lantern-glow language as HomePage buttons
+   ========================================================= */
+
+.news-page {
+  min-height: 100dvh;
+  background-size: cover;
+  background-position: center top;
+  background-color: var(--bg-void);
+  position: relative;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+.news-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% -5%, rgba(180,200,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 120% 80% at 50% 50%, transparent 35%, rgba(0,0,0,0.72) 100%),
+    linear-gradient(180deg,
+      rgba(3,6,10,0.80) 0%,
+      rgba(4,7,12,0.62) 25%,
+      rgba(4,7,12,0.78) 75%,
+      rgba(2,4,8,0.93) 100%
+    );
+}
+
+.news-fog {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 25% at 0% 95%,  rgba(140,160,200,0.05) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 20% at 100% 90%, rgba(140,160,200,0.04) 0%, transparent 65%);
+  animation: fogDrift 28s ease-in-out infinite alternate;
+}
+
+.news-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =====================================================
+   TOPBAR — back button, carved wood + peg corners
+   ===================================================== */
+.news-topbar {
+  margin-bottom: var(--space-6);
+}
+
+.news-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  position: relative;
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 4px 14px rgba(0,0,0,0.5);
+  transition: color var(--ease), transform var(--ease), box-shadow var(--ease);
+}
+.news-back-btn::before,
+.news-back-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--ease);
+}
+.news-back-btn::before {
+  background-image:
+    radial-gradient(circle 2px at 8px 8px, rgba(94,76,50,0.65) 0%, transparent 75%),
+    radial-gradient(circle 2px at calc(100% - 8px) 8px, rgba(94,76,50,0.65) 0%, transparent 75%),
+    radial-gradient(circle 2px at 8px calc(100% - 8px), rgba(94,76,50,0.65) 0%, transparent 75%),
+    radial-gradient(circle 2px at calc(100% - 8px) calc(100% - 8px), rgba(94,76,50,0.65) 0%, transparent 75%);
+  opacity: 0.6;
+}
+.news-back-btn::after {
+  background-image:
+    radial-gradient(circle 5px at 8px 8px, rgba(212,168,83,0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at calc(100% - 8px) 8px, rgba(212,168,83,0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at 8px calc(100% - 8px), rgba(212,168,83,0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at calc(100% - 8px) calc(100% - 8px), rgba(212,168,83,0.9) 0%, transparent 75%);
+  opacity: 0;
+}
+.news-back-btn:hover {
+  color: var(--gold-bright);
+  transform: translateX(-3px);
+}
+.news-back-btn:hover::before { opacity: 0.2; }
+.news-back-btn:hover::after  { opacity: 1; }
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+.news-header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.news-header-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.news-ornament-line {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong));
+}
+.news-ornament-line:last-child {
+  background: linear-gradient(90deg, var(--border-strong), transparent);
+}
+.news-ornament-diamond {
+  width: 6px; height: 6px;
+  transform: rotate(45deg);
+  background: var(--gold-mid);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+
+.news-title {
+  font-family: var(--font-display) !important;
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+  margin-bottom: var(--space-2);
+}
+
+.news-subtitle {
+  font-family: var(--font-meta);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+/* =====================================================
+   FILTER TABS — mini peg-corner buttons
+   ===================================================== */
+.news-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.news-filter-btn {
+  position: relative;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-handwritten);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.05));
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 3px 10px rgba(0,0,0,0.4);
+  transition: color var(--ease), border-color var(--ease), transform var(--ease), box-shadow var(--ease);
+}
+.news-filter-btn:hover {
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.news-filter-btn.is-active {
+  color: var(--gold-bright);
+  border-color: rgba(212,168,83,0.30);
+  background-image: linear-gradient(180deg, rgba(212,168,83,0.10), rgba(0,0,0,0.05));
+  box-shadow: inset 0 1px 0 rgba(255,230,140,0.05), 0 0 16px rgba(212,168,83,0.15);
+}
+
+/* =====================================================
+   NEWS GRID — carved wood cards, peg corners, hover glow
+   ===================================================== */
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-7);
+}
+
+.news-card {
+  position: relative;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)),
+    linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
+  background-color: var(--bg-elevated);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.02),
+    inset 0 -8px 20px rgba(0,0,0,0.5),
+    0 6px 20px rgba(0,0,0,0.55);
+  transition: transform var(--ease-md), box-shadow var(--ease-md), border-color var(--ease-md);
+}
+
+/* Wooden peg corners — same language as menu buttons */
+.news-card-corner {
+  position: absolute;
+  width: 12px; height: 12px;
+  pointer-events: none;
+  border-radius: 50%;
+}
+.news-card-corner.tl { top: 8px; left: 8px; }
+.news-card-corner.br { bottom: 8px; right: 8px; }
+.news-card-corner::before,
+.news-card-corner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transition: opacity var(--ease);
+}
+.news-card-corner::before {
+  background: radial-gradient(circle, rgba(94,76,50,0.7) 0%, transparent 75%);
+  opacity: 0.6;
+}
+.news-card-corner::after {
+  background: radial-gradient(circle, rgba(212,168,83,0.95) 0%, transparent 75%);
+  opacity: 0;
+}
+.news-card.is-hovered {
+  transform: translateY(-4px);
+  border-color: rgba(212,168,83,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    0 14px 34px rgba(0,0,0,0.6),
+    var(--shadow-gold);
+}
+.news-card.is-hovered .news-card-corner::before { opacity: 0.15; }
+.news-card.is-hovered .news-card-corner::after  { opacity: 1; }
+
+.news-card-tag {
+  display: inline-block;
+  font-family: var(--font-meta);
+  font-size: 0.64rem;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 2px 9px;
+  border-radius: 3px;
+  margin-bottom: var(--space-2);
+  color: var(--gold-mid);
+  background: rgba(212,168,83,0.10);
+  border: 1px solid rgba(212,168,83,0.20);
+}
+.news-card-tag.tag-event     { color: #6ecf8a; background: rgba(42,102,68,0.12); border-color: rgba(42,102,68,0.35); }
+.news-card-tag.tag-notice    { color: var(--silver); background: rgba(255,255,255,0.05); border-color: var(--border-default); }
+.news-card-tag.tag-patch     { color: #7ea8cf; background: rgba(60,90,140,0.14); border-color: rgba(60,90,140,0.35); }
+.news-card-tag.tag-community { color: #d4a8cf; background: rgba(140,80,140,0.12); border-color: rgba(140,80,140,0.32); }
+
+.news-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.news-card-desc {
+  font-family: var(--font-thai);
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: var(--space-3);
+}
+
+.news-card-dev {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-left: 2px solid rgba(212,168,83,0.25);
+  background: rgba(0,0,0,0.18);
+  border-radius: 0 4px 4px 0;
+  margin-bottom: var(--space-3);
+}
+.news-card-dev-label {
+  font-family: var(--font-meta);
+  font-size: 0.64rem;
+  color: var(--gold-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.news-card-dev-text {
+  font-family: var(--font-meta);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.news-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.news-card-date {
+  font-family: var(--font-meta);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.news-narrator {
+  text-align: center;
+  font-family: var(--font-meta);
+  font-size: 0.78rem;
+  color: var(--gold-dim);
+  font-style: italic;
+  letter-spacing: 0.03em;
+  opacity: 0.85;
+}

@@ -30,6 +30,13 @@
   --silver:         #a8b4c0;
   --silver-dim:     #68788a;
 
+  /* ── Atmosphere accent — Andaman bioluminescent teal ── */
+  /* Used ONLY for ambient/decorative elements (fog tint, edge glow, ocean hints) */
+  /* Never used on buttons — primary hierarchy stays gold, this stays background-only */
+  --teal-glow:      #1a7a7b;
+  --teal-glow-soft: rgba(26,122,123,0.10);
+  --teal-glow-dim:  rgba(26,122,123,0.05);
+
   /* ── Text ── */
   --text-primary:   #e8edf2;
   --text-secondary: #8a9aaa;
@@ -46,7 +53,7 @@
   --font-logo:      'Cinzel Decorative', serif;   /* main game logo only */
   --font-display:   'Cinzel', serif;               /* panel/section titles */
   --font-meta:      'Special Elite', 'Courier Prime', monospace; /* labels, meta, dev notes */
-  --font-handwritten: 'Special Elite', 'Brush Script MT', cursive; /* hand-drawn / script accents for buttons */
+  --font-handwritten: 'Special Elite', 'Courier Prime', monospace; /* button titles — rough hand-inked feel */
   --font-body:      'Noto Sans Thai', 'Inter', sans-serif; /* buttons, body, Thai text */
   --font-thai:      'Noto Sans Thai', sans-serif;
 
