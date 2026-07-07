@@ -11,6 +11,8 @@ import CustomizePage from '../pages/CustomizePage.jsx';
 import SettingsPage from '../pages/SettingsPage.jsx';
 import NewsPage from '../pages/NewsPage.jsx';
 import ProfilePage from '../pages/ProfilePage.jsx';
+import AccountSettingsPage from '../pages/AccountSettingsPage.jsx';
+import ViewProfilePage from '../pages/ViewProfilePage.jsx';
 
 export default function App() {
   return (
@@ -27,6 +29,8 @@ export default function App() {
             <Route path="/settings"     element={<SettingsPage />} />
             <Route path="/news"         element={<NewsPage />} />
             <Route path="/profile"      element={<ProfilePage />} />
+            <Route path="/profile/view" element={<ViewProfilePage />} />
+            <Route path="/profile/settings" element={<AccountSettingsPage />} />
             <Route path="*"             element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

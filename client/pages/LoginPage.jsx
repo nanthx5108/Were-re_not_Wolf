@@ -47,8 +47,7 @@ export default function LoginPage() {
 
         <div className="auth-divider" />
 
-        <h2 className="auth-title">เข้าสู่หมู่บ้าน</h2>
-        <p className="auth-sub">ใครเชื่อถือได้บ้าง? คงต้องเข้ามาดูเอง</p>
+        <h2 className="auth-title">เข้าสู่ระบบ</h2>
 
         {error && <div className="auth-error">{error}</div>}
 

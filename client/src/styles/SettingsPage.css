@@ -1,8 +1,4 @@
 .settings-page {
-  --hp-accent:      #a8895a;
-  --hp-accent-dim:  #6b5436;
-  --hp-sepia:       #c9bba0;
-
   min-height: 100dvh;
   background-size: cover;
   background-position: center;
@@ -22,9 +18,9 @@
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(180,160,120,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 0%, var(--gold-glow-soft) 0%, transparent 60%),
     radial-gradient(ellipse 90% 70% at 50% 100%, rgba(0,0,0,0.45) 0%, transparent 65%),
-    linear-gradient(180deg, rgba(12,12,12,0.55) 0%, rgba(12,12,12,0.40) 38%, rgba(10,10,10,0.7) 100%);
+    linear-gradient(180deg, rgba(8,12,16,0.55) 0%, rgba(8,12,16,0.40) 38%, rgba(8,12,16,0.7) 100%);
 }
 
 .settings-container {
@@ -55,29 +51,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color .2s, border-color .2s, background .2s;
+  transition: color var(--ease), border-color var(--ease), background var(--ease);
   flex-shrink: 0;
 }
 .settings-back-btn:hover {
-  color: var(--hp-accent);
-  border-color: var(--hp-accent-dim);
-  background: rgba(168,137,90,0.08);
+  color: var(--color-accent);
+  border-color: var(--color-accent-dim);
+  background: var(--gold-glow-soft);
 }
 
 .settings-title {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 1.5rem;
-  color: var(--hp-sepia);
+  color: var(--text-gold);
   letter-spacing: 0.04em;
 }
 
 .settings-panel {
   position: relative;
   padding: var(--space-5);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   border: 2px solid var(--color-border);
-  background: linear-gradient(180deg, #252420 0%, #1e1d1b 100%);
-  box-shadow: 0 12px 36px rgba(0,0,0,0.55);
+  background: linear-gradient(180deg, var(--bg-overlay) 0%, var(--bg-elevated) 100%);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -103,7 +99,7 @@
 }
 
 .settings-section-label {
-  font-family: 'Courier Prime', monospace;
+  font-family: var(--font-meta);
   font-size: 0.78rem;
   color: var(--color-text-muted);
   letter-spacing: 0.08em;
@@ -124,13 +120,13 @@
 }
 
 .volume-label {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 0.95rem;
-  color: var(--hp-sepia);
+  color: var(--text-gold);
 }
 
 .volume-value {
-  font-family: 'Courier Prime', monospace;
+  font-family: var(--font-meta);
   font-size: 0.8rem;
   color: var(--color-text-muted);
   min-width: 36px;
@@ -144,7 +140,7 @@
   height: 6px;
   border-radius: 3px;
   background: rgba(0,0,0,0.4);
-  border: 1px solid #352d20;
+  border: 1px solid var(--border-strong);
   outline: none;
   cursor: pointer;
 }
@@ -155,9 +151,9 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #b89868, var(--hp-accent));
-  border: 1px solid var(--hp-accent-dim);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  background: linear-gradient(180deg, var(--gold-bright), var(--color-accent));
+  border: 1px solid var(--color-accent-dim);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
 }
 
@@ -165,9 +161,9 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #b89868, var(--hp-accent));
-  border: 1px solid var(--hp-accent-dim);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  background: linear-gradient(180deg, var(--gold-bright), var(--color-accent));
+  border: 1px solid var(--color-accent-dim);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
 }
 
@@ -178,7 +174,7 @@
 
 .settings-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, #352d20, transparent);
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
 }
 
 .settings-mute-row {
@@ -197,7 +193,7 @@
 .mute-toggle input {
   width: 16px;
   height: 16px;
-  accent-color: var(--hp-accent);
+  accent-color: var(--color-accent);
 }
 
 .mute-toggle span {
@@ -214,23 +210,23 @@
 .settings-save-btn {
   padding: 12px 28px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--hp-accent-dim);
-  background: linear-gradient(180deg, #b89868 0%, var(--hp-accent) 55%, var(--hp-accent-dim) 100%);
-  color: #18130c;
-  font-family: 'Cinzel', serif;
+  border: 1px solid var(--color-accent-dim);
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--color-accent) 55%, var(--color-accent-dim) 100%);
+  color: var(--bg-void);
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.9rem;
   letter-spacing: 0.04em;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-  transition: transform .2s, filter .2s;
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform var(--ease), filter var(--ease);
 }
 .settings-save-btn:hover { transform: translateY(-1px); }
 .settings-save-btn:active { transform: translateY(1px); filter: brightness(0.94); }
 
 .settings-saved-msg {
-  font-family: 'Courier Prime', monospace;
+  font-family: var(--font-meta);
   font-size: 0.78rem;
-  color: var(--hp-accent);
+  color: var(--color-accent);
   margin-right: var(--space-3);
   align-self: center;
   opacity: 0;
