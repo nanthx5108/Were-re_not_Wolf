@@ -4,13 +4,15 @@ import {
   loginHandler,
   logoutHandler,
   meHandler,
+  updateProfileHandler,
 } from '../controllers/authController.js';
 
 const router = Router();
 
 router.post('/register', registerHandler);
-router.post('/login',    loginHandler);
-router.post('/logout',   logoutHandler);
-router.get('/me',        meHandler);
+router.post('/login', loginHandler);
+router.post('/logout', logoutHandler);
+router.get('/me', meHandler);
+router.put('/profile', updateProfileHandler);
 
 export default router;

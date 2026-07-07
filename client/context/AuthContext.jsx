@@ -4,7 +4,7 @@ const AuthContext = createContext(null);
 const API = '/api/auth';
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(async ({ username, password }) => {
-    const res  = await fetch(`${API}/register`, {
+    const res = await fetch(`${API}/register`, {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async ({ username, password }) => {
-    const res  = await fetch(`${API}/login`, {
+    const res = await fetch(`${API}/login`, {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -46,8 +46,26 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const updateProfile = useCallback(async (payload = {}) => {
+    const res = await fetch(`${API}/profile`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: payload.username,
+        displayName: payload.displayName,
+        birthdate: payload.birthdate,
+        email: payload.email,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || 'Update profile failed.');
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, register, login, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

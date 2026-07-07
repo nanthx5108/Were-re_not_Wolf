@@ -1,4 +1,9 @@
-import { registerService, loginService, getUserByIdService } from '../services/authService.js';
+import {
+  registerService,
+  loginService,
+  getUserByIdService,
+  updateProfileService,
+} from '../services/authService.js';
 
 export async function registerHandler(req, res, next) {
   try {
@@ -13,7 +18,7 @@ export async function registerHandler(req, res, next) {
 
     const user = await registerService({ username, password });
 
-    req.session.userId   = user.id;
+    req.session.userId = user.id;
     req.session.username = user.username;
 
     return res.status(201).json({ user });
@@ -32,7 +37,7 @@ export async function loginHandler(req, res, next) {
 
     const user = await loginService({ username, password });
 
-    req.session.userId   = user.id;
+    req.session.userId = user.id;
     req.session.username = user.username;
 
     return res.json({ user });
@@ -64,6 +69,27 @@ export async function meHandler(req, res, next) {
 
     return res.json({ user });
   } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateProfileHandler(req, res, next) {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: 'Not authenticated.' });
+    }
+
+    const { username, displayName, birthdate, email } = req.body;
+    const user = await updateProfileService(req.session.userId, {
+      username,
+      displayName,
+      birthdate,
+      email,
+    });
+
+    return res.json({ user });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
     next(err);
   }
 }

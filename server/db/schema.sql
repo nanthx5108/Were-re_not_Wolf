@@ -51,14 +51,24 @@ CREATE INDEX IF NOT EXISTS idx_messages_room_id  ON messages(room_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sent_at  ON messages(sent_at);
 
 CREATE TABLE IF NOT EXISTS users (
-    id           VARCHAR(36)     NOT NULL PRIMARY KEY,
-    username     VARCHAR(32)     NOT NULL UNIQUE,
-    password     VARCHAR(255)    NOT NULL,
-    games_played INT             NOT NULL DEFAULT 0,
-    created_at   TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+    id                 VARCHAR(36)     NOT NULL PRIMARY KEY,
+    username           VARCHAR(32)     NOT NULL UNIQUE,
+    password           VARCHAR(255)    NOT NULL,
+    games_played       INT             NOT NULL DEFAULT 0,
+    display_name       VARCHAR(32)     DEFAULT NULL,
+    birthdate          DATE            DEFAULT NULL,
+    email              VARCHAR(255)    DEFAULT NULL,
+    avatar_url         VARCHAR(500)    DEFAULT NULL,
+    username_changed_at DATETIME       DEFAULT NULL,
+    created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
  
 ALTER TABLE users ADD COLUMN IF NOT EXISTS games_played INT NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(32) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate DATE DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username_changed_at DATETIME DEFAULT NULL;
 ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT FALSE;
