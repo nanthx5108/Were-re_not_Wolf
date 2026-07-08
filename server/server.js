@@ -24,6 +24,10 @@ io.on('connection', socket => {
   });
 });
 
+app.get('/api/stats/online', (_req, res) => {
+  res.json({ online: io.engine.clientsCount });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`🐺 WE'RE not WOLF server → http://localhost:${PORT}`);
 });
