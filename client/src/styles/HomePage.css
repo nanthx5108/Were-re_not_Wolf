@@ -119,8 +119,7 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-6);
-  background: linear-gradient(180deg, rgba(8,12,16,0.80) 0%, transparent 100%);
-  backdrop-filter: blur(6px);
+  background: transparent;
 }
 
 /* ── Online users badge (top-left) ── */
