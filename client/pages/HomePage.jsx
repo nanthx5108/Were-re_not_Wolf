@@ -502,7 +502,7 @@ export default function HomePage() {
                 <span className="panel-line" />
               </div>
 
-              <div className="news-container">
+              <div className="home-news-list">
                 {NEWS.map(n => <NewsRow key={n.id} news={n} />)}
               </div>
 
