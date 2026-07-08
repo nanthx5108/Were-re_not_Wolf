@@ -61,6 +61,24 @@ function IconArrow() {
   );
 }
 
+function IconPin() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 17v5"/>
+      <path d="M8 3h8l-1 6 3 3v2H6v-2l3-3-1-6z"/>
+    </svg>
+  );
+}
+
+function IconClock() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <polyline points="12 7 12 12 16 14"/>
+    </svg>
+  );
+}
+
 function IconLogin() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -77,19 +95,6 @@ function IconRegister() {
       <circle cx="9" cy="8" r="4"/>
       <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
       <polyline points="17 8 19 10 23 6"/>
-    </svg>
-  );
-}
-
-function IconWolf() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-      <ellipse cx="16" cy="20" rx="10" ry="7" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="1"/>
-      <circle cx="16" cy="13" r="7" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="1"/>
-      <path d="M11 10 L8 4 L12 9.5" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8"/>
-      <path d="M21 10 L24 4 L20 9.5" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8"/>
-      <circle cx="13" cy="13.5" r="1.2" fill="rgba(180,200,255,0.6)"/>
-      <circle cx="19" cy="13.5" r="1.2" fill="rgba(180,200,255,0.6)"/>
     </svg>
   );
 }
@@ -471,7 +476,12 @@ export default function HomePage() {
                 <span className="panel-corner panel-corner-tl" aria-hidden="true" />
                 <span className="panel-corner panel-corner-br" aria-hidden="true" />
                 <div className="player-ava">
-                  {user ? user.username.charAt(0).toUpperCase() : <IconWolf />}
+                  {user ? user.username.charAt(0).toUpperCase() : (
+                    <span className="player-ava-eyes">
+                      <span className="eye-dot" />
+                      <span className="eye-dot" />
+                    </span>
+                  )}
                 </div>
                 <div className="player-info">
                   <div className="player-name">
@@ -480,11 +490,13 @@ export default function HomePage() {
                   <div className="player-level">
                     {user ? `ระดับ ${user.level ?? 1}` : 'เข้าสู่ระบบเพื่อบันทึกความคืบหน้า'}
                   </div>
-                  {user && (
+                  {user ? (
                     <div className="player-exp">
                       <div className="player-exp-fill"
                         style={{ width: `${(((user.gamesPlayed ?? 0) % GAMES_PER_LEVEL) / GAMES_PER_LEVEL) * 100}%` }} />
                     </div>
+                  ) : (
+                    <div className="player-hint">&ldquo;หมาป่าไม่ได้จับตาดูนายอยู่หรอก&hellip; จริง ๆ นะ&rdquo;</div>
                   )}
                 </div>
               </div>
@@ -496,17 +508,25 @@ export default function HomePage() {
             <div className="panel-box">
               <span className="panel-corner panel-corner-tl" aria-hidden="true" />
               <span className="panel-corner panel-corner-br" aria-hidden="true" />
-              <div className="panel-head">
-                <span className="panel-line" />
-                <span className="panel-title">ข่าวสาร</span>
-                <span className="panel-line" />
+              <div className="home-news-head">
+                <div>
+                  <div className="home-news-eyebrow">ข่าวสาร</div>
+                  <div className="home-news-heading">กระดานประกาศหมู่บ้าน</div>
+                </div>
+                <span className="home-news-pin"><IconPin /></span>
               </div>
 
               <div className="home-news-list">
                 {NEWS.map(n => <NewsRow key={n.id} news={n} />)}
               </div>
 
-              <div className="more-container">
+              <div className="home-dev-note">
+                <div className="home-dev-note-label">Developer Note</div>
+                <div className="home-dev-note-text">&ldquo;เราไม่ได้บัฟหมาป่านะ ชาวบ้านเรียกร้องให้ปรับสมดุล&hellip; เราเลยไม่ทำอะไรเลย&rdquo;</div>
+              </div>
+
+              <div className="home-news-footer">
+                <span className="home-news-updated">อัปเดตล่าสุด &middot; {NEWS[0]?.date}</span>
                 <button className="more-btn" onClick={() => navigate('/news')}>
                   ดูทั้งหมด <span className="more-arrow"><IconArrow /></span>
                 </button>
@@ -537,11 +557,13 @@ export default function HomePage() {
 /* ── Sub-components ── */
 function NewsRow({ news }) {
   return (
-    <div className="news-item">
-      <div className="news-tag">{news.tag}</div>
-      <div className="news-title">{news.title}</div>
-      <div className="news-desc">{news.desc}</div>
-      <div className="news-date">{news.date}</div>
+    <div className="home-news-item">
+      <div className="home-news-item-meta">
+        <span className="home-news-item-tag">{news.tag}</span>
+        <span className="home-news-item-date"><IconClock />{news.date}</span>
+      </div>
+      <div className="home-news-item-title">{news.title}</div>
+      <div className="home-news-item-desc">{news.desc}</div>
     </div>
   );
 }
