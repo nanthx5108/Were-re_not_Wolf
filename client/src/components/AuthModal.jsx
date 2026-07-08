@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import '../styles/AuthModel.css';
+import '../styles/AuthModal.css';
 
 export default function AuthModal({ onClose, message }) {
   const navigate = useNavigate();
