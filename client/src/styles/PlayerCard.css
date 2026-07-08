@@ -82,7 +82,7 @@
 }
 
 .badge-host {
-  background-color: rgba(122, 80, 16, 0.2);
+  background-color: rgba(108, 128, 141, 0.2);
   color: var(--color-accent);
   border: 1px solid var(--color-accent-dim);
 }
