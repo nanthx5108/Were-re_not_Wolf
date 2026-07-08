@@ -1,9 +1,3 @@
-/* =========================================================
-   WE'RE NOT WOLF — HomePage
-   Redesign v3: premium mystery, moonlit village, sarcastic soul
-   ========================================================= */
-
-/* ── Page shell ── */
 .home-page {
   min-height: 100dvh;
   background-size: cover;
@@ -16,25 +10,62 @@
   flex-direction: column;
   align-items: center;
   overflow-x: hidden;
+
+  /* ── Kolae-inspired button materials (scoped locally to this page) ── */
+  --wood-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.15' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32 0 0 0 0 0.24 0 0 0 0 0.15 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+  --kolae-stripe: linear-gradient(90deg,
+    var(--gold-bright) 0%,
+    var(--gold-bright) 30%,
+    #b0472e 30%, #b0472e 55%,
+    var(--teal-glow) 55%, var(--teal-glow) 78%,
+    var(--gold-mid) 78%, var(--gold-mid) 100%);
 }
 
-/* ── Layered cinematic overlay ── */
 .home-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
   background:
-    /* top — moonlight corona */
     radial-gradient(ellipse 60% 40% at 50% -5%, rgba(180,200,255,0.06) 0%, transparent 60%),
-    /* vignette edges */
     radial-gradient(ellipse 120% 80% at 50% 50%, transparent 40%, rgba(0,0,0,0.55) 100%),
-    /* overall dark layer — lightened to reveal BG art */
     linear-gradient(180deg,
       rgba(8,12,16,0.50) 0%,
       rgba(8,12,16,0.30) 30%,
       rgba(8,12,16,0.55) 75%,
       rgba(4,6,10,0.85) 100%
     );
+}
+
+/* ── Fireflies — warm gold sparks drifting near the ground line ── */
+.fireflies-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.firefly {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 9px 2px var(--gold-glow);
+  animation-name: fireflyFloat;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes fireflyFloat {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  12%  { opacity: 0.9; }
+  50%  { transform: translate(12px, -30px); }
+  82%  { opacity: 0.55; }
+  100% { transform: translate(-6px, -62px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fireflies-layer { display: none; }
 }
 
 /* ── Fog layer — subtle Andaman bioluminescent tint near the water line ── */
@@ -72,12 +103,53 @@
   top: 0; right: 0; left: 0;
   z-index: 100;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-6);
   background: linear-gradient(180deg, rgba(8,12,16,0.80) 0%, transparent 100%);
   backdrop-filter: blur(0px);
+}
+
+/* ── Online users badge (top-left) ── */
+.online-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(10,15,20,0.55);
+  border: 1px solid var(--border-default);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+.online-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #5FA36A;
+  box-shadow: 0 0 8px 1px rgba(95,163,106,0.8);
+  animation: onlinePulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes onlinePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.85); }
+}
+.online-text {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.online-count {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .online-text { display: none; }
+  .online-badge { padding: 8px; }
 }
 
 .home-topbar,
@@ -98,6 +170,9 @@
 }
 
 .auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 9px 20px;
   border-radius: var(--radius-sm);
   font-family: var(--font-display);
@@ -110,7 +185,6 @@
   transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--ease), background var(--ease);
 }
 
-/* Sheen sweep on hover — light passes across the button */
 .auth-btn::before {
   content: '';
   position: absolute;
@@ -138,27 +212,48 @@
   box-shadow: 0 4px 16px rgba(168,180,192,0.10);
 }
 
-/* ── auth-btn-primary: bevel gradient + resting depth ── */
+/* ── auth-btn-primary: Kolae plank — gold paint film over wood grain ── */
 .auth-btn-primary {
+  position: relative;
   border: 1px solid var(--gold-mid);
-  background: linear-gradient(180deg,
-    rgba(212,168,83,0.28) 0%,
-    rgba(212,168,83,0.16) 50%,
-    rgba(212,168,83,0.08) 100%);
-  color: var(--gold-bright);
+  background:
+    linear-gradient(180deg,
+      rgba(212,168,83,0.55) 0%,
+      rgba(180,132,58,0.42) 50%,
+      rgba(122,90,40,0.38) 100%),
+    var(--wood-grain),
+    linear-gradient(180deg, #4a3a26 0%, #2e2417 100%);
+  background-blend-mode: normal, overlay, normal;
+  color: var(--bg-void);
   box-shadow:
-    0 3px 10px rgba(0,0,0,0.25),
-    inset 0 1px 0 rgba(255,255,255,0.12);
+    0 3px 10px rgba(0,0,0,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset 0 -2px 4px rgba(0,0,0,0.22);
+  overflow: hidden;
+}
+.auth-btn-primary::after {
+  content: '';
+  position: absolute;
+  left: 10%; right: 10%;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--kolae-stripe);
+  opacity: 0.5;
+  transition: opacity var(--ease), transform var(--ease);
 }
 .auth-btn-primary:hover {
-  background: linear-gradient(180deg,
-    rgba(212,168,83,0.38) 0%,
-    rgba(212,168,83,0.22) 50%,
-    rgba(212,168,83,0.12) 100%);
-  box-shadow: var(--shadow-gold), inset 0 1px 0 rgba(255,255,255,0.18);
+  filter: brightness(1.08);
+  box-shadow:
+    var(--shadow-gold),
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -2px 4px rgba(0,0,0,0.2);
+}
+.auth-btn-primary:hover::after {
+  opacity: 1;
+  animation: brushDraw 380ms ease-out;
 }
 
-/* User pill */
 .user-pill {
   display: flex;
   align-items: center;
@@ -216,9 +311,6 @@
   letter-spacing: 0.04em;
 }
 
-/* =====================================================
-   TITLE SECTION
-   ===================================================== */
 .home-header {
   text-align: center;
   padding: 120px 0 var(--space-7);
@@ -261,9 +353,6 @@
   box-shadow: 0 0 8px var(--gold-glow);
 }
 
-/* =====================================================
-   MAIN GRID
-   ===================================================== */
 .home-grid {
   display: grid;
   grid-template-columns: 1fr 0.85fr;
@@ -284,9 +373,6 @@
   gap: var(--space-4);
 }
 
-/* =====================================================
-   PANEL — premium glass card
-   ===================================================== */
 .menu-panel,
 .home-form,
 .panel-box {
@@ -326,9 +412,6 @@
 
 .menu-panel { padding: var(--space-4); }
 
-/* =====================================================
-   MENU BUTTONS
-   ===================================================== */
 .menu-btn {
   display: grid;
   grid-template-columns: 52px 1fr auto;
@@ -403,13 +486,40 @@
 .menu-btn.is-primary:hover:not(:disabled) {
   background: linear-gradient(90deg, rgba(212,168,83,0.12) 0%, transparent 60%);
   border-color: var(--gold-dim);
-  box-shadow: inset 0 0 0 1px rgba(212,168,83,0.08), 0 0 18px rgba(212,168,83,0.10);
+  box-shadow: inset 0 0 0 1px rgba(212,168,83,0.08), 0 0 26px rgba(212,168,83,0.16);
+  transform: translateY(-2px);
 }
 .menu-btn.is-primary:hover:not(:disabled)::before {
   opacity: 0.2;
 }
 .menu-btn.is-primary:hover:not(:disabled)::after {
   opacity: 1;
+}
+
+/* ── corner brackets for the primary (create room) button ── */
+.menu-btn-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  opacity: 0.55;
+  transition: opacity var(--ease);
+}
+.menu-btn-corner-tl {
+  top: 4px; left: 4px;
+  border-top: 2px solid var(--gold-mid);
+  border-left: 2px solid var(--gold-mid);
+  border-top-left-radius: 6px;
+}
+.menu-btn-corner-br {
+  bottom: 4px; right: 4px;
+  border-bottom: 2px solid var(--gold-mid);
+  border-right: 2px solid var(--gold-mid);
+  border-bottom-right-radius: 6px;
+}
+.menu-btn.is-primary:hover:not(:disabled) .menu-btn-corner {
+  opacity: 1;
+  border-color: var(--gold-bright);
 }
 
 .menu-btn:disabled {
@@ -484,9 +594,6 @@
   margin: 0 4px;
 }
 
-/* =====================================================
-   FORMS
-   ===================================================== */
 .home-form {
   padding: var(--space-5);
   display: flex;
@@ -555,52 +662,85 @@
 
 .btn-row { display: flex; gap: var(--space-3); margin-top: var(--space-1); }
 
-/* ── btn-primary: bevel gradient + resting depth + bouncy easing ── */
+/* ── btn-primary: Kolae plank — gold paint film over wood grain ── */
 .btn-primary {
+  position: relative;
   flex: 1;
   padding: 13px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--gold-mid);
-  background: linear-gradient(180deg,
-    rgba(212,168,83,0.30) 0%,
-    rgba(212,168,83,0.16) 55%,
-    rgba(212,168,83,0.08) 100%);
-  color: var(--gold-bright);
+  background:
+    linear-gradient(180deg,
+      rgba(212,168,83,0.55) 0%,
+      rgba(180,132,58,0.42) 50%,
+      rgba(122,90,40,0.38) 100%),
+    var(--wood-grain),
+    linear-gradient(180deg, #4a3a26 0%, #2e2417 100%);
+  background-blend-mode: normal, overlay, normal;
+  color: var(--bg-void);
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.82rem;
   letter-spacing: 0.06em;
   box-shadow:
-    0 3px 10px rgba(0,0,0,0.25),
-    inset 0 1px 0 rgba(255,255,255,0.12);
-  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--ease), background var(--ease), filter var(--ease);
+    0 3px 10px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -2px 4px rgba(0,0,0,0.25);
+  overflow: hidden;
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--ease), filter var(--ease);
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  left: 8%; right: 8%;
+  bottom: 5px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--kolae-stripe);
+  opacity: 0.55;
+  transition: opacity var(--ease), transform var(--ease);
 }
 .btn-primary:not(:disabled):hover {
   transform: translateY(-2px);
-  background: linear-gradient(180deg,
-    rgba(212,168,83,0.40) 0%,
-    rgba(212,168,83,0.22) 55%,
-    rgba(212,168,83,0.12) 100%);
-  box-shadow: var(--shadow-gold), inset 0 1px 0 rgba(255,255,255,0.18);
+  filter: brightness(1.08);
+  box-shadow:
+    var(--shadow-gold),
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 -2px 4px rgba(0,0,0,0.2);
+}
+.btn-primary:not(:disabled):hover::after {
+  opacity: 1;
+  transform: scaleX(1.05);
+  animation: brushDraw 380ms ease-out;
 }
 .btn-primary:not(:disabled):active {
   transform: translateY(0);
   filter: brightness(0.92);
 }
 
-/* ── btn-back: added resting depth + lift micro-interaction ── */
+@keyframes brushDraw {
+  0%   { clip-path: inset(0 100% 0 0); }
+  60%  { clip-path: inset(0 -10% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+/* ── btn-back / refresh-btn: bare weathered plank, no paint ── */
 .btn-back {
+  position: relative;
   padding: 13px 20px;
   border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.02);
   border: 1px solid var(--border-default);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.10) 100%),
+    var(--wood-grain),
+    var(--bg-elevated);
+  background-blend-mode: normal, soft-light, normal;
   color: var(--text-muted);
   font-size: 0.84rem;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
   transition: background var(--ease), color var(--ease), border-color var(--ease), transform var(--ease);
 }
 .btn-back:hover {
-  background: rgba(255,255,255,0.05);
   color: var(--text-secondary);
   border-color: var(--border-strong);
   transform: translateY(-1px);
@@ -622,10 +762,14 @@
 .room-list-head { display: flex; justify-content: space-between; align-items: center; }
 
 .refresh-btn {
+  position: relative;
   padding: 4px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-default);
-  background: transparent;
+  background:
+    var(--wood-grain),
+    transparent;
+  background-blend-mode: soft-light, normal;
   color: var(--text-muted);
   font-size: 0.72rem;
   transition: color var(--ease), border-color var(--ease);

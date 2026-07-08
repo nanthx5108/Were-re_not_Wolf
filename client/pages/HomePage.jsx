@@ -61,6 +61,26 @@ function IconArrow() {
   );
 }
 
+function IconLogin() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+      <polyline points="10 17 15 12 10 7"/>
+      <line x1="15" y1="12" x2="3" y2="12"/>
+    </svg>
+  );
+}
+
+function IconRegister() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="4"/>
+      <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
+      <polyline points="17 8 19 10 23 6"/>
+    </svg>
+  );
+}
+
 function IconWolf() {
   return (
     <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
@@ -148,7 +168,22 @@ export default function HomePage() {
   const [publicRooms, setPublicRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [selectedRoomCode, setSelectedRoomCode] = useState(null);
+  const [onlineCount, setOnlineCount] = useState(null);
   const ddRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchOnline() {
+      try {
+        const res = await fetch('/api/stats/online');
+        const data = await res.json();
+        if (!cancelled && res.ok) setOnlineCount(data.online);
+      } catch { /* silent */ }
+    }
+    fetchOnline();
+    const id = setInterval(fetchOnline, 8000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
   useEffect(() => {
     function handleClick(e) {
@@ -235,8 +270,24 @@ export default function HomePage() {
       <div className="home-overlay" />
       <div className="home-fog" />
 
+      <div className="fireflies-layer" aria-hidden="true">
+        <span className="firefly" style={{ left: '9%', top: '70%', animationDuration: '9s', animationDelay: '0s' }} />
+        <span className="firefly" style={{ left: '18%', top: '80%', animationDuration: '11s', animationDelay: '1.2s' }} />
+        <span className="firefly" style={{ left: '68%', top: '64%', animationDuration: '10s', animationDelay: '.6s' }} />
+        <span className="firefly" style={{ left: '82%', top: '76%', animationDuration: '12s', animationDelay: '2.4s' }} />
+        <span className="firefly" style={{ left: '44%', top: '84%', animationDuration: '9.5s', animationDelay: '3.1s' }} />
+        <span className="firefly" style={{ left: '58%', top: '73%', animationDuration: '13s', animationDelay: '1.8s' }} />
+      </div>
+
       <div className="home-container">
         <div className="home-topbar">
+          <div className="online-badge" title="ผู้เล่นที่ออนไลน์อยู่ตอนนี้">
+            <span className="online-dot" />
+            <span className="online-text">
+              ออนไลน์ · <span className="online-count">{onlineCount ?? '—'}</span> ชาวบ้าน
+            </span>
+          </div>
+
           <div className="home-auth-actions">
             {user ? (
               <div className="user-dropdown-wrap" ref={ddRef}>
@@ -255,9 +306,11 @@ export default function HomePage() {
             ) : (
               <>
                 <button className="auth-btn auth-btn-secondary" onClick={() => navigate('/login')} onMouseEnter={playHoverSfx}>
+                  <IconLogin />
                   เข้าสู่ระบบ
                 </button>
                 <button className="auth-btn auth-btn-primary" onClick={() => navigate('/register')} onMouseEnter={playHoverSfx}>
+                  <IconRegister />
                   สมัครสมาชิก
                 </button>
               </>
@@ -362,7 +415,7 @@ export default function HomePage() {
                 <div className="room-list custom-scrollbar">
                   {publicRooms.length === 0 && !loadingRooms && (
                     <div className="room-list-empty">
-                      หมู่บ้านเงียบผิดปกติ... เงียบเกินไป
+                      ยังไม่มีห้อง
                     </div>
                   )}
                   {publicRooms.map(r => {
@@ -434,7 +487,7 @@ export default function HomePage() {
             <div className="panel-box">
               <div className="panel-head">
                 <span className="panel-line" />
-                <span className="panel-title">นกส่งสาร</span>
+                <span className="panel-title">ข่าวสาร</span>
                 <span className="panel-line" />
               </div>
 
@@ -459,7 +512,7 @@ export default function HomePage() {
           <a className="soc-btn" title="Discord" href="https://discord.gg/gvDNBHQKT" target="_blank" rel="noopener noreferrer">
             <IconDiscord />
           </a>
-          <a className="soc-btn" title="Facebook" href="https://facebook.com/PLACEHOLDER" target="_blank" rel="noopener noreferrer">
+          <a className="soc-btn" title="Facebook" href="https://www.facebook.com/RayongTC?locale=th_TH" target="_blank" rel="noopener noreferrer">
             <IconFacebook />
           </a>
         </div>
@@ -487,6 +540,8 @@ function MenuBtn({ title, sub, onClick, primary = false, icon, onHover }) {
     <button type="button" onClick={onClick} disabled={!onClick}
       onMouseEnter={onHover}
       className={`menu-btn ${primary ? 'is-primary' : ''}`}>
+      {primary && <span className="menu-btn-corner menu-btn-corner-tl" aria-hidden="true" />}
+      {primary && <span className="menu-btn-corner menu-btn-corner-br" aria-hidden="true" />}
       <div className="menu-icon">{icon}</div>
       <div className="menu-text">
         <div className="menu-title">{title}</div>
