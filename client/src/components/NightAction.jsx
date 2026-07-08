@@ -20,10 +20,10 @@ export default function NightAction() {
   const chosenPlayer = alivePlayers.find((player) => player.id === myNightAction?.targetId);
 
   return (
-    <section style={{ border: '1px solid #e8a027', padding: '1rem', borderRadius: '12px', background: 'rgba(8,12,20,0.7)' }}>
-      <h3 style={{ marginTop: 0, color: '#e8a027' }}>🌙 Night Action</h3>
+    <section style={{ border: '1px solid #9fbcd0', padding: '1rem', borderRadius: '12px', background: 'rgba(8,12,20,0.7)' }}>
+      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>🌙 Night Action</h3>
       <p style={{ marginBottom: '0.75rem' }}>{prompt}</p>
-      <p style={{ marginBottom: '0.75rem', color: '#f5dcb3' }}>
+      <p style={{ marginBottom: '0.75rem', color: '#d9e4ec' }}>
         Role: <strong>{myRole}</strong>
       </p>
 
@@ -39,7 +39,7 @@ export default function NightAction() {
               <button
                 key={player.id}
                 onClick={() => submitNightAction(player.id)}
-                style={{ padding: '0.6rem 0.9rem', borderRadius: '999px', border: '1px solid #e8a027', background: '#111827', color: '#fff' }}
+                style={{ padding: '0.6rem 0.9rem', borderRadius: '999px', border: '1px solid #9fbcd0', background: '#111827', color: '#fff' }}
               >
                 {player.nickname}
               </button>
@@ -48,7 +48,7 @@ export default function NightAction() {
       )}
 
       {nightResult && (
-        <div style={{ marginTop: '0.75rem', color: '#f5dcb3' }}>
+        <div style={{ marginTop: '0.75rem', color: '#d9e4ec' }}>
           <strong>Night report:</strong>{' '}
           {nightResult.killedNickname ? `${nightResult.killedNickname} was struck.` : 'No one was harmed.'}
           {nightResult.seerResult && ` Seer saw ${nightResult.seerResult.role}.`}

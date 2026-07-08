@@ -186,7 +186,7 @@
   color: var(--gold-bright);
   border-color: rgba(159,188,208,0.30);
   background-image: linear-gradient(180deg, rgba(159,188,208,0.10), rgba(0,0,0,0.05));
-  box-shadow: inset 0 1px 0 rgba(255,230,140,0.05), 0 0 16px rgba(159,188,208,0.15);
+  box-shadow: inset 0 1px 0 rgba(202,218,229,0.05), 0 0 16px rgba(159,188,208,0.15);
 }
 
 /* =====================================================

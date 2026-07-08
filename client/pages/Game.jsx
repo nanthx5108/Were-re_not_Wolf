@@ -55,7 +55,7 @@ export default function Game() {
       )}
 
       {gameResult && (
-        <div className="lobby-error-banner" style={{ background: 'rgba(232, 160, 39, 0.16)' }}>
+        <div className="lobby-error-banner" style={{ background: 'rgba(159, 188, 208, 0.16)' }}>
           <span><strong>{gameResult.message}</strong></span>
         </div>
       )}
