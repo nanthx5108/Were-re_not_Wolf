@@ -966,7 +966,7 @@
   margin-bottom: var(--space-4);
 }
 
-.news-container { display: flex; flex-direction: column; flex: 1; }
+.home-news-list { display: flex; flex-direction: column; flex: 1; }
 
 .news-item {
   padding: 14px 0;
