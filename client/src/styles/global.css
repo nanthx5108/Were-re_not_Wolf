@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Special+Elite&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Special+Elite&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Sriracha&display=swap');
 
 /* =========================================================
    WE'RE NOT WOLF — Global Design System
@@ -54,8 +54,8 @@
   --font-display:   'Cinzel', serif;               /* panel/section titles */
   --font-meta:      'Special Elite', 'Courier Prime', monospace; /* labels, meta, dev notes */
   --font-handwritten: 'Special Elite', 'Courier Prime', monospace; /* button titles — rough hand-inked feel */
-  --font-body:      'Noto Sans Thai', 'Inter', sans-serif; /* buttons, body, Thai text */
-  --font-thai:      'Noto Sans Thai', sans-serif;
+  --font-body:      'Sriracha', 'Noto Sans Thai', 'Inter', sans-serif; /* buttons, body, Thai text — loopless, playful, flowing */
+  --font-thai:      'Sriracha', 'Noto Sans Thai', sans-serif;
 
   /* ── Spacing ── */
   --space-1: 4px;
