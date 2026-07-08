@@ -35,16 +35,16 @@ function buildBirthdate(day, month, year) {
 function DerpyWolfAvatar({ size = 96 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none">
-      <circle cx="60" cy="65" r="42" fill="#1a1712" stroke="#c8a84a" strokeWidth="2"/>
-      <path d="M28 45 L18 15 L42 38 Z" fill="#1a1712" stroke="#c8a84a" strokeWidth="2" strokeLinejoin="round"/>
-      <path d="M92 45 L102 15 L78 38 Z" fill="#1a1712" stroke="#c8a84a" strokeWidth="2" strokeLinejoin="round"/>
-      <circle cx="44" cy="58" r="14" fill="#f0e8d0" stroke="#c8a84a" strokeWidth="1.5"/>
-      <circle cx="76" cy="58" r="14" fill="#f0e8d0" stroke="#c8a84a" strokeWidth="1.5"/>
+      <circle cx="60" cy="65" r="42" fill="#1a1712" stroke="#9fbcd0" strokeWidth="2"/>
+      <path d="M28 45 L18 15 L42 38 Z" fill="#1a1712" stroke="#9fbcd0" strokeWidth="2" strokeLinejoin="round"/>
+      <path d="M92 45 L102 15 L78 38 Z" fill="#1a1712" stroke="#9fbcd0" strokeWidth="2" strokeLinejoin="round"/>
+      <circle cx="44" cy="58" r="14" fill="#f0e8d0" stroke="#9fbcd0" strokeWidth="1.5"/>
+      <circle cx="76" cy="58" r="14" fill="#f0e8d0" stroke="#9fbcd0" strokeWidth="1.5"/>
       <circle cx="47" cy="60" r="6" fill="#1a1208"/>
       <circle cx="73" cy="60" r="6" fill="#1a1208"/>
-      <path d="M35 82 Q60 100 85 82" stroke="#c8a84a" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-      <path d="M50 88 L52 100 L58 90" fill="#f0e8d0" stroke="#c8a84a" strokeWidth="1"/>
-      <path d="M70 88 L68 100 L62 90" fill="#f0e8d0" stroke="#c8a84a" strokeWidth="1"/>
+      <path d="M35 82 Q60 100 85 82" stroke="#9fbcd0" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      <path d="M50 88 L52 100 L58 90" fill="#f0e8d0" stroke="#9fbcd0" strokeWidth="1"/>
+      <path d="M70 88 L68 100 L62 90" fill="#f0e8d0" stroke="#9fbcd0" strokeWidth="1"/>
       <path d="M58 92 Q60 105 56 112 Q52 116 50 108 Q50 98 58 92 Z" fill="#c86060" stroke="#8b3a3a" strokeWidth="1"/>
     </svg>
   );
