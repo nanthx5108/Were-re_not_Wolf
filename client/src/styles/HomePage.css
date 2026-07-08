@@ -1095,7 +1095,7 @@
   position: relative;
   padding: 9px 28px;
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-family: var(--font-handwritten);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
@@ -1170,7 +1170,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   background: transparent;
   transition: color var(--ease), border-color var(--ease), background var(--ease), transform var(--ease);
   text-decoration: none;
