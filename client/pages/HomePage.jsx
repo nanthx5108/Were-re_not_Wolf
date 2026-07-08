@@ -268,6 +268,7 @@ export default function HomePage() {
   return (
     <div className="home-page entrance-page" style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
       <div className="home-overlay" />
+      <div className="home-moon-glow" aria-hidden="true" />
       <div className="home-fog" />
 
       <div className="fireflies-layer" aria-hidden="true">
@@ -333,6 +334,8 @@ export default function HomePage() {
           <div className="home-left entrance-menu">
             {!mode && (
               <div className="menu-panel">
+                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+                <span className="panel-corner panel-corner-br" aria-hidden="true" />
                 <MenuBtn
                   primary
                   icon={<IconCreate />}
@@ -359,6 +362,8 @@ export default function HomePage() {
 
             {mode === 'create' && (
               <form onSubmit={handleCreate} className="home-form fade-in">
+                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+                <span className="panel-corner panel-corner-br" aria-hidden="true" />
                 <h2 className="form-title">สร้างห้องใหม่</h2>
                 {error && <ErrorBox msg={error} />}
                 <Field label="ชื่อของคุณ" id="nick" value={nickname}
@@ -399,6 +404,8 @@ export default function HomePage() {
 
             {mode === 'join' && (
               <form onSubmit={handleJoin} className="home-form fade-in">
+                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+                <span className="panel-corner panel-corner-br" aria-hidden="true" />
                 <h2 className="form-title">เข้าร่วมห้อง</h2>
                 {error && <ErrorBox msg={error} />}
                 <Field label="ชื่อของคุณ" id="nick2" value={nickname}
@@ -461,6 +468,8 @@ export default function HomePage() {
             {/* Player bar */}
             {!mode && (
               <div className="player-bar fade-in">
+                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+                <span className="panel-corner panel-corner-br" aria-hidden="true" />
                 <div className="player-ava">
                   {user ? user.username.charAt(0).toUpperCase() : <IconWolf />}
                 </div>
@@ -485,6 +494,8 @@ export default function HomePage() {
           {/* RIGHT — News */}
           <div className="home-right entrance-news">
             <div className="panel-box">
+              <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+              <span className="panel-corner panel-corner-br" aria-hidden="true" />
               <div className="panel-head">
                 <span className="panel-line" />
                 <span className="panel-title">ข่าวสาร</span>
