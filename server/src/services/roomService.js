@@ -50,11 +50,11 @@ function clampMaxPlayers(value) {
 
 export async function listRoomsService() {
   const [rows] = await pool.query(
-    `SELECT r.id, r.name, r.status, r.max_players,
+    `SELECT r.id, r.name, r.status, r.max_players, r.is_private,
             COUNT(p.id) AS player_count
      FROM rooms r
      LEFT JOIN players p ON p.room_id = r.id
-     WHERE r.is_private = FALSE AND r.status != 'finished'
+     WHERE r.status != 'finished'
      GROUP BY r.id
      ORDER BY r.created_at DESC
      LIMIT 50`
@@ -66,6 +66,7 @@ export async function listRoomsService() {
     status:      r.status,
     maxPlayers:  r.max_players,
     playerCount: r.player_count,
+    isPrivate:   !!r.is_private,
   }));
 }
 

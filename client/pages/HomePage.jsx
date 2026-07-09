@@ -71,9 +71,9 @@ function IconSettings() {
   );
 }
 
-function IconArrow() {
+function IconArrow({ style }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
       <polyline points="9 18 15 12 9 6"/>
     </svg>
   );
@@ -84,6 +84,15 @@ function IconPin() {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 17v5"/>
       <path d="M8 3h8l-1 6 3 3v2H6v-2l3-3-1-6z"/>
+    </svg>
+  );
+}
+
+function IconLock() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   );
 }
@@ -190,7 +199,8 @@ export default function HomePage() {
   const [showDD, setShowDD] = useState(false);
   const [publicRooms, setPublicRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [selectedRoomCode, setSelectedRoomCode] = useState(null);
+  const [joinStep, setJoinStep] = useState('browse'); // 'browse' | 'code' | 'name'
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [onlineCount, setOnlineCount] = useState(null);
   const ddRef = useRef(null);
 
@@ -278,14 +288,40 @@ export default function HomePage() {
     return () => clearInterval(id);
   }, [mode]);
 
-  function selectRoomToJoin(code) {
-    setSelectedRoomCode(code);
-    setRoomCode(code);
+  function selectRoomToJoin(room) {
+    setError(null);
+    setSelectedRoom(room);
+    if (room.isPrivate) {
+      setRoomCode('');
+      setJoinStep('code');
+    } else {
+      setRoomCode(room.id);
+      setJoinStep('name');
+    }
+  }
+
+  function confirmRoomCode(e) {
+    e.preventDefault();
+    if (!roomCode.trim()) return;
+    setError(null);
+    setJoinStep('name');
+  }
+
+  function backJoinStep() {
+    setError(null);
+    if (joinStep === 'name' && selectedRoom?.isPrivate) {
+      setJoinStep('code');
+    } else {
+      setJoinStep('browse');
+      setSelectedRoom(null);
+      setRoomCode('');
+    }
   }
 
   function reset() {
     setMode(null); setError(null); setNickname('');
-    setRoomName(''); setRoomCode(''); setSelectedRoomCode(null);
+    setRoomName(''); setRoomCode('');
+    setJoinStep('browse'); setSelectedRoom(null);
   }
 
   return (
@@ -437,65 +473,98 @@ export default function HomePage() {
             )}
 
             {mode === 'join' && (
-              <form onSubmit={handleJoin} className="home-form fade-in">
+              <form onSubmit={joinStep === 'code' ? confirmRoomCode : handleJoin} className="home-form fade-in">
                 <span className="panel-corner panel-corner-tl" aria-hidden="true" />
                 <span className="panel-corner panel-corner-br" aria-hidden="true" />
-                <h2 className="form-title">เข้าร่วมห้อง</h2>
-                {error && <ErrorBox msg={error} />}
-                <Field label="ชื่อของคุณ" id="nick2" value={nickname}
-                  onChange={e => setNickname(e.target.value)} max={32} autoFocus />
 
-                <div className="room-list-head">
-                  <span className="field-label">ห้องที่เปิดอยู่</span>
-                  <button type="button" onClick={fetchPublicRooms}
-                    className="refresh-btn" disabled={loadingRooms}>
-                    {loadingRooms ? 'กำลังโหลด...' : '↻ รีเฟรช'}
-                  </button>
-                </div>
+                {joinStep === 'browse' && (
+                  <>
+                    <button type="button" className="btn-back join-top-back" onClick={reset}>
+                      <IconArrow style={{ transform: 'rotate(180deg)' }} /> กลับหน้าหลัก
+                    </button>
+                    <h2 className="form-title">ห้องที่ออนไลน์อยู่</h2>
+                    {error && <ErrorBox msg={error} />}
 
-                <div className="room-list custom-scrollbar">
-                  {publicRooms.length === 0 && !loadingRooms && (
-                    <div className="room-list-empty">
-                      ยังไม่มีห้อง
-                    </div>
-                  )}
-                  {publicRooms.map(r => {
-                    const full = r.playerCount >= r.maxPlayers;
-                    const inGame = r.status !== 'waiting';
-                    const disabled = full || inGame;
-                    const selected = selectedRoomCode === r.id;
-                    return (
-                      <button type="button" key={r.id}
-                        onClick={() => !disabled && selectRoomToJoin(r.id)}
-                        disabled={disabled}
-                        className={`room-row ${selected ? 'is-selected' : ''} ${disabled ? 'is-disabled' : ''}`}>
-                        <div className="room-row-main">
-                          <span className="room-row-name">{r.name}</span>
-                          <span className="room-row-code">#{r.id}</span>
-                        </div>
-                        <div className="room-row-meta">
-                          <span className={`room-status-badge ${inGame ? 'is-playing' : ''}`}>
-                            {inGame ? 'กำลังเล่น' : 'รอผู้เล่น'}
-                          </span>
-                          <span className="room-row-count">{r.playerCount}/{r.maxPlayers} คน</span>
-                        </div>
+                    <div className="room-list-head">
+                      <button type="button" onClick={fetchPublicRooms}
+                        className="refresh-btn" disabled={loadingRooms}>
+                        {loadingRooms ? 'กำลังโหลด...' : '↻ รีเฟรช'}
                       </button>
-                    );
-                  })}
-                </div>
+                    </div>
 
-                <Field label="หรือกรอกรหัสห้อง (สำหรับห้องส่วนตัว)"
-                  id="code" value={roomCode}
-                  onChange={e => { setRoomCode(e.target.value.toUpperCase()); setSelectedRoomCode(null); }}
-                  max={8} extraClassName="field-input-code" />
+                    <div className="room-list custom-scrollbar">
+                      {publicRooms.length === 0 && !loadingRooms && (
+                        <div className="room-list-empty">
+                          ยังไม่มีห้อง
+                        </div>
+                      )}
+                      {publicRooms.map(r => {
+                        const full = r.playerCount >= r.maxPlayers;
+                        const inGame = r.status !== 'waiting';
+                        const disabled = full || inGame;
+                        return (
+                          <button type="button" key={r.id}
+                            onClick={() => !disabled && selectRoomToJoin(r)}
+                            disabled={disabled}
+                            className={`room-row room-row-3col ${disabled ? 'is-disabled' : ''}`}>
+                            <span className="room-row-col room-row-col-name">{r.name}</span>
+                            <span className={`room-row-col room-row-col-privacy ${r.isPrivate ? 'is-private' : 'is-public'}`}>
+                              {r.isPrivate ? <><IconLock /> ส่วนตัว</> : 'สาธารณะ'}
+                            </span>
+                            <span className="room-row-col room-row-col-count">
+                              {r.playerCount}/{r.maxPlayers} คน
+                              {inGame && <span className="room-row-ingame">กำลังเล่น</span>}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
 
-                <div className="btn-row">
-                  <button type="submit" className="btn-primary"
-                    disabled={loading || !nickname.trim() || !roomCode.trim()}>
-                    {loading ? 'กำลังเข้าร่วม...' : 'เข้าร่วม'}
-                  </button>
-                  <button type="button" className="btn-back" onClick={reset}>กลับ</button>
-                </div>
+                {joinStep !== 'browse' && <h2 className="form-title">เข้าร่วมห้อง</h2>}
+                {joinStep !== 'browse' && error && <ErrorBox msg={error} />}
+
+                {joinStep === 'code' && (
+                  <>
+                    <div className="join-selected-room">
+                      <span className="join-selected-label"><IconLock /> ห้องส่วนตัว</span>
+                      <span className="join-selected-name">{selectedRoom?.name}</span>
+                    </div>
+                    <p className="field-hint">ห้องนี้เป็นห้องส่วนตัว กรอกรหัสห้องที่ได้รับมาก่อนถึงจะเข้าร่วมได้</p>
+                    <Field label="รหัสห้อง" id="code" value={roomCode}
+                      onChange={e => setRoomCode(e.target.value.toUpperCase())}
+                      max={8} extraClassName="field-input-code" autoFocus />
+
+                    <div className="btn-row">
+                      <button type="submit" className="btn-primary" disabled={!roomCode.trim()}>
+                        ถัดไป
+                      </button>
+                      <button type="button" className="btn-back" onClick={backJoinStep}>กลับ</button>
+                    </div>
+                  </>
+                )}
+
+                {joinStep === 'name' && (
+                  <>
+                    <div className="join-selected-room">
+                      <span className="join-selected-label">
+                        {selectedRoom?.isPrivate && <IconLock />} กำลังเข้าร่วมห้อง
+                      </span>
+                      <span className="join-selected-name">{selectedRoom?.name}</span>
+                    </div>
+                    <Field label="ชื่อของคุณ" id="nick2" value={nickname}
+                      onChange={e => setNickname(e.target.value)} max={32} autoFocus />
+
+                    <div className="btn-row">
+                      <button type="submit" className="btn-primary"
+                        disabled={loading || !nickname.trim() || !roomCode.trim()}>
+                        {loading ? 'กำลังเข้าร่วม...' : 'เข้าร่วม'}
+                      </button>
+                      <button type="button" className="btn-back" onClick={backJoinStep}>กลับ</button>
+                    </div>
+                  </>
+                )}
               </form>
             )}
 
