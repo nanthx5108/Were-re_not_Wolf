@@ -47,16 +47,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const updateProfile = useCallback(async (payload = {}) => {
+    const form = new FormData();
+    if (payload.username !== undefined) form.append('username', payload.username);
+    if (payload.displayName !== undefined) form.append('displayName', payload.displayName);
+    if (payload.birthdate !== undefined) form.append('birthdate', payload.birthdate);
+    if (payload.email !== undefined) form.append('email', payload.email);
+    if (payload.avatarFile) form.append('avatar', payload.avatarFile);
+
     const res = await fetch(`${API}/profile`, {
       method: 'PUT',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: payload.username,
-        displayName: payload.displayName,
-        birthdate: payload.birthdate,
-        email: payload.email,
-      }),
+      body: form,
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error(data?.error || 'Update profile failed.');

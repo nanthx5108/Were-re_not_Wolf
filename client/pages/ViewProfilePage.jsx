@@ -111,7 +111,7 @@ export default function ViewProfilePage() {
           <div className="view-profile-divider" />
 
           <div className="view-profile-btn-row">
-            <button className="view-profile-btn-edit" onClick={() => navigate('/profile/settings')}>
+            <button className="view-profile-btn-edit" onClick={() => navigate('/profile')}>
               แก้ไขข้อมูล
             </button>
           </div>

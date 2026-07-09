@@ -80,11 +80,13 @@ export async function updateProfileHandler(req, res, next) {
     }
 
     const { username, displayName, birthdate, email } = req.body;
+    const avatarUrl = req.file ? `/uploads/avatars/${req.file.filename}` : undefined;
     const user = await updateProfileService(req.session.userId, {
       username,
       displayName,
       birthdate,
       email,
+      avatarUrl,
     });
 
     return res.json({ user });

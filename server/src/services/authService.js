@@ -1,6 +1,12 @@
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pool from '../../db/connection.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const UPLOADS_ROOT = path.join(__dirname, '../../uploads');
 
 const SALT_ROUNDS = 12;
 const GAMES_PER_LEVEL = 5;
@@ -93,7 +99,7 @@ export async function updateProfileService(id, updates) {
   await ensureProfileColumns();
 
   const [rows] = await pool.query(
-    'SELECT username, username_changed_at FROM users WHERE id = ?',
+    'SELECT username, username_changed_at, avatar_url FROM users WHERE id = ?',
     [id]
   );
   const existingUser = rows[0];
@@ -129,6 +135,15 @@ export async function updateProfileService(id, updates) {
   if (typeof updates.email === 'string') {
     fields.push('email = ?');
     values.push(updates.email.trim() || null);
+  }
+  if (typeof updates.avatarUrl === 'string' && updates.avatarUrl) {
+    fields.push('avatar_url = ?');
+    values.push(updates.avatarUrl);
+
+    if (existingUser.avatar_url) {
+      const oldPath = path.join(UPLOADS_ROOT, existingUser.avatar_url.replace(/^\/uploads\//, ''));
+      fs.unlink(oldPath).catch(() => {});
+    }
   }
   if (nextUsername && usernameChanged) {
     fields.push('username = ?');
