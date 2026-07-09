@@ -142,11 +142,50 @@ function IconFacebook() {
   );
 }
 
-function IconGlobe() {
+function IconGlobe({ size = 17 }) {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/>
       <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  );
+}
+
+function IconSearch() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  );
+}
+
+function IconHouse() {
+  return (
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11.5 12 4l9 7.5"/>
+      <path d="M5.5 10v9a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-9"/>
+      <path d="M9.5 20v-6h5v6"/>
+    </svg>
+  );
+}
+
+function IconGroup() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  );
+}
+
+function IconBlock() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/>
     </svg>
   );
 }
@@ -201,6 +240,9 @@ export default function HomePage() {
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [joinStep, setJoinStep] = useState('browse'); // 'browse' | 'code' | 'name'
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [roomSearch, setRoomSearch] = useState('');
+  const [roomFilter, setRoomFilter] = useState('all'); // 'all' | 'public' | 'private' | 'open'
+  const [refreshSpin, setRefreshSpin] = useState(0);
   const [onlineCount, setOnlineCount] = useState(null);
   const ddRef = useRef(null);
 
@@ -281,6 +323,11 @@ export default function HomePage() {
     finally { setLoadingRooms(false); }
   }
 
+  function handleRefreshRooms() {
+    setRefreshSpin(s => s + 360);
+    fetchPublicRooms();
+  }
+
   useEffect(() => {
     if (mode !== 'join') return;
     fetchPublicRooms();
@@ -322,7 +369,26 @@ export default function HomePage() {
     setMode(null); setError(null); setNickname('');
     setRoomName(''); setRoomCode('');
     setJoinStep('browse'); setSelectedRoom(null);
+    setRoomSearch(''); setRoomFilter('all');
   }
+
+  const HOST_AVATAR_COLORS = ['#b4cbda', '#9fbcd0', '#5FA36A', '#c98a8a', '#b79dd0'];
+
+  const filteredRooms = publicRooms.filter(r => {
+    if (roomFilter === 'public' && r.isPrivate) return false;
+    if (roomFilter === 'private' && !r.isPrivate) return false;
+    if (roomFilter === 'open' && r.playerCount >= r.maxPlayers) return false;
+    const q = roomSearch.trim().toLowerCase();
+    if (q && !r.name.toLowerCase().includes(q) && !(r.host || '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const ROOM_FILTER_TABS = [
+    { key: 'all', label: 'ทั้งหมด' },
+    { key: 'public', label: 'สาธารณะ' },
+    { key: 'private', label: 'ส่วนตัว' },
+    { key: 'open', label: 'ยังไม่เต็ม' },
+  ];
 
   return (
     <div className="home-page entrance-page" style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
@@ -474,50 +540,129 @@ export default function HomePage() {
 
             {mode === 'join' && (
               <form onSubmit={joinStep === 'code' ? confirmRoomCode : handleJoin} className="home-form fade-in">
-                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-                <span className="panel-corner panel-corner-br" aria-hidden="true" />
+                {joinStep !== 'browse' && (
+                  <>
+                    <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+                    <span className="panel-corner panel-corner-br" aria-hidden="true" />
+                  </>
+                )}
 
                 {joinStep === 'browse' && (
                   <>
-                    <button type="button" className="btn-back join-top-back" onClick={reset}>
-                      <IconArrow style={{ transform: 'rotate(180deg)' }} /> กลับหน้าหลัก
-                    </button>
-                    <h2 className="form-title">ห้องที่ออนไลน์อยู่</h2>
-                    {error && <ErrorBox msg={error} />}
-
-                    <div className="room-list-head">
-                      <button type="button" onClick={fetchPublicRooms}
-                        className="refresh-btn" disabled={loadingRooms}>
-                        {loadingRooms ? 'กำลังโหลด...' : '↻ รีเฟรช'}
+                    <div className="join-header-row">
+                      <button type="button" className="join-back-btn" onClick={reset}>
+                        <IconArrow style={{ transform: 'rotate(180deg)' }} /> ย้อนกลับไปหน้าหลัก
                       </button>
                     </div>
 
-                    <div className="room-list custom-scrollbar">
-                      {publicRooms.length === 0 && !loadingRooms && (
-                        <div className="room-list-empty">
-                          ยังไม่มีห้อง
+                    {error && <ErrorBox msg={error} />}
+
+                    <div className="join-search-row">
+                      <div className="join-search-wrap">
+                        <IconSearch />
+                        <input
+                          type="text"
+                          className="join-search-input"
+                          placeholder="ค้นหาชื่อห้อง..."
+                          value={roomSearch}
+                          onChange={e => setRoomSearch(e.target.value)}
+                        />
+                      </div>
+                      <button type="button" onClick={handleRefreshRooms}
+                        className="refresh-btn" disabled={loadingRooms}>
+                        <span className="refresh-icon" style={{ transform: `rotate(${refreshSpin}deg)` }}>↻</span>
+                        รีเฟรช
+                      </button>
+                    </div>
+
+                    <div className="join-filter-tabs">
+                      {ROOM_FILTER_TABS.map(tab => (
+                        <button type="button" key={tab.key}
+                          className={`join-filter-tab ${roomFilter === tab.key ? 'is-active' : ''}`}
+                          onClick={() => setRoomFilter(tab.key)}>
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="room-list-panel">
+                      <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+                      <span className="panel-corner panel-corner-br" aria-hidden="true" />
+
+                      {filteredRooms.length === 0 ? (
+                        <div className="room-list-empty-rich">
+                          <IconHouse />
+                          <div className="room-list-empty-title">
+                            {publicRooms.length === 0 ? 'ตอนนี้ยังไม่มีห้องเปิดอยู่' : 'ไม่พบห้องที่ตรงกับตัวกรอง'}
+                          </div>
+                          <div className="room-list-empty-sub">
+                            {publicRooms.length === 0
+                              ? 'หมู่บ้านเงียบสงัด… อาจถึงเวลาที่คุณจะเป็นคนแรกที่จุดตะเกียง'
+                              : 'ลองเปลี่ยนตัวกรองหรือคำค้นหาดูอีกครั้ง'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="room-list custom-scrollbar">
+                          {filteredRooms.map((r, i) => {
+                            const full = r.playerCount >= r.maxPlayers;
+                            const inGame = r.status !== 'waiting';
+                            const disabled = full || inGame;
+                            const pct = Math.min(1, r.playerCount / Math.max(1, r.maxPlayers));
+                            const nearFull = !full && pct >= 0.75;
+                            const countClass = full ? 'is-full' : nearFull ? 'is-near' : 'is-ok';
+                            const hostInitial = (r.host || '?').trim().charAt(0).toUpperCase();
+                            const hostColor = HOST_AVATAR_COLORS[i % HOST_AVATAR_COLORS.length];
+                            return (
+                              <div key={r.id} className={`room-row-rich ${disabled ? 'is-disabled' : ''}`}>
+                                <span className="room-row-index">{String(i + 1).padStart(2, '0')}</span>
+
+                                <span className="room-row-icon">
+                                  <IconHouse />
+                                  {full && <span className="room-row-icon-badge"><IconBlock /></span>}
+                                </span>
+
+                                <div className="room-row-info">
+                                  <div className="room-row-info-top">
+                                    <span className="room-row-title">{r.name}</span>
+                                    {r.isPrivate ? (
+                                      <span className="room-tag is-private"><IconLock /> ห้องส่วนตัว</span>
+                                    ) : (
+                                      <span className="room-tag is-public"><IconGlobe size={13} /> ห้องสาธารณะ</span>
+                                    )}
+                                    {nearFull && <span className="room-row-nearfull">เกือบเต็มแล้ว · รีบเลย</span>}
+                                    {inGame && <span className="room-row-nearfull is-playing">กำลังเล่น</span>}
+                                  </div>
+                                  {r.host && (
+                                    <div className="room-row-info-bottom">
+                                      <span className="room-row-host-dot" style={{ background: hostColor }}>{hostInitial}</span>
+                                      <span className="room-row-host-text">โฮสต์โดย {r.host}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className={`room-row-count ${countClass}`}>
+                                  <span className="room-row-count-num">
+                                    <IconGroup /> {r.playerCount}<span className="room-row-count-max">/{r.maxPlayers}</span>
+                                  </span>
+                                  <span className="room-row-count-bar">
+                                    <span className="room-row-count-fill" style={{ width: `${pct * 100}%` }} />
+                                  </span>
+                                </div>
+
+                                {disabled ? (
+                                  <button type="button" disabled className="room-row-join-btn is-disabled">
+                                    {full ? 'เต็มแล้ว' : 'กำลังเล่น'}
+                                  </button>
+                                ) : (
+                                  <button type="button" className="room-row-join-btn" onClick={() => selectRoomToJoin(r)}>
+                                    เข้าร่วม
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
-                      {publicRooms.map(r => {
-                        const full = r.playerCount >= r.maxPlayers;
-                        const inGame = r.status !== 'waiting';
-                        const disabled = full || inGame;
-                        return (
-                          <button type="button" key={r.id}
-                            onClick={() => !disabled && selectRoomToJoin(r)}
-                            disabled={disabled}
-                            className={`room-row room-row-3col ${disabled ? 'is-disabled' : ''}`}>
-                            <span className="room-row-col room-row-col-name">{r.name}</span>
-                            <span className={`room-row-col room-row-col-privacy ${r.isPrivate ? 'is-private' : 'is-public'}`}>
-                              {r.isPrivate ? <><IconLock /> ส่วนตัว</> : 'สาธารณะ'}
-                            </span>
-                            <span className="room-row-col room-row-col-count">
-                              {r.playerCount}/{r.maxPlayers} คน
-                              {inGame && <span className="room-row-ingame">กำลังเล่น</span>}
-                            </span>
-                          </button>
-                        );
-                      })}
                     </div>
                   </>
                 )}
