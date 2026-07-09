@@ -836,7 +836,7 @@
   animation: shake 300ms ease;
 }
 
-.room-list-head { display: flex; justify-content: space-between; align-items: center; }
+.room-list-head { display: flex; justify-content: flex-end; align-items: center; }
 
 .refresh-btn {
   position: relative;
@@ -856,8 +856,8 @@
 .room-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  max-height: 200px;
+  gap: var(--space-3);
+  max-height: 260px;
   overflow-y: auto;
 }
 
@@ -896,26 +896,87 @@
 }
 .room-row.is-disabled { opacity: 0.35; cursor: not-allowed; }
 
-.room-row-main { display: flex; flex-direction: column; gap: 2px; }
-.room-row-name { font-size: 0.88rem; color: var(--text-primary); font-family: var(--font-display); }
-.room-row-code { font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.12em; }
-.room-row-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.join-top-back {
+  align-self: flex-start;
+}
 
-.room-status-badge {
-  font-size: 0.66rem;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: rgba(42,102,68,0.18);
-  border: 1px solid rgba(42,102,68,0.5);
-  color: #6ecf8a;
+.room-row-3col { gap: var(--space-2); }
+.room-row-col {
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+}
+.room-row-col-name {
+  flex: 1.4;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.room-row-col-privacy {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-family: var(--font-meta);
   letter-spacing: 0.04em;
+  color: #6ecf8a;
 }
-.room-status-badge.is-playing {
-  background: rgba(139,32,32,0.18);
-  border-color: rgba(139,32,32,0.5);
+.room-row-col-privacy.is-private { color: var(--gold-mid); }
+.room-row-col-count {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  font-family: var(--font-meta);
+}
+.room-row-ingame {
+  font-size: 0.62rem;
   color: #f08080;
+  letter-spacing: 0.02em;
 }
-.room-row-count { font-size: 0.72rem; color: var(--text-muted); }
+
+.join-selected-room {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(159,188,208,0.06);
+  border: 1px solid rgba(159,188,208,0.18);
+}
+.join-selected-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-meta);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.join-selected-name {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  color: var(--gold-bright);
+  font-weight: 600;
+  text-align: right;
+}
+
+.field-hint {
+  font-family: var(--font-meta);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin: -4px 0 2px;
+  line-height: 1.5;
+}
 
 .player-bar {
   position: relative;
