@@ -256,7 +256,7 @@ export default function ProfilePage() {
                 className="profile-avatar-input"
               />
               <p className="profile-avatar-hint">
-                คลิกที่รูปเพื่อเปลี่ยน — ไม่เปลี่ยนก็ได้ หมาป่าหน้าโง่ก็ดูดีอยู่แล้ว
+                คลิกที่รูปเพื่อเปลี่ยน ไม่เปลี่ยนก็ได้ หมาป่าหน้าโง่ก็ดูดีอยู่แล้ว
               </p>
             </div>
 
@@ -306,7 +306,7 @@ export default function ProfilePage() {
                 {usernameOnCooldown
                   ? 'เปลี่ยนไปแล้วเมื่อไม่นานมานี้ ต้องรอให้ครบกำหนดก่อน'
                   : usernameUnlocked
-                    ? `พิมพ์ชื่อใหม่ได้เลย — เปลี่ยนแล้วต้องรอ ${USERNAME_COOLDOWN_DAYS} วันถึงจะเปลี่ยนได้อีก`
+                    ? `พิมพ์ชื่อใหม่ได้เลย เปลี่ยนแล้วต้องรออีก ${USERNAME_COOLDOWN_DAYS} วันถึงจะเปลี่ยนได้อีกครั้ง`
                     : 'กดไอคอนดินสอเพื่อแก้ไขชื่อบัญชี'}
               </span>
             </div>
@@ -372,7 +372,7 @@ export default function ProfilePage() {
                 </button>
               </div>
               <span className="profile-email-note">
-                ใช้สำหรับกู้คืนบัญชีเท่านั้น — ยังไม่มีการยืนยันอีเมลในตอนนี้
+                ใช้สำหรับกู้คืนบัญชีเท่านั้น (ยังไม่มีการยืนยันอีเมลในตอนนี้)
               </span>
             </div>
 
@@ -386,7 +386,7 @@ export default function ProfilePage() {
           <div className="profile-divider" />
 
           <button className="profile-logout-btn" onClick={requestReset}>
-            เปลี่ยนใจแล้วเหรอ? — ล้างสิ่งที่แก้ไขทั้งหมด
+            เปลี่ยนใจแล้วเหรอ? ล้างสิ่งที่แก้ไขทั้งหมด
           </button>
         </div>
       </div>

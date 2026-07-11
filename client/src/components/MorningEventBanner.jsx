@@ -35,7 +35,7 @@ export default function MorningEventBanner() {
         <span className="morning-event-peg morning-event-peg--bl" aria-hidden="true" />
         <span className="morning-event-peg morning-event-peg--br" aria-hidden="true" />
 
-        <p className="morning-event-kicker">— เหตุการณ์ประจำเช้า วันที่ {morningEvent.round} —</p>
+        <p className="morning-event-kicker">เหตุการณ์ประจำเช้า วันที่ {morningEvent.round}</p>
         <div className="morning-event-icon">{morningEvent.icon}</div>
         <h2 className="morning-event-title">{morningEvent.title}</h2>
         <p className="morning-event-narrator">"{morningEvent.narrator}"</p>

@@ -81,7 +81,7 @@ export default function Game() {
                   textDecoration: p.isAlive ? 'none' : 'line-through',
                   opacity: p.isAlive ? 1 : 0.6,
                 }}>
-                  {ROLE_LABEL[p.role] || p.role} — {p.nickname}
+                  {p.nickname} · {ROLE_LABEL[p.role] || p.role}
                 </span>
               ))}
             </div>

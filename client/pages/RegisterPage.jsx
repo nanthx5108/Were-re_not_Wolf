@@ -77,7 +77,7 @@ export default function RegisterPage() {
         <div className="auth-divider" />
 
         <h2 className="auth-title">เข้าร่วมหมู่บ้าน</h2>
-        <p className="auth-sub">สร้างตัวตนของคุณ — แต่ระวัง ความลับมักถูกเปิดเผย</p>
+        <p className="auth-sub">สร้างตัวตนของคุณ แต่ระวังไว้ ความลับมักถูกเปิดเผย</p>
 
         {error && <div className="auth-error">{error}</div>}
 

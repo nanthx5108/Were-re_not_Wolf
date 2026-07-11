@@ -191,8 +191,8 @@ function _broadcastMorningEvent(io, roomId, morning, round) {
   });
 
   const chatText = announcement
-    ? `${event.icon} ${event.title} — ${event.narrator} (${announcement})`
-    : `${event.icon} ${event.title} — ${event.narrator}`;
+    ? `${event.icon} ${event.title}: ${event.narrator} (${announcement})`
+    : `${event.icon} ${event.title}: ${event.narrator}`;
 
   io.to(roomId).emit('chat:message', {
     id:      `sys-event-${Date.now()}`,
