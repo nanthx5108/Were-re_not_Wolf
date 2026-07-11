@@ -10,7 +10,7 @@ import { canJoinRoom } from '../game/roomCapacity.js';
 import { validateConfigForPlayerCount, buildDefaultRoleConfig } from '../game/roomConfig.js';
 import { startPhaseTimer, advancePhase, clearPhaseTimer, getPhaseDurationMs } from '../game/phaseManager.js';
 import { castVote, hasAllVoted, clearVoting } from '../game/voteManager.js';
-import { initNightActions, submitNightAction } from '../game/nightActions.js';
+import { initNightActions, submitNightAction, getBlockedProtectTargets } from '../game/nightActions.js';
 
 export function registerSocketHandlers(socket, io) {
 
@@ -51,6 +51,11 @@ export function registerSocketHandlers(socket, io) {
     if (!room) return;
     const player = room.players.get(playerId);
     if (!player?.isAlive) return socket.emit('error', { message: 'Dead players cannot chat.' });
+
+    // Silencer ปิดปากไว้เมื่อคืน — มีผลตลอดวันนี้ ทุกช่องแชท
+    if (room.silencedPlayerId === playerId) {
+      return socket.emit('error', { message: 'เจ้าถูกปิดปากไว้ วันนี้พูดไม่ได้' });
+    }
 
     if (channel === CHANNELS.WEREWOLF && player.role !== 'werewolf') {
       return socket.emit('error', { message: 'Only werewolves can use this channel.' });
@@ -107,9 +112,20 @@ export function registerSocketHandlers(socket, io) {
     const durationMs = getPhaseDurationMs(roomId, PHASES.NIGHT);
     const endsAt = startPhaseTimer(io, roomId, PHASES.NIGHT);
 
+    const wolves = assigned.filter(p => p.role === 'werewolf');
+
     for (const p of assigned) {
       const s = findSocketByPlayerId(io, p.id);
-      if (s) s.emit('game:started', { phase: PHASES.NIGHT, myRole: p.role, endsAt, durationMs, round: 1 });
+      if (!s) continue;
+
+      // หมาป่าเห็นทีมกันเอง — คนอื่นไม่ได้รับ field นี้เลย
+      const teammates = p.role === 'werewolf'
+        ? wolves.filter(w => w.id !== p.id).map(w => ({ id: w.id, nickname: w.nickname }))
+        : undefined;
+
+      s.emit('game:started', {
+        phase: PHASES.NIGHT, myRole: p.role, endsAt, durationMs, round: 1, teammates,
+      });
     }
 
     io.to(roomId).emit('room:state', serializeRoom(roomId));
@@ -130,6 +146,10 @@ export function registerSocketHandlers(socket, io) {
 
     const player = room.players.get(playerId);
     if (!player?.isAlive) return socket.emit('error', { message: 'Dead players cannot act.' });
+
+    if (getBlockedProtectTargets(roomId, playerId).includes(targetId)) {
+      return socket.emit('error', { message: 'เจ้าเพิ่งเฝ้าคนนี้เมื่อคืน — ห้ามป้องกันคนเดิม 2 คืนติด' });
+    }
 
     const action = submitNightAction(roomId, playerId, { targetId });
     if (!action) return socket.emit('error', { message: 'Invalid night action.' });

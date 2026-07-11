@@ -104,6 +104,8 @@ async function _advancePhase(io, roomId) {
 
   if (nextPhase === PHASES.NIGHT) {
     initNightActions(roomId);
+    // การปิดปากมีผลแค่วันเดียว — พอขึ้นคืนใหม่ก็พูดได้ตามปกติ
+    updateRoom(roomId, { silencedPlayerId: null });
   }
 
   if (nextPhase === PHASES.VOTING) {
@@ -142,8 +144,36 @@ async function _advancePhase(io, roomId) {
     sentAt:  new Date().toISOString(),
   });
 
+  if (nextPhase === PHASES.NIGHT) {
+    sendBlockedProtectTargets(io, roomId);
+  }
+
   if (morning) {
     _broadcastMorningEvent(io, roomId, morning, round);
+  }
+}
+
+// บอกผู้พิทักษ์ว่าคืนนี้ห้ามเลือกใคร (คนที่เพิ่งเฝ้าไปเมื่อคืน) — ส่งเฉพาะเจ้าตัว
+export function sendBlockedProtectTargets(io, roomId) {
+  const room = getRoom(roomId);
+  if (!room) return;
+
+  for (const player of room.players.values()) {
+    if (player.role !== 'bodyguard' || !player.isAlive) continue;
+    const s = player.socketId ? io.sockets.sockets.get(player.socketId) : null;
+    if (s) s.emit('night:blocked_targets', { targetIds: room.lastProtectedIds || [] });
+  }
+}
+
+// แจ้งคนที่ถูก Silencer ปิดปาก — ส่งเฉพาะเจ้าตัว ไม่ประกาศให้ทั้งห้องรู้ว่าใครโดน
+function _notifySilenced(io, roomId, result) {
+  if (!result?.silencedId) return;
+  const target = getRoom(roomId)?.players.get(result.silencedId);
+  const s = target?.socketId ? io.sockets.sockets.get(target.socketId) : null;
+  if (s) {
+    s.emit('chat:silenced', {
+      message: '🤐 คอของเจ้าแห้งผาก พูดไม่ออกสักคำ — วันนี้เจ้าพิมพ์อะไรไม่ได้เลย',
+    });
   }
 }
 
@@ -205,8 +235,12 @@ async function _endGameAndBroadcast(io, roomId, win) {
 }
 
 async function _resolveNightActionsAndBroadcast(io, roomId) {
-  const result = await resolveNightActions(roomId);
+  const result = resolveNightActions(roomId);
   if (!result) return null;
+
+  if (result.killedId) {
+    await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [result.killedId]);
+  }
 
   io.to(roomId).emit('night:result', {
     killedId:       result.killedId,
@@ -220,6 +254,8 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
       seerSocket.emit('night:seer_result', result.seerResult);
     }
   }
+
+  _notifySilenced(io, roomId, result);
 
   io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
 

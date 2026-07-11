@@ -8,7 +8,7 @@ const CHANNEL_COLOR = {
 };
 
 export default function ChatBox({ showWerewolfChannel = false }) {
-  const { messages, sendMessage, myRole } = useGame();
+  const { messages, sendMessage, myRole, silencedNote } = useGame();
   const [input,   setInput]   = useState('');
   const [channel, setChannel] = useState('village');
   const bottomRef = useRef(null);
@@ -17,10 +17,12 @@ export default function ChatBox({ showWerewolfChannel = false }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const isSilenced = Boolean(silencedNote);
+
   function handleSend(e) {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || isSilenced) return;
     sendMessage(trimmed, channel);
     setInput('');
   }
@@ -49,8 +51,10 @@ export default function ChatBox({ showWerewolfChannel = false }) {
         <div ref={bottomRef} />
       </div>
 
+      {isSilenced && <p style={s.silenced}>{silencedNote}</p>}
+
       <form onSubmit={handleSend} style={s.form}>
-        {canWerewolf && (
+        {canWerewolf && !isSilenced && (
           <select value={channel} onChange={e => setChannel(e.target.value)} style={s.select}>
             <option value="village">Village</option>
             <option value="werewolf">Werewolf</option>
@@ -58,9 +62,13 @@ export default function ChatBox({ showWerewolfChannel = false }) {
         )}
         <input
           type="text" value={input} onChange={e => setInput(e.target.value)}
-          placeholder="Say something…" maxLength={300} style={s.input}
+          disabled={isSilenced}
+          placeholder={isSilenced ? 'วันนี้เจ้าพูดไม่ได้…' : 'Say something…'}
+          maxLength={300}
+          style={{ ...s.input, ...(isSilenced ? s.inputDisabled : {}) }}
         />
-        <button type="submit" disabled={!input.trim()} style={s.sendBtn}>Send</button>
+        <button type="submit" disabled={!input.trim() || isSilenced}
+          style={{ ...s.sendBtn, ...(isSilenced ? s.sendBtnDisabled : {}) }}>Send</button>
       </form>
     </div>
   );
@@ -79,4 +87,7 @@ const s = {
   select:    { background:'var(--color-surface-2)', border:'1px solid var(--color-border)', borderRadius:'var(--radius-md)', color:'var(--color-text)', fontSize:'13px', padding:'6px 8px', cursor:'pointer', outline:'none' },
   input:     { flex:1, background:'var(--color-surface-2)', border:'1px solid var(--color-border)', borderRadius:'var(--radius-md)', color:'var(--color-text)', fontFamily:'var(--font-body)', fontSize:'14px', padding:'8px 12px', outline:'none' },
   sendBtn:   { background:'var(--color-accent)', border:'none', borderRadius:'var(--radius-md)', color:'#0d1117', fontWeight:700, fontSize:'16px', padding:'8px 14px', cursor:'pointer', lineHeight:1 },
+  silenced:  { background:'rgba(139,32,32,.15)', border:'1px solid rgba(229,115,115,.35)', borderRadius:'var(--radius-md)', color:'#e57373', fontSize:'12.5px', padding:'7px 10px', textAlign:'center' },
+  inputDisabled: { opacity:.5, cursor:'not-allowed' },
+  sendBtnDisabled: { opacity:.4, cursor:'not-allowed' },
 };

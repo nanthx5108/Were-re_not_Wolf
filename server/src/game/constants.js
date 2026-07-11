@@ -3,6 +3,7 @@ export const ROLES = Object.freeze({
   WEREWOLF:   'werewolf',
   SEER:       'seer',
   BODYGUARD:  'bodyguard',
+  SILENCER:   'silencer',
   FOOL:       'fool',
 });
 
@@ -16,9 +17,13 @@ export const ROLE_FACTION = Object.freeze({
   villager:  'village',
   seer:      'village',
   bodyguard: 'village',
+  silencer:  'village',
   werewolf:  'werewolf',
   fool:      'neutral',
 });
+
+// บทบาทที่มี night action — ใช้ตรวจสิทธิ์ก่อนรับ action
+export const NIGHT_ACTION_ROLES = Object.freeze(['werewolf', 'seer', 'bodyguard', 'silencer']);
 
 export const PLAYER_LIMITS = Object.freeze({ MIN: 4, MAX: 8 });
 

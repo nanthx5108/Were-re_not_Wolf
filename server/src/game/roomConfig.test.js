@@ -61,8 +61,24 @@ test('fool is neutral and does not count as a villager for balance', () => {
 });
 
 test('rejects unknown roles and unknown phases', () => {
-  assert.match(normalizeRoomConfig({ roleConfig: { silencer: 1 } }, 6).error, /Unknown configurable role/);
+  assert.match(normalizeRoomConfig({ roleConfig: { necromancer: 1 } }, 6).error, /Unknown configurable role/);
   assert.match(normalizeRoomConfig({ phaseDurations: { results: 10 } }, 6).error, /Unknown phase duration/);
+});
+
+test('silencer is configurable and defaults to zero', () => {
+  const { config, error } = normalizeRoomConfig({ roleConfig: { silencer: 1 } }, 6);
+
+  assert.equal(error, undefined);
+  assert.equal(config.roleConfig.silencer, 1);
+  assert.equal(buildDefaultRoleConfig(6).silencer, 0, 'preset เดิมไม่มี silencer จึงต้องเริ่มที่ 0');
+});
+
+test('silencer counts as a villager for the balance check', () => {
+  // 4 คน: หมาป่า 1, silencer 1, ที่เหลือชาวบ้าน 2 → ฝ่ายชาวบ้าน 3 คน ผ่านสบาย
+  assert.equal(
+    normalizeRoomConfig({ roleConfig: { werewolf: 1, seer: 0, bodyguard: 0, silencer: 1, fool: 0 } }, 4).error,
+    undefined
+  );
 });
 
 test('rejects durations outside the allowed range', () => {

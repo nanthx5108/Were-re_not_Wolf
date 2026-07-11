@@ -2,7 +2,7 @@ import { ROLE_DISTRIBUTION, PLAYER_LIMITS, ROLE_FACTION } from './constants.js';
 
 // บทบาทที่ host กำหนดจำนวนเองได้ — ที่เหลือเติมเป็น villager อัตโนมัติ
 // เพิ่ม role ใหม่ (เช่น silencer) = เพิ่มชื่อในนี้ + ROLE_FACTION แล้ว validation ตามมาเอง
-export const CONFIGURABLE_ROLES = Object.freeze(['werewolf', 'seer', 'bodyguard', 'fool']);
+export const CONFIGURABLE_ROLES = Object.freeze(['werewolf', 'seer', 'bodyguard', 'silencer', 'fool']);
 
 export const DEFAULT_PHASE_DURATIONS = Object.freeze({
   night:  30,
