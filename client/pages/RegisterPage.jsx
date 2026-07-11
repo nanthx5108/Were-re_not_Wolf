@@ -96,10 +96,10 @@ export default function RegisterPage() {
               autoComplete="username"
             />
             {username.length > 0 && (
-              <span className="auth-hint">
+              <span className={`auth-hint ${username.trim().length < 3 ? 'is-bad' : 'is-ok'}`}>
                 {username.trim().length < 3
-                  ? `⚠ ต้องการอีก ${3 - username.trim().length} ตัว`
-                  : '✓ โอเค'}
+                  ? `ต้องการอีก ${3 - username.trim().length} ตัว`
+                  : 'ใช้ชื่อนี้ได้'}
               </span>
             )}
           </div>
@@ -135,8 +135,8 @@ export default function RegisterPage() {
               autoComplete="new-password"
             />
             {password2.length > 0 && (
-              <span className="auth-hint">
-                {password === password2 ? '✓ รหัสผ่านตรงกัน' : '⚠ รหัสผ่านไม่ตรงกัน'}
+              <span className={`auth-hint ${password === password2 ? 'is-ok' : 'is-bad'}`}>
+                {password === password2 ? 'รหัสผ่านตรงกัน' : 'รหัสผ่านไม่ตรงกัน'}
               </span>
             )}
           </div>

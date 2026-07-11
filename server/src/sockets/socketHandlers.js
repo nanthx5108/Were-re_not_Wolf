@@ -139,7 +139,7 @@ export function registerSocketHandlers(socket, io) {
     io.to(roomId).emit('room:state', serializeRoom(roomId));
     io.to(roomId).emit('chat:message', {
       id: `sys-${Date.now()}`, channel: CHANNELS.SYSTEM,
-      content: '🌙 ค่ำคืนมาถึง... หมู่บ้านหลับใหล',
+      content: 'ค่ำคืนมาถึง... หมู่บ้านหลับใหล',
       sentAt: new Date().toISOString(),
     });
   });

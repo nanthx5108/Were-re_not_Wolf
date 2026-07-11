@@ -33,10 +33,10 @@ const NEXT_PHASE = Object.freeze({
 });
 
 const PHASE_MESSAGES = Object.freeze({
-  [PHASES.NIGHT]:   '🌙 ค่ำคืนมาถึง... หมู่บ้านหลับใหล',
-  [PHASES.DAY]:     '☀️ รุ่งสางแล้ว! จงพูดคุยและหาตัวหมาป่า',
-  [PHASES.VOTING]:  '🗳️ ถึงเวลาโหวตแล้ว ใครคือหมาป่า?',
-  [PHASES.RESULTS]: '📜 กำลังนับคะแนนเสียง...',
+  [PHASES.NIGHT]:   'ค่ำคืนมาถึง... หมู่บ้านหลับใหล',
+  [PHASES.DAY]:     'รุ่งสางแล้ว จงพูดคุยและหาตัวหมาป่า',
+  [PHASES.VOTING]:  'ถึงเวลาโหวตแล้ว ใครคือหมาป่า?',
+  [PHASES.RESULTS]: 'กำลังนับคะแนนเสียง...',
 });
 
 const timers = new Map();
@@ -93,7 +93,7 @@ async function _advancePhase(io, roomId) {
     if (eliminatedRole === 'fool') {
       return _endGameAndBroadcast(io, roomId, {
         winner: 'fool',
-        message: '🃏 คนโง่ชนะแล้ว! การถูกเนรเทศคือสิ่งที่เขาต้องการมาตลอด',
+        message: 'คนโง่ชนะแล้ว การถูกเนรเทศคือสิ่งที่เขาต้องการมาตลอด',
       });
     }
 
@@ -173,7 +173,7 @@ function _notifySilenced(io, roomId, result) {
   const s = target?.socketId ? io.sockets.sockets.get(target.socketId) : null;
   if (s) {
     s.emit('chat:silenced', {
-      message: '🤐 คอของเจ้าแห้งผาก พูดไม่ออกสักคำ — วันนี้เจ้าพิมพ์อะไรไม่ได้เลย',
+      message: 'คอของเจ้าแห้งผาก พูดไม่ออกสักคำ วันนี้เจ้าพิมพ์อะไรไม่ได้เลย',
     });
   }
 }
@@ -327,8 +327,8 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
   io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
 
   const msg = result.killedNickname
-    ? `💀 เช้านี้พบร่างของ ${result.killedNickname}... หมู่บ้านไม่ปลอดภัยอีกต่อไป`
-    : '🕊️ เมื่อคืนไม่มีใครเสียชีวิต หมู่บ้านยังสงบ... ชั่วคราว';
+    ? `เช้านี้พบร่างของ ${result.killedNickname}... หมู่บ้านไม่ปลอดภัยอีกต่อไป`
+    : 'เมื่อคืนไม่มีใครเสียชีวิต หมู่บ้านยังสงบ... ชั่วคราว';
 
   io.to(roomId).emit('chat:message', {
     id:      `sys-night-${Date.now()}`,
@@ -366,10 +366,10 @@ async function _resolveVotingAndBroadcast(io, roomId) {
   io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
 
   const msg = wasTie
-    ? '🤝 คะแนนเสมอ! ไม่มีใครถูกกำจัดออกจากเกาะ'
+    ? 'คะแนนเสมอ ไม่มีใครถูกกำจัดออกจากเกาะ'
     : eliminatedNickname
-      ? `💀 ${eliminatedNickname} ถูกชาวบ้านโหวตออกจากเกาะ!`
-      : '🤷 ไม่มีใครถูกโหวตออกรอบนี้';
+      ? `${eliminatedNickname} ถูกชาวบ้านโหวตออกจากเกาะ`
+      : 'ไม่มีใครถูกโหวตออกรอบนี้';
 
   io.to(roomId).emit('chat:message', {
     id:      `sys-vote-${Date.now()}`,

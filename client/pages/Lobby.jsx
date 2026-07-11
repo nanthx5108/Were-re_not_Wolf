@@ -99,18 +99,19 @@ export default function Lobby() {
               </div>
               <ul className="rules-list">
                 <li className="rules-item">
+                  บทบาท:{' '}
                   {CONFIGURABLE_ROLES
                     .filter(r => (room.roleConfig[r.key] || 0) > 0)
-                    .map(r => `${r.icon} ${r.label} ×${room.roleConfig[r.key]}`)
-                    .join('  ·  ')}
+                    .map(r => `${r.label} ×${room.roleConfig[r.key]}`)
+                    .join(', ')}
                 </li>
                 <li className="rules-item">
-                  🧑‍🌾 Villager ×{Math.max(0, playerCount - CONFIGURABLE_ROLES.reduce(
-                    (sum, r) => sum + (room.roleConfig[r.key] || 0), 0))} (ตามจำนวนคนที่เข้าจริง)
+                  ที่เหลืออีก {Math.max(0, playerCount - CONFIGURABLE_ROLES.reduce(
+                    (sum, r) => sum + (room.roleConfig[r.key] || 0), 0))} คนเป็น Villager (นับตามคนที่เข้าจริง)
                 </li>
                 {room.phaseDurations && (
                   <li className="rules-item">
-                    ⏱️ กลางคืน {room.phaseDurations.night}s · พูดคุย {room.phaseDurations.day}s · โหวต {room.phaseDurations.voting}s
+                    เวลา: กลางคืน {room.phaseDurations.night} วิ, พูดคุย {room.phaseDurations.day} วิ, โหวต {room.phaseDurations.voting} วิ
                   </li>
                 )}
               </ul>

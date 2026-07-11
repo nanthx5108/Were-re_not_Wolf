@@ -228,6 +228,9 @@
   color: var(--color-text-muted);
   padding-left: 2px;
 }
+/* สถานะบอกด้วยสี ไม่ต้องมีเครื่องหมายถูก/ตกใจนำหน้า */
+.auth-hint.is-ok  { color: #6ecf8a; }
+.auth-hint.is-bad { color: #e57373; }
 
 /* === Password strength === */
 .auth-strength {
