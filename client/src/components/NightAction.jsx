@@ -2,10 +2,13 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useGame } from '../../context/Gamecontext.jsx';
 
 const ROLE_PROMPTS = {
-  werewolf: 'Choose a target to strike tonight.',
-  seer: 'Choose a player to inspect tonight.',
-  bodyguard: 'Choose a player to protect tonight.',
+  werewolf:  'เลือกเหยื่อของคืนนี้',
+  seer:      'เลือกคนที่จะตรวจคืนนี้ — เจ้าจะรู้แค่ว่าเขาอยู่ฝ่ายไหน',
+  bodyguard: 'เลือกคนที่จะปกป้องคืนนี้ — ห้ามเฝ้าคนเดิม 2 คืนติด',
+  silencer:  'เลือกคนที่จะปิดปาก — พรุ่งนี้ทั้งวันเขาจะพิมพ์อะไรไม่ได้เลย',
 };
+
+const ACTION_ROLES = ['werewolf', 'seer', 'bodyguard', 'silencer'];
 
 const FACTION_LABEL = {
   village:  'ฝ่ายชาวบ้าน',
@@ -15,7 +18,10 @@ const FACTION_LABEL = {
 };
 
 export default function NightAction() {
-  const { room, playerId, myRole, submitNightAction, myNightAction, morningEvent, seerResult, wolfTargets } = useGame();
+  const {
+    room, playerId, myRole, submitNightAction, myNightAction,
+    morningEvent, seerResult, wolfTargets, teammates, blockedTargets,
+  } = useGame();
   const [chosenIds, setChosenIds] = useState([]);
 
   const isNight = room?.phase === 'night';
@@ -23,7 +29,7 @@ export default function NightAction() {
 
   const alivePlayers = useMemo(() => (room?.players || []).filter((player) => player.isAlive), [room?.players]);
 
-  if (!room || !myRole || !['werewolf', 'seer', 'bodyguard'].includes(myRole)) {
+  if (!room || !myRole || !ACTION_ROLES.includes(myRole)) {
     return null;
   }
 
@@ -65,11 +71,6 @@ export default function NightAction() {
     setChosenIds((ids) => (ids.includes(targetId) ? ids : [...ids, targetId].slice(0, maxTargets)));
   }
 
-  // เป้าหมายที่เพื่อนร่วมทีมหมาป่าเลือกไว้ — server ส่งมาให้เฉพาะหมาป่าเท่านั้น
-  const packTargets = myRole === 'werewolf'
-    ? Object.values(wolfTargets || {}).filter((t) => t.playerId !== playerId)
-    : [];
-
   return (
     <>
     {seerReport}
@@ -93,25 +94,39 @@ export default function NightAction() {
           )}
           {alivePlayers
             .filter((player) => player.id !== playerId && !chosenIds.includes(player.id))
-            .map((player) => (
-              <button
-                key={player.id}
-                onClick={() => handlePick(player.id)}
-                style={{ padding: '0.6rem 0.9rem', borderRadius: '999px', border: '1px solid #9fbcd0', background: '#111827', color: '#fff' }}
-              >
-                {player.nickname}
-              </button>
-            ))}
+            .map((player) => {
+              // ผู้พิทักษ์เฝ้าคนเดิม 2 คืนติดไม่ได้ — server ก็ปฏิเสธ ปุ่มนี้แค่กันไม่ให้กดไปเสียเปล่า
+              const blocked = myRole === 'bodyguard' && (blockedTargets || []).includes(player.id);
+              return (
+                <button
+                  key={player.id}
+                  onClick={() => handlePick(player.id)}
+                  disabled={blocked}
+                  title={blocked ? 'เจ้าเพิ่งเฝ้าคนนี้เมื่อคืน' : undefined}
+                  style={{
+                    padding: '0.6rem 0.9rem', borderRadius: '999px',
+                    border: '1px solid #9fbcd0', background: '#111827', color: '#fff',
+                    opacity: blocked ? 0.35 : 1,
+                    cursor: blocked ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {player.nickname}{blocked ? ' 🛡️' : ''}
+                </button>
+              );
+            })}
         </div>
       )}
 
-      {packTargets.length > 0 && (
+      {myRole === 'werewolf' && (
         <div style={{ marginTop: '0.75rem', color: '#d9e4ec' }}>
           <strong style={{ color: '#e57373' }}>🐺 ทีมของเจ้า:</strong>{' '}
-          {packTargets.map((t) => {
-            const victim = alivePlayers.find((p) => p.id === t.targetId)?.nickname ?? '?';
-            return `${t.nickname} → ${victim}`;
-          }).join(' · ')}
+          {(teammates || []).length === 0
+            ? 'เจ้าล่าเพียงลำพัง'
+            : teammates.map((mate) => {
+                const pick = wolfTargets?.[mate.id]?.targetId;
+                const victim = pick ? alivePlayers.find((p) => p.id === pick)?.nickname : null;
+                return victim ? `${mate.nickname} → ${victim}` : `${mate.nickname} (ยังไม่เลือก)`;
+              }).join(' · ')}
         </div>
       )}
     </section>

@@ -5,6 +5,7 @@ export const ROLES = Object.freeze({
   WEREWOLF:   'werewolf',
   SEER:       'seer',
   BODYGUARD:  'bodyguard',
+  SILENCER:   'silencer',
   FOOL:       'fool',
 });
 
@@ -29,7 +30,8 @@ export const PHASE_DURATIONS_SEC = Object.freeze({
 export const CONFIGURABLE_ROLES = Object.freeze([
   { key: 'werewolf',  label: 'Werewolf',  icon: '🐺', hint: 'ร่วมกันฆ่า 1 คนทุกคืน เห็นทีมกันเอง' },
   { key: 'seer',      label: 'Seer',      icon: '🔮', hint: 'ตรวจ 1 คนทุกคืน รู้แค่ฝ่าย' },
-  { key: 'bodyguard', label: 'Guardian',  icon: '🛡️', hint: 'ป้องกัน 1 คนจากการถูกฆ่า' },
+  { key: 'bodyguard', label: 'Bodyguard', icon: '🛡️', hint: 'ป้องกัน 1 คนจากการถูกฆ่า ห้ามซ้ำคนเดิม 2 คืนติด' },
+  { key: 'silencer',  label: 'Silencer',  icon: '🤐', hint: 'ปิดปาก 1 คน พิมพ์ไม่ได้ตลอดวันถัดไป' },
   { key: 'fool',      label: 'Fool',      icon: '🃏', hint: 'ชนะทันทีถ้าถูกโหวตเนรเทศ' },
 ]);
 
@@ -43,11 +45,11 @@ export const DEFAULT_PHASE_DURATIONS = Object.freeze({ night: 30, day: 60, votin
 
 // ค่าเริ่มต้นของจำนวน role ตามขนาดห้อง — ต้องตรงกับ ROLE_DISTRIBUTION ฝั่ง server
 const ROLE_PRESETS = Object.freeze({
-  4: { werewolf: 1, seer: 1, bodyguard: 0, fool: 0 },
-  5: { werewolf: 1, seer: 1, bodyguard: 1, fool: 0 },
-  6: { werewolf: 2, seer: 1, bodyguard: 1, fool: 1 },
-  7: { werewolf: 2, seer: 1, bodyguard: 1, fool: 1 },
-  8: { werewolf: 2, seer: 1, bodyguard: 1, fool: 1 },
+  4: { werewolf: 1, seer: 1, bodyguard: 0, silencer: 0, fool: 0 },
+  5: { werewolf: 1, seer: 1, bodyguard: 1, silencer: 0, fool: 0 },
+  6: { werewolf: 2, seer: 1, bodyguard: 1, silencer: 0, fool: 1 },
+  7: { werewolf: 2, seer: 1, bodyguard: 1, silencer: 0, fool: 1 },
+  8: { werewolf: 2, seer: 1, bodyguard: 1, silencer: 0, fool: 1 },
 });
 
 export function defaultRoleConfig(maxPlayers) {
@@ -65,7 +67,8 @@ export function validateRoleConfig(roleConfig, playerCount) {
   }
 
   // Fool เป็นกลาง ไม่นับเป็นชาวบ้าน — ที่นั่งที่เหลือถึงจะเป็น Villager
-  const villagers = (roleConfig.seer || 0) + (roleConfig.bodyguard || 0) + (playerCount - special);
+  const villagers = (roleConfig.seer || 0) + (roleConfig.bodyguard || 0)
+    + (roleConfig.silencer || 0) + (playerCount - special);
   if (wolves >= villagers) {
     return `หมาป่า ${wolves} ตัว vs ชาวบ้าน ${villagers} คน — หมาป่าชนะทันทีที่เริ่มเกม`;
   }

@@ -25,6 +25,8 @@ export const SOCKET_EVENTS = Object.freeze({
   NIGHT_ACTION_UPDATE:  'night:action:update',
   NIGHT_RESULT:         'night:result',
   NIGHT_SEER_RESULT:    'night:seer_result',
+  NIGHT_BLOCKED_TARGETS:'night:blocked_targets',
+  CHAT_SILENCED:        'chat:silenced',
   MORNING_EVENT:        'morning:event',
   MORNING_EVENT_PRIVATE:'morning:event:private',
   GAME_ENDED:           'game:ended',
@@ -41,12 +43,15 @@ const initialState = {
   connected:  false,
   error:      null,
   wolfTargets:   {},
+  teammates:     [],
   seerResult:    null,
   myNightAction: null,
   nightResult:   null,
   gameResult:    null,
   morningEvent:  null,
   privateNote:   null,
+  blockedTargets: [],
+  silencedNote:   null,
 };
 
 function gameReducer(state, action) {
@@ -90,6 +95,7 @@ function gameReducer(state, action) {
       return {
         ...state,
         myRole: action.myRole,
+        teammates: action.teammates ?? [],   // มีเฉพาะหมาป่า — server ไม่ส่ง field นี้ให้คนอื่น
         room: state.room ? {
           ...state.room,
           status:          'in_progress',
@@ -116,6 +122,8 @@ function gameReducer(state, action) {
         seerResult:    action.phase === 'night' ? null : state.seerResult,
         myNightAction: action.phase === 'night' ? null : state.myNightAction,
         privateNote:   action.phase === 'night' ? null : state.privateNote,
+        // การปิดปากมีผลแค่วันเดียว — พอขึ้นคืนใหม่ก็พูดได้ (ตรงกับที่ server เคลียร์)
+        silencedNote:  action.phase === 'night' ? null : state.silencedNote,
         // morningEvent คงไว้ข้ามคืน — NightAction ใช้เช็ค effect เช่น เรือกลับเข้าฝั่ง (เลือกป้องกัน 2 คน)
       };
 
@@ -158,6 +166,13 @@ function gameReducer(state, action) {
     case 'SEER_RESULT':
       return { ...state, seerResult: action.payload };
 
+    // ผู้พิทักษ์เท่านั้นที่ได้รับ — คนที่เพิ่งเฝ้าไปเมื่อคืน เลือกซ้ำไม่ได้
+    case 'BLOCKED_TARGETS':
+      return { ...state, blockedTargets: action.payload.targetIds || [] };
+
+    case 'SILENCED':
+      return { ...state, silencedNote: action.payload.message };
+
     case 'MORNING_EVENT':
       return { ...state, morningEvent: action.payload, privateNote: null };
 
@@ -199,6 +214,8 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.NIGHT_ACTION_UPDATE]:  (payload)       => dispatch({ type: 'WOLF_TARGET_UPDATE', payload }),
       [SOCKET_EVENTS.NIGHT_RESULT]:         (payload)       => dispatch({ type: 'NIGHT_RESULT', payload }),
       [SOCKET_EVENTS.NIGHT_SEER_RESULT]:    (payload)       => dispatch({ type: 'SEER_RESULT', payload }),
+      [SOCKET_EVENTS.NIGHT_BLOCKED_TARGETS]:(payload)       => dispatch({ type: 'BLOCKED_TARGETS', payload }),
+      [SOCKET_EVENTS.CHAT_SILENCED]:        (payload)       => dispatch({ type: 'SILENCED', payload }),
       [SOCKET_EVENTS.MORNING_EVENT]:        (payload)       => dispatch({ type: 'MORNING_EVENT', payload }),
       [SOCKET_EVENTS.MORNING_EVENT_PRIVATE]:(payload)       => dispatch({ type: 'MORNING_EVENT_PRIVATE', payload }),
       [SOCKET_EVENTS.GAME_ENDED]:           ({ winner, message }) => dispatch({ type: 'GAME_ENDED', winner, message }),

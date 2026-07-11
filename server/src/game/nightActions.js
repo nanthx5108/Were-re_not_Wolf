@@ -1,4 +1,3 @@
-import pool from '../../db/connection.js';
 import { getRoom, updateRoom, updatePlayer } from './gameStore.js';
 import { ROLE_FACTION } from './constants.js';
 import { consumeNightEffect, getActiveNightEffect } from './morningEvents.js';
@@ -11,10 +10,22 @@ export function initNightActions(roomId) {
     werewolf: {},
     seer: null,
     bodyguard: null,
+    silencer: null,
   };
 
   updateRoom(roomId, { nightActions: actions });
   return actions;
+}
+
+/**
+ * คนที่ผู้พิทักษ์ห้ามเลือกคืนนี้ — ห้ามป้องกันคนเดิม 2 คืนติด
+ * คืน array ว่างถ้าไม่ใช่ผู้พิทักษ์ หรือคืนก่อนไม่ได้ป้องกันใคร
+ */
+export function getBlockedProtectTargets(roomId, playerId) {
+  const room = getRoom(roomId);
+  const player = room?.players.get(playerId);
+  if (!room || player?.role !== 'bodyguard') return [];
+  return room.lastProtectedIds || [];
 }
 
 export function submitNightAction(roomId, playerId, action) {
@@ -30,18 +41,24 @@ export function submitNightAction(roomId, playerId, action) {
   const target = room.players.get(targetId);
   if (!target || !target.isAlive || targetId === playerId) return null;
 
-  const current = room.nightActions || { werewolf: {}, seer: null, bodyguard: null };
+  const current = room.nightActions || { werewolf: {}, seer: null, bodyguard: null, silencer: null };
   const next = {
     werewolf: { ...(current.werewolf || {}) },
     seer: current.seer,
     bodyguard: current.bodyguard,
+    silencer: current.silencer,
   };
 
   if (player.role === 'werewolf') {
     next.werewolf[playerId] = targetId;
   } else if (player.role === 'seer') {
     next.seer = { playerId, targetId };
+  } else if (player.role === 'silencer') {
+    next.silencer = { playerId, targetId };
   } else if (player.role === 'bodyguard') {
+    // ห้ามป้องกันคนเดิม 2 คืนติด
+    if (getBlockedProtectTargets(roomId, playerId).includes(targetId)) return null;
+
     // เหตุการณ์ "เรือกลับเข้าฝั่ง" — คืนนี้ผู้พิทักษ์เลือกป้องกันได้ 2 คน
     const maxTargets = getActiveNightEffect(roomId) === 'double_guard' ? 2 : 1;
     const existing = next.bodyguard?.playerId === playerId
@@ -66,11 +83,13 @@ export function submitNightAction(roomId, playerId, action) {
   return next;
 }
 
-export async function resolveNightActions(roomId) {
+// ตัดสินผลของคืนนี้ — เป็น pure game logic ไม่แตะ DB
+// การเขียน is_alive ลง DB เป็นหน้าที่ของ phaseManager (ที่เดียวกับตอน resolve โหวต)
+export function resolveNightActions(roomId) {
   const room = getRoom(roomId);
   if (!room) return null;
 
-  const actions = room.nightActions || { werewolf: {}, seer: null, bodyguard: null };
+  const actions = room.nightActions || { werewolf: {}, seer: null, bodyguard: null, silencer: null };
   const werewolfVotes = actions.werewolf || {};
 
   const voteCounts = {};
@@ -113,7 +132,6 @@ export async function resolveNightActions(roomId) {
       killedId = selectedTargetId;
       killedNickname = target.nickname;
       updatePlayer(roomId, killedId, { isAlive: false });
-      await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [killedId]);
     }
   }
 
@@ -126,10 +144,23 @@ export async function resolveNightActions(roomId) {
       : { targetId: target.id, faction: ROLE_FACTION[target.role] };
   })() : null;
 
+  // Silencer — เป้าหมายพิมพ์ไม่ได้ตลอดวันถัดไป (ตายคืนนี้แล้วก็ไม่ต้องปิดปาก)
+  const silencedId = actions.silencer?.targetId && actions.silencer.targetId !== killedId
+    ? actions.silencer.targetId
+    : null;
+  const silencedNickname = silencedId ? room.players.get(silencedId)?.nickname ?? null : null;
+
+  // เก็บคนที่ผู้พิทักษ์เฝ้าคืนนี้ไว้ เพื่อบล็อกไม่ให้เลือกซ้ำในคืนถัดไป
+  updateRoom(roomId, {
+    lastProtectedIds: protectedIds,
+    silencedPlayerId: silencedId,
+  });
+
   const skillCount =
     Object.keys(werewolfVotes).length +
     (actions.seer ? 1 : 0) +
-    (actions.bodyguard ? 1 : 0);
+    (actions.bodyguard ? 1 : 0) +
+    (actions.silencer ? 1 : 0);
 
   return {
     werewolfVotes,
@@ -140,6 +171,8 @@ export async function resolveNightActions(roomId) {
     prevented,
     seerResult,
     seerId: actions.seer?.playerId || null,
+    silencedId,
+    silencedNickname,
     skillCount,
     nightEffect,
   };
