@@ -6,8 +6,10 @@ import {
 } from '../game/gameStore.js';
 import { distributeRoles }   from '../game/Roledistributor.js';
 import { PLAYER_LIMITS, CHANNELS, PHASES } from '../game/constants.js';
-import { canJoinRoom } from '../game/roomCapacity.js';
-import { validateConfigForPlayerCount, buildDefaultRoleConfig } from '../game/roomConfig.js';
+import { canJoinRoom, getRoomPlayerLimit } from '../game/roomCapacity.js';
+import {
+  validateConfigForPlayerCount, buildDefaultRoleConfig, normalizeRoomConfig,
+} from '../game/roomConfig.js';
 import {
   startPhaseTimer, advancePhase, clearPhaseTimer, getPhaseDurationMs,
   endGameIfDecided, scheduleRoomAbandon, cancelRoomAbandon,
@@ -86,6 +88,28 @@ export function registerSocketHandlers(socket, io) {
     } else {
       io.to(roomId).emit('chat:message', message);
     }
+  });
+
+  // host ปรับบทบาท/เวลาได้ใน Lobby ก่อนเริ่มเกม — validate ฝั่ง server เสมอ ไม่เชื่อ client
+  socket.on('room:config', async ({ config }) => {
+    const { roomId, playerId } = socket.data || {};
+    if (!roomId || !playerId) return;
+
+    const room = getRoom(roomId);
+    if (!room)                    return socket.emit('error', { message: 'Room not found.' });
+    if (room.hostId !== playerId) return socket.emit('error', { message: 'เฉพาะเจ้าของห้องเท่านั้นที่ตั้งค่าได้' });
+    if (room.status !== 'waiting') return socket.emit('error', { message: 'เกมเริ่มไปแล้ว แก้การตั้งค่าไม่ได้' });
+
+    const { config: safe, error } = normalizeRoomConfig(config, getRoomPlayerLimit(room));
+    if (error) return socket.emit('error', { message: error });
+
+    updateRoom(roomId, {
+      roleConfig:     safe.roleConfig,
+      phaseDurations: safe.phaseDurations,
+    });
+    await pool.query(`UPDATE rooms SET config = ? WHERE id = ?`, [JSON.stringify(safe), roomId]);
+
+    io.to(roomId).emit('room:config_updated', safe);
   });
 
   socket.on('game:start', async () => {

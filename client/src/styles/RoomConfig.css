@@ -1,0 +1,152 @@
+/* แผงตั้งค่าห้อง — ใช้ใน Lobby (host แก้ได้ / คนอื่นดูอย่างเดียว) */
+
+.roomcfg {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.roomcfg-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomcfg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.roomcfg-title {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.roomcfg-tally {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.roomcfg-tally.is-bad { color: var(--color-danger); }
+
+.roomcfg-role {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+}
+
+.roomcfg-role-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+.roomcfg-role-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.roomcfg-role-name { font-size: 0.85rem; color: var(--text-primary); font-weight: 600; }
+.roomcfg-role-hint { font-size: 0.68rem; color: var(--text-muted); }
+
+.roomcfg-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.roomcfg-stepper button {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.roomcfg-stepper button:hover:not(:disabled) {
+  border-color: var(--gold-dim);
+  color: var(--gold-mid);
+}
+.roomcfg-stepper button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.roomcfg-count {
+  min-width: 22px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.roomcfg-filler {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.roomcfg-warning {
+  font-size: 0.75rem;
+  color: var(--color-danger);
+  background: var(--danger-soft);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  line-height: 1.5;
+}
+
+.roomcfg-durations {
+  display: flex;
+  gap: 8px;
+}
+
+.roomcfg-duration {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.roomcfg-duration-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.roomcfg-duration-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+.roomcfg-duration-input:focus {
+  outline: none;
+  border-color: var(--gold-dim);
+}
+
+.roomcfg-duration-range {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.roomcfg-duration-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}

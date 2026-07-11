@@ -4,7 +4,7 @@ import { useGame } from '../context/Gamecontext.jsx';
 import PlayerCard from '../src/components/PlayerCard.jsx';
 import ChatBox    from '../src/components/ChatBox.jsx';
 import Navbar     from '../src/components/Navbar.jsx';
-import { CONFIGURABLE_ROLES } from '../src/constants/game.js';
+import RoomConfigPanel from '../src/components/RoomConfigPanel.jsx';
 import '../src/styles/Lobby.css';
 
 const MIN_PLAYERS = 4;
@@ -25,7 +25,7 @@ export default function Lobby() {
   const {
     room, playerId, nickname, myRole,
     connected, error,
-    leaveRoom, startGame, clearError,
+    leaveRoom, startGame, clearError, updateRoomConfig,
   } = useGame();
 
   useEffect(() => {
@@ -92,31 +92,20 @@ export default function Lobby() {
             </div>
           </section>
 
-          {room.roleConfig && (
-            <section className="lobby-section">
-              <div className="section-header">
-                <h3 className="section-title">การตั้งค่าห้อง</h3>
-              </div>
-              <ul className="rules-list">
-                <li className="rules-item">
-                  บทบาท:{' '}
-                  {CONFIGURABLE_ROLES
-                    .filter(r => (room.roleConfig[r.key] || 0) > 0)
-                    .map(r => `${r.label} ×${room.roleConfig[r.key]}`)
-                    .join(', ')}
-                </li>
-                <li className="rules-item">
-                  ที่เหลืออีก {Math.max(0, playerCount - CONFIGURABLE_ROLES.reduce(
-                    (sum, r) => sum + (room.roleConfig[r.key] || 0), 0))} คนเป็น Villager (นับตามคนที่เข้าจริง)
-                </li>
-                {room.phaseDurations && (
-                  <li className="rules-item">
-                    เวลา: กลางคืน {room.phaseDurations.night} วิ, พูดคุย {room.phaseDurations.day} วิ, โหวต {room.phaseDurations.voting} วิ
-                  </li>
-                )}
-              </ul>
-            </section>
-          )}
+          <section className="lobby-section">
+            <div className="section-header">
+              <h3 className="section-title">การตั้งค่าห้อง</h3>
+              {!isHost && <span className="section-note">เจ้าของห้องเป็นคนตั้ง</span>}
+            </div>
+            <RoomConfigPanel
+              roleConfig={room.roleConfig}
+              phaseDurations={room.phaseDurations}
+              maxPlayers={roomCapacity}
+              playerCount={playerCount}
+              editable={isHost}
+              onChange={updateRoomConfig}
+            />
+          </section>
 
           <section className="lobby-section lobby-rules">
             <div className="section-header">
