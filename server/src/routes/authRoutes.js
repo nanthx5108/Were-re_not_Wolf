@@ -5,6 +5,8 @@ import {
   logoutHandler,
   meHandler,
   updateProfileHandler,
+  googleAuthHandler,
+  googleCallbackHandler,
 } from '../controllers/authController.js';
 import { uploadAvatar } from '../middleware/upload.js';
 
@@ -15,5 +17,7 @@ router.post('/login', loginHandler);
 router.post('/logout', logoutHandler);
 router.get('/me', meHandler);
 router.put('/profile', uploadAvatar, updateProfileHandler);
+router.get('/google', googleAuthHandler);
+router.get('/google/callback', googleCallbackHandler);
 
 export default router;
