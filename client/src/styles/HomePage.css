@@ -502,11 +502,18 @@
 
 .menu-panel { padding: var(--space-4); }
 
+/* คอลัมน์ซ้ายกว้าง ~570px ปุ่มที่ยืดเต็มความกว้างเลยดูยาวเหยียด
+   จำกัดไว้เท่ากันทั้งแผงเมนูและแถบผู้เล่น เพื่อให้ยังเรียงเป็นคอลัมน์เดียวกันอยู่ */
+.menu-panel,
+.player-bar {
+  width: 100%;
+  max-width: 430px;
+}
+
 .menu-btn {
   display: grid;
-  /* คอลัมน์ซ้าย/ขวากว้างเท่ากัน (ไอคอน 52px, ลูกศร 52px) คำตรงกลางจึงอยู่กึ่งกลางปุ่มจริงๆ
-     ถ้าปล่อยขวาเป็น auto ลูกศรจะกว้างไม่เท่าไอคอน แล้วคำจะเยื้องไปทางขวา */
-  grid-template-columns: 52px 1fr 52px;
+  /* ไอคอนซ้าย · คำชิดขวา · ลูกศรกว้างเท่าตัวมันเอง (โผล่ตอน hover) */
+  grid-template-columns: 52px 1fr auto;
   gap: var(--space-4);
   align-items: center;
   padding: 16px 18px;
@@ -648,9 +655,9 @@
 .menu-text {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 3px;
-  text-align: center;
+  text-align: right;
 }
 .menu-title {
   font-family: var(--font-display);
