@@ -30,11 +30,31 @@ export const SOCKET_EVENTS = Object.freeze({
   MORNING_EVENT:        'morning:event',
   MORNING_EVENT_PRIVATE:'morning:event:private',
   GAME_ENDED:           'game:ended',
+  GAME_RESUMED:         'game:resumed',
 });
 
+// เก็บ identity ไว้ใน sessionStorage เพื่อให้รีเฟรชแล้วกลับเข้าเกมได้
+// ใช้ session ไม่ใช่ local เพราะแยกตามแท็บ — เปิดหลายแท็บทดสอบพร้อมกันได้โดยไม่ทับกัน
+const SESSION_KEY = 'wnw:session';
+
+export function saveSession(session) {
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch { /* โหมดส่วนตัว */ }
+}
+
+export function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; }
+}
+
+export function clearSession() {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch { /* โหมดส่วนตัว */ }
+}
+
+const restored = loadSession();
+
 const initialState = {
-  playerId:   null,
-  nickname:   null,
+  playerId:   restored?.playerId ?? null,
+  nickname:   restored?.nickname ?? null,
+  roomId:     restored?.roomId ?? null,
   room:       null,
   myRole:     null,
   messages:   [],
@@ -179,8 +199,32 @@ function gameReducer(state, action) {
     case 'MORNING_EVENT_PRIVATE':
       return { ...state, privateNote: action.payload.message };
 
+    // กลับเข้าเกมหลังรีเฟรช/เน็ตหลุด — server ส่ง state ส่วนตัวมาให้ครบชุด
+    case 'GAME_RESUMED':
+      return {
+        ...state,
+        myRole:         action.myRole,
+        teammates:      action.teammates ?? [],
+        blockedTargets: action.blockedTargets ?? [],
+        silencedNote:   action.isSilenced
+          ? '🤐 เจ้ายังถูกปิดปากอยู่ — วันนี้พิมพ์อะไรไม่ได้'
+          : null,
+        messages:       action.messages ?? state.messages,
+        room: state.room ? {
+          ...state.room,
+          status:          'in_progress',
+          phase:           action.phase,
+          phaseEndsAt:     action.endsAt,
+          phaseDurationMs: action.durationMs ?? null,
+          round:           action.round,
+        } : state.room,
+      };
+
     case 'GAME_ENDED':
-      return { ...state, gameResult: { winner: action.winner, message: action.message } };
+      return {
+        ...state,
+        gameResult: { winner: action.winner, message: action.message, reveal: action.reveal ?? [] },
+      };
 
     case 'CLEAR_ERROR':
       return { ...state, error: null };
@@ -218,7 +262,8 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.CHAT_SILENCED]:        (payload)       => dispatch({ type: 'SILENCED', payload }),
       [SOCKET_EVENTS.MORNING_EVENT]:        (payload)       => dispatch({ type: 'MORNING_EVENT', payload }),
       [SOCKET_EVENTS.MORNING_EVENT_PRIVATE]:(payload)       => dispatch({ type: 'MORNING_EVENT_PRIVATE', payload }),
-      [SOCKET_EVENTS.GAME_ENDED]:           ({ winner, message }) => dispatch({ type: 'GAME_ENDED', winner, message }),
+      [SOCKET_EVENTS.GAME_RESUMED]:         (data)          => dispatch({ type: 'GAME_RESUMED', ...data }),
+      [SOCKET_EVENTS.GAME_ENDED]:           ({ winner, message, reveal }) => dispatch({ type: 'GAME_ENDED', winner, message, reveal }),
       [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
       [SOCKET_EVENTS.VOTE_RESULT]: (data) => dispatch({ type: 'VOTE_RESULT', ...data }),
     };
@@ -230,11 +275,34 @@ export function GameProvider({ children }) {
   }, []);
 
   const setIdentity   = useCallback((pid, nick) => dispatch({ type: 'SET_IDENTITY', playerId: pid, nickname: nick }), []);
+
   const joinRoom      = useCallback((roomId, playerId, nickname) => {
+    saveSession({ roomId, playerId, nickname });
     if (!socket.connected) socket.connect();
     socket.emit(SOCKET_EVENTS.ROOM_JOIN, { roomId, playerId, nickname });
   }, []);
-  const leaveRoom     = useCallback(() => { socket.emit(SOCKET_EVENTS.ROOM_LEAVE); socket.disconnect(); dispatch({ type: 'RESET' }); }, []);
+
+  const leaveRoom     = useCallback(() => {
+    clearSession();
+    socket.emit(SOCKET_EVENTS.ROOM_LEAVE);
+    socket.disconnect();
+    dispatch({ type: 'RESET' });
+  }, []);
+
+  // รีเฟรชหน้ากลางเกม / เน็ตหลุดแล้ว socket.io ต่อกลับได้ → ยิง room:join ซ้ำด้วย identity เดิม
+  // server เห็นว่า playerId อยู่ในห้องอยู่แล้ว จึงคืน state ให้แทนที่จะปฏิเสธว่า "เกมเริ่มไปแล้ว"
+  useEffect(() => {
+    const session = loadSession();
+    if (!session?.roomId || !session?.playerId) return;
+
+    const rejoin = () => socket.emit(SOCKET_EVENTS.ROOM_JOIN, session);
+
+    if (socket.connected) rejoin();
+    else socket.connect();
+
+    socket.on('connect', rejoin);
+    return () => socket.off('connect', rejoin);
+  }, []);
   const sendMessage   = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
   const startGame     = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
   const advancePhase  = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);

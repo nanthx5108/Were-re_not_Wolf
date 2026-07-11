@@ -35,13 +35,18 @@ export function addPlayerToRoom(roomId, player) {
   const room = getRoom(roomId);
   if (!room) return null;
   room.players.set(player.id, {
-    id:       player.id,
-    nickname: player.nickname,
-    role:     player.role || null,
-    isAlive:  true,
-    socketId: player.socketId,
+    id:          player.id,
+    nickname:    player.nickname,
+    role:        player.role || null,
+    isAlive:     true,
+    isConnected: true,
+    socketId:    player.socketId,
   });
   return room;
+}
+
+export function getConnectedPlayers(roomId) {
+  return getPlayersArray(roomId).filter(p => p.isConnected);
 }
 
 export function removePlayerFromRoom(roomId, playerId) {
@@ -90,9 +95,10 @@ export function serializeRoom(roomId) {
     phaseDurations: room.phaseDurations,
     playerCount: getPlayersArray(roomId).length,
     players: getPlayersArray(roomId).map(p => ({
-      id:       p.id,
-      nickname: p.nickname,
-      isAlive:  p.isAlive,
+      id:          p.id,
+      nickname:    p.nickname,
+      isAlive:     p.isAlive,
+      isConnected: p.isConnected !== false,
     })),
   };
 }

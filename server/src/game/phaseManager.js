@@ -221,17 +221,66 @@ export function getTimeRemaining(roomId) {
   return Math.max(0, Math.ceil((entry.endsAt - Date.now()) / 1000));
 }
 
+// เรียกได้จากนอก phaseManager (เช่น มีคนออกกลางเกมจนฝ่ายใดฝ่ายหนึ่งชนะ)
+export async function endGameIfDecided(io, roomId) {
+  const room = getRoom(roomId);
+  if (!room || room.status !== 'in_progress') return false;
+
+  const win = evaluateWinCondition(roomId);
+  if (!win) return false;
+
+  clearPhaseTimer(roomId);
+  await _endGameAndBroadcast(io, roomId, win);
+  return true;
+}
+
 async function _endGameAndBroadcast(io, roomId, win) {
+  const players = getPlayersArray(roomId);
   endGame(roomId, win.winner, win.message);
   await pool.query(`UPDATE rooms SET status = 'finished' WHERE id = ?`, [roomId]);
 
-  io.to(roomId).emit('game:ended', { winner: win.winner, message: win.message });
+  // เกมจบแล้ว บทบาทไม่ใช่ความลับอีกต่อไป — เปิดให้ดูทั้งหมด
+  const reveal = players.map(p => ({
+    id: p.id, nickname: p.nickname, role: p.role, isAlive: p.isAlive,
+  }));
+
+  io.to(roomId).emit('game:ended', { winner: win.winner, message: win.message, reveal });
   io.to(roomId).emit('chat:message', {
     id:      `sys-end-${Date.now()}`,
     channel: CHANNELS.SYSTEM,
     content: win.message,
     sentAt:  new Date().toISOString(),
   });
+
+  // นับสถิติเฉพาะผู้เล่นที่ล็อกอิน (playerId ของ guest เป็น uuid ที่ไม่มีใน users)
+  const ids = players.map(p => p.id);
+  if (ids.length) {
+    await pool.query(
+      `UPDATE users SET games_played = games_played + 1 WHERE id IN (${ids.map(() => '?').join(',')})`,
+      ids
+    ).catch(err => console.error('[games_played]', err));
+  }
+}
+
+// ── ห้องร้าง ────────────────────────────────────────────────────────────────
+// ทุกคนหลุดหมดระหว่างเกม — รอสักพักเผื่อกลับมา ถ้าไม่กลับก็ทิ้งห้อง
+const ABANDON_GRACE_MS = 5 * 60_000;
+const abandonTimers = new Map();
+
+export function scheduleRoomAbandon(roomId, onAbandon) {
+  cancelRoomAbandon(roomId);
+  abandonTimers.set(roomId, setTimeout(() => {
+    abandonTimers.delete(roomId);
+    Promise.resolve(onAbandon()).catch(err => console.error('[room abandon]', err));
+  }, ABANDON_GRACE_MS));
+}
+
+export function cancelRoomAbandon(roomId) {
+  const t = abandonTimers.get(roomId);
+  if (t) {
+    clearTimeout(t);
+    abandonTimers.delete(roomId);
+  }
 }
 
 async function _resolveNightActionsAndBroadcast(io, roomId) {
