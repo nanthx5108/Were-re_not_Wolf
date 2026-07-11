@@ -10,6 +10,15 @@ import MorningEventBanner from '../src/components/MorningEventBanner.jsx';
 import Navbar from '../src/components/Navbar.jsx';
 import '../src/styles/Lobby.css';
 
+const ROLE_LABEL = {
+  villager:  '🧑‍🌾 Villager',
+  werewolf:  '🐺 Werewolf',
+  seer:      '🔮 Seer',
+  bodyguard: '🛡️ Bodyguard',
+  silencer:  '🤐 Silencer',
+  fool:      '🃏 Fool',
+};
+
 export default function Game() {
   const { roomId } = useParams();
   const navigate = useNavigate();
@@ -57,8 +66,28 @@ export default function Game() {
       )}
 
       {gameResult && (
-        <div className="lobby-error-banner" style={{ background: 'rgba(159, 188, 208, 0.16)' }}>
-          <span><strong>{gameResult.message}</strong></span>
+        <div className="lobby-error-banner" style={{ background: 'rgba(159, 188, 208, 0.16)', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+          <strong>{gameResult.message}</strong>
+
+          {gameResult.reveal?.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              {gameResult.reveal.map((p) => (
+                <span key={p.id} style={{
+                  padding: '0.25rem 0.6rem',
+                  borderRadius: '999px',
+                  fontSize: '0.78rem',
+                  border: '1px solid var(--color-border)',
+                  background: p.role === 'werewolf' ? 'rgba(229,115,115,.18)' : 'rgba(255,255,255,.05)',
+                  textDecoration: p.isAlive ? 'none' : 'line-through',
+                  opacity: p.isAlive ? 1 : 0.6,
+                }}>
+                  {ROLE_LABEL[p.role] || p.role} — {p.nickname}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <button className="lobby-start-btn" onClick={handleLeave}>กลับหน้าแรก</button>
         </div>
       )}
 

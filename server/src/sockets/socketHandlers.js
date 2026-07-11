@@ -1,14 +1,17 @@
 import pool from '../../db/connection.js';
 import {
   getRoom, addPlayerToRoom, removePlayerFromRoom,
-  updatePlayer, getPlayersArray,
+  updatePlayer, getPlayersArray, getConnectedPlayers,
   serializeRoom, serializeRoomForPlayer, updateRoom, deleteRoom,
 } from '../game/gameStore.js';
 import { distributeRoles }   from '../game/Roledistributor.js';
 import { PLAYER_LIMITS, CHANNELS, PHASES } from '../game/constants.js';
 import { canJoinRoom } from '../game/roomCapacity.js';
 import { validateConfigForPlayerCount, buildDefaultRoleConfig } from '../game/roomConfig.js';
-import { startPhaseTimer, advancePhase, clearPhaseTimer, getPhaseDurationMs } from '../game/phaseManager.js';
+import {
+  startPhaseTimer, advancePhase, clearPhaseTimer, getPhaseDurationMs,
+  endGameIfDecided, scheduleRoomAbandon, cancelRoomAbandon,
+} from '../game/phaseManager.js';
 import { castVote, hasAllVoted, clearVoting } from '../game/voteManager.js';
 import { initNightActions, submitNightAction, getBlockedProtectTargets } from '../game/nightActions.js';
 
@@ -18,6 +21,11 @@ export function registerSocketHandlers(socket, io) {
     try {
       const room = getRoom(roomId);
       if (!room) return socket.emit('error', { message: 'Room not found.' });
+
+      // ผู้เล่นที่อยู่ในห้องอยู่แล้ว = กลับเข้ามาใหม่ (รีเฟรช/เน็ตหลุด) — ไม่ใช่คนใหม่
+      const existing = room.players.get(playerId);
+      if (existing) return handleRejoin(socket, io, roomId, playerId);
+
       if (room.status !== 'waiting') return socket.emit('error', { message: 'Game already in progress.' });
       if (!canJoinRoom(room, room.players.size)) return socket.emit('error', { message: 'Room is full.' });
 
@@ -41,7 +49,7 @@ export function registerSocketHandlers(socket, io) {
   });
 
   socket.on('room:leave', () => handleLeave(socket, io));
-  socket.on('disconnect', () => handleLeave(socket, io));
+  socket.on('disconnect', () => handleDisconnect(socket, io));
 
   socket.on('chat:send', async ({ content, channel = CHANNELS.VILLAGE }) => {
     const { roomId, playerId, nickname } = socket.data || {};
@@ -209,24 +217,133 @@ export function registerSocketHandlers(socket, io) {
   });
 }
 
-async function handleLeave(socket, io) {
+// กลับเข้าห้องเดิม — ต้องคืน state ส่วนตัวให้ครบ ไม่งั้นผู้เล่นจะเล่นต่อไม่ได้
+async function handleRejoin(socket, io, roomId, playerId) {
+  const room = getRoom(roomId);
+  const player = room.players.get(playerId);
+
+  updatePlayer(roomId, playerId, { socketId: socket.id, isConnected: true });
+  await pool.query(`UPDATE players SET socket_id = ? WHERE id = ?`, [socket.id, playerId]);
+
+  socket.join(roomId);
+  socket.data = { roomId, playerId, nickname: player.nickname };
+  cancelRoomAbandon(roomId);
+
+  socket.emit('room:state', serializeRoomForPlayer(roomId, playerId));
+
+  if (room.status === 'in_progress') {
+    const teammates = player.role === 'werewolf'
+      ? getPlayersArray(roomId)
+          .filter(p => p.role === 'werewolf' && p.id !== playerId)
+          .map(p => ({ id: p.id, nickname: p.nickname }))
+      : undefined;
+
+    socket.emit('game:resumed', {
+      phase:          room.phase,
+      round:          room.round,
+      endsAt:         room.phaseEndsAt,
+      durationMs:     getPhaseDurationMs(roomId, room.phase),
+      myRole:         player.role,
+      teammates,
+      isSilenced:     room.silencedPlayerId === playerId,
+      blockedTargets: getBlockedProtectTargets(roomId, playerId),
+      messages:       await loadRecentMessages(roomId, player.role),
+    });
+  }
+
+  io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
+  io.to(roomId).emit('chat:message', {
+    id: `sys-${Date.now()}`, channel: CHANNELS.SYSTEM,
+    content: `${player.nickname} กลับเข้าเกาะแล้ว`,
+    sentAt: new Date().toISOString(),
+  });
+}
+
+// แชทย้อนหลัง — คนที่ไม่ใช่หมาป่าต้องไม่เห็นช่องหมาป่า
+async function loadRecentMessages(roomId, role) {
+  const channels = role === 'werewolf'
+    ? [CHANNELS.VILLAGE, CHANNELS.SYSTEM, CHANNELS.WEREWOLF]
+    : [CHANNELS.VILLAGE, CHANNELS.SYSTEM];
+
+  const [rows] = await pool.query(
+    `SELECT id, player_id, nickname, content, channel, sent_at
+     FROM messages
+     WHERE room_id = ? AND channel IN (${channels.map(() => '?').join(',')})
+     ORDER BY sent_at DESC, id DESC
+     LIMIT 100`,
+    [roomId, ...channels]
+  );
+
+  return rows.reverse().map(r => ({
+    id:       `db-${r.id}`,
+    playerId: r.player_id,
+    nickname: r.nickname,
+    channel:  r.channel,
+    content:  r.content,
+    sentAt:   new Date(r.sent_at).toISOString(),
+  }));
+}
+
+// เน็ตหลุด/ปิดแท็บ — ระหว่างเกมยังไม่ถือว่าออก เผื่อกลับมา
+async function handleDisconnect(socket, io) {
   const { roomId, playerId, nickname } = socket.data || {};
   if (!roomId || !playerId) return;
-
-  removePlayerFromRoom(roomId, playerId);
-  await pool.query(`DELETE FROM players WHERE id = ?`, [playerId]);
-  socket.leave(roomId);
 
   const room = getRoom(roomId);
   if (!room) return;
 
-  if (room.players.size === 0) {
-    clearPhaseTimer(roomId);
-    clearVoting(roomId);
-    deleteRoom(roomId);
-    await pool.query(`DELETE FROM rooms WHERE id = ?`, [roomId]);
+  // ยังไม่เริ่มเกม — หลุดคือออกไปเลย ไม่มีอะไรให้กลับมาหา
+  if (room.status !== 'in_progress') return handleLeave(socket, io);
+
+  updatePlayer(roomId, playerId, { isConnected: false, socketId: null });
+  socket.leave(roomId);
+
+  io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
+  io.to(roomId).emit('chat:message', {
+    id: `sys-${Date.now()}`, channel: CHANNELS.SYSTEM,
+    content: `${nickname} ขาดการเชื่อมต่อ… (ยังอยู่ในเกม)`,
+    sentAt: new Date().toISOString(),
+  });
+
+  if (getConnectedPlayers(roomId).length === 0) {
+    scheduleRoomAbandon(roomId, () => destroyRoom(roomId));
+  }
+}
+
+// ตั้งใจกดออก
+async function handleLeave(socket, io) {
+  const { roomId, playerId, nickname } = socket.data || {};
+  if (!roomId || !playerId) return;
+
+  const room = getRoom(roomId);
+  if (!room) return;
+
+  socket.leave(roomId);
+
+  // ออกกลางเกม = ยอมแพ้ ตายไปเลย — ลบทิ้งไม่ได้ ไม่งั้นเงื่อนไขชนะจะนับผิด
+  if (room.status === 'in_progress') {
+    updatePlayer(roomId, playerId, { isAlive: false, isConnected: false, socketId: null });
+    await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [playerId]);
+
+    io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
+    io.to(roomId).emit('chat:message', {
+      id: `sys-${Date.now()}`, channel: CHANNELS.SYSTEM,
+      content: `${nickname} หนีออกจากเกาะไปแล้ว`,
+      sentAt: new Date().toISOString(),
+    });
+
+    await endGameIfDecided(io, roomId);
+
+    if (getConnectedPlayers(roomId).length === 0) {
+      scheduleRoomAbandon(roomId, () => destroyRoom(roomId));
+    }
     return;
   }
+
+  removePlayerFromRoom(roomId, playerId);
+  await pool.query(`DELETE FROM players WHERE id = ?`, [playerId]);
+
+  if (room.players.size === 0) return destroyRoom(roomId);
 
   if (room.hostId === playerId) {
     const newHost = room.players.values().next().value;
@@ -241,6 +358,14 @@ async function handleLeave(socket, io) {
     content: `${nickname} left the island.`,
     sentAt: new Date().toISOString(),
   });
+}
+
+async function destroyRoom(roomId) {
+  clearPhaseTimer(roomId);
+  cancelRoomAbandon(roomId);
+  clearVoting(roomId);
+  deleteRoom(roomId);
+  await pool.query(`DELETE FROM rooms WHERE id = ?`, [roomId]);
 }
 
 function broadcastToRole(io, room, role, event, data) {
