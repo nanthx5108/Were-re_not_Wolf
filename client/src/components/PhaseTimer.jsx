@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PHASE_DURATIONS_SEC, PHASE_CONFIG } from '../constants/game.js';
 
-export default function PhaseTimer({ phase, phaseEndsAt, round }) {
+export default function PhaseTimer({ phase, phaseEndsAt, phaseDurationMs, round }) {
   const [remaining, setRemaining] = useState(0);
 
   useEffect(() => {
@@ -17,10 +17,13 @@ export default function PhaseTimer({ phase, phaseEndsAt, round }) {
     return () => clearInterval(id);
   }, [phaseEndsAt]);
 
-  const cfg      = PHASE_CONFIG[phase] || PHASE_CONFIG.lobby;
-  const totalSec = PHASE_DURATIONS_SEC[phase] || 30;
-  const pct      = phaseEndsAt
-    ? Math.max(0, Math.min(1, (phaseEndsAt - Date.now()) / (totalSec * 1000)))
+  const cfg = PHASE_CONFIG[phase] || PHASE_CONFIG.lobby;
+
+  // ความยาว phase มาจาก server — host ตั้งเวลาเองได้ และเหตุการณ์ประจำเช้าปรับเวลาได้อีก
+  // ค่า fallback ใช้เฉพาะตอนยังไม่ได้รับ event แรก
+  const totalMs = phaseDurationMs || (PHASE_DURATIONS_SEC[phase] || 30) * 1000;
+  const pct = phaseEndsAt
+    ? Math.max(0, Math.min(1, (phaseEndsAt - Date.now()) / totalMs))
     : 0;
 
   const isUrgent = remaining <= 10 && remaining > 0;

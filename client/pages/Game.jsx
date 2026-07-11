@@ -1,11 +1,12 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useGame } from '../context/GameContext.jsx';
+import { useGame } from '../context/Gamecontext.jsx';
 import PlayerCard from '../src/components/PlayerCard.jsx';
 import ChatBox from '../src/components/ChatBox.jsx';
 import PhaseTimer from '../src/components/PhaseTimer.jsx';
 import VotingPanel from '../src/components/VotingPanel.jsx';
 import NightAction from '../src/components/NightAction.jsx';
+import MorningEventBanner from '../src/components/MorningEventBanner.jsx';
 import Navbar from '../src/components/Navbar.jsx';
 import '../src/styles/Lobby.css';
 
@@ -45,6 +46,7 @@ export default function Game() {
 
   return (
     <div className="lobby-page">
+      <MorningEventBanner />
       <Navbar roomId={room.id} nickname={nickname} connected={connected} onLeave={handleLeave} />
 
       {error && (
@@ -72,7 +74,7 @@ export default function Game() {
           </section>
 
           <section className="lobby-section">
-            <PhaseTimer phase={room.phase} phaseEndsAt={room.phaseEndsAt} round={room.round} />
+            <PhaseTimer phase={room.phase} phaseEndsAt={room.phaseEndsAt} phaseDurationMs={room.phaseDurationMs} round={room.round} />
             {(isNight || isVoting || isResults) && (
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
                 {isHost && <button className="lobby-start-btn" onClick={advancePhase}>Skip phase</button>}
@@ -82,7 +84,9 @@ export default function Game() {
         </aside>
 
         <section className="lobby-chat-section" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {isNight && <NightAction />}
+          {/* NightAction ตัดสินใจเองว่าจะแสดงตัวเลือกกลางคืน หรือผลตรวจของ Seer (ซึ่งมาถึงตอนกลางวัน) */}
+          <NightAction />
+
           {isVoting && <VotingPanel players={alivePlayers} playerId={playerId} votes={votes} onVote={castVote} />}
           {isResults && voteResult && (
             <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface)' }}>

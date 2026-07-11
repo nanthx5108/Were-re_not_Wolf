@@ -24,6 +24,9 @@ export const SOCKET_EVENTS = Object.freeze({
   NIGHT_ACTION_ACK:     'night:action:ack',
   NIGHT_ACTION_UPDATE:  'night:action:update',
   NIGHT_RESULT:         'night:result',
+  NIGHT_SEER_RESULT:    'night:seer_result',
+  MORNING_EVENT:        'morning:event',
+  MORNING_EVENT_PRIVATE:'morning:event:private',
   GAME_ENDED:           'game:ended',
 });
 
@@ -42,6 +45,8 @@ const initialState = {
   myNightAction: null,
   nightResult:   null,
   gameResult:    null,
+  morningEvent:  null,
+  privateNote:   null,
 };
 
 function gameReducer(state, action) {
@@ -87,10 +92,11 @@ function gameReducer(state, action) {
         myRole: action.myRole,
         room: state.room ? {
           ...state.room,
-          status:      'in_progress',
-          phase:       action.phase,
-          phaseEndsAt: action.endsAt,
-          round:       action.round ?? 1,
+          status:          'in_progress',
+          phase:           action.phase,
+          phaseEndsAt:     action.endsAt,
+          phaseDurationMs: action.durationMs ?? null,
+          round:           action.round ?? 1,
         } : state.room,
       };
 
@@ -99,15 +105,18 @@ function gameReducer(state, action) {
         ...state,
         room: state.room ? {
           ...state.room,
-          phase:       action.phase,
-          phaseEndsAt: action.endsAt,
-          round:       action.round,
+          phase:           action.phase,
+          phaseEndsAt:     action.endsAt,
+          phaseDurationMs: action.durationMs ?? null,
+          round:           action.round,
         } : state.room,
         votes:      action.phase === 'voting' ? { voteMap: {}, counts: {} } : null,
         voteResult: action.phase === 'results' ? state.voteResult : null,
         wolfTargets:   action.phase === 'night' ? {} : state.wolfTargets,
         seerResult:    action.phase === 'night' ? null : state.seerResult,
         myNightAction: action.phase === 'night' ? null : state.myNightAction,
+        privateNote:   action.phase === 'night' ? null : state.privateNote,
+        // morningEvent คงไว้ข้ามคืน — NightAction ใช้เช็ค effect เช่น เรือกลับเข้าฝั่ง (เลือกป้องกัน 2 คน)
       };
 
     case 'VOTE_UPDATE':
@@ -133,8 +142,27 @@ function gameReducer(state, action) {
     case 'NIGHT_ACTION_ACK':
       return { ...state, myNightAction: action.payload, nightResult: null };
 
+    // มาจาก server เฉพาะเมื่อเราเป็นหมาป่า — เป้าหมายของเพื่อนร่วมทีม
+    case 'WOLF_TARGET_UPDATE':
+      return {
+        ...state,
+        wolfTargets: {
+          ...state.wolfTargets,
+          [action.payload.playerId]: action.payload,
+        },
+      };
+
     case 'NIGHT_RESULT':
       return { ...state, nightResult: action.payload };
+
+    case 'SEER_RESULT':
+      return { ...state, seerResult: action.payload };
+
+    case 'MORNING_EVENT':
+      return { ...state, morningEvent: action.payload, privateNote: null };
+
+    case 'MORNING_EVENT_PRIVATE':
+      return { ...state, privateNote: action.payload.message };
 
     case 'GAME_ENDED':
       return { ...state, gameResult: { winner: action.winner, message: action.message } };
@@ -168,7 +196,11 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.PHASE_CHANGED]:        (data)          => dispatch({ type: 'PHASE_CHANGED', ...data }),
       [SOCKET_EVENTS.ERROR]:                ({ message })   => dispatch({ type: 'SET_ERROR', error: message }),
       [SOCKET_EVENTS.NIGHT_ACTION_ACK]:     (payload)       => dispatch({ type: 'NIGHT_ACTION_ACK', payload }),
+      [SOCKET_EVENTS.NIGHT_ACTION_UPDATE]:  (payload)       => dispatch({ type: 'WOLF_TARGET_UPDATE', payload }),
       [SOCKET_EVENTS.NIGHT_RESULT]:         (payload)       => dispatch({ type: 'NIGHT_RESULT', payload }),
+      [SOCKET_EVENTS.NIGHT_SEER_RESULT]:    (payload)       => dispatch({ type: 'SEER_RESULT', payload }),
+      [SOCKET_EVENTS.MORNING_EVENT]:        (payload)       => dispatch({ type: 'MORNING_EVENT', payload }),
+      [SOCKET_EVENTS.MORNING_EVENT_PRIVATE]:(payload)       => dispatch({ type: 'MORNING_EVENT_PRIVATE', payload }),
       [SOCKET_EVENTS.GAME_ENDED]:           ({ winner, message }) => dispatch({ type: 'GAME_ENDED', winner, message }),
       [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
       [SOCKET_EVENTS.VOTE_RESULT]: (data) => dispatch({ type: 'VOTE_RESULT', ...data }),

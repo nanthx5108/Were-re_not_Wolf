@@ -6,6 +6,7 @@ import {
 } from '../services/roomService.js';
 import { serializeRoom } from '../game/gameStore.js';
 import { PLAYER_LIMITS } from '../game/constants.js';
+import { normalizeRoomConfig } from '../game/roomConfig.js';
 
 export async function createRoomHandler(req, res, next) {
   try {
@@ -33,12 +34,20 @@ export async function createRoomHandler(req, res, next) {
       });
     }
 
+    // config ถูก validate เทียบกับขนาดห้องที่ตกลงกันแล้ว — ห้ามเชื่อ client
+    const roomSize = parsedMaxPlayers ?? PLAYER_LIMITS.MAX;
+    const { config, error: configError } = normalizeRoomConfig(req.body?.config, roomSize);
+    if (configError) {
+      return res.status(400).json({ error: configError });
+    }
+
     const { roomId, playerId } = await createRoomService({
       hostNickname,
       roomName,
       userId: req.session?.userId || null,
       maxPlayers: parsedMaxPlayers,
       isPrivate: !!isPrivate,
+      config,
     });
 
     return res.status(201).json({

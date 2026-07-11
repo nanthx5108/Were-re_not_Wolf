@@ -2,13 +2,14 @@ import pool from '../../db/connection.js';
 import {
   getRoom, addPlayerToRoom, removePlayerFromRoom,
   updatePlayer, getPlayersArray,
-  serializeRoom, serializeRoomForPlayer, updateRoom,
+  serializeRoom, serializeRoomForPlayer, updateRoom, deleteRoom,
 } from '../game/gameStore.js';
 import { distributeRoles }   from '../game/Roledistributor.js';
 import { PLAYER_LIMITS, CHANNELS, PHASES } from '../game/constants.js';
 import { canJoinRoom } from '../game/roomCapacity.js';
-import { startPhaseTimer, advancePhase, clearPhaseTimer } from '../game/phaseManager.js';
-import { castVote, hasAllVoted } from '../game/voteManager.js';
+import { validateConfigForPlayerCount, buildDefaultRoleConfig } from '../game/roomConfig.js';
+import { startPhaseTimer, advancePhase, clearPhaseTimer, getPhaseDurationMs } from '../game/phaseManager.js';
+import { castVote, hasAllVoted, clearVoting } from '../game/voteManager.js';
 import { initNightActions, submitNightAction } from '../game/nightActions.js';
 
 export function registerSocketHandlers(socket, io) {
@@ -88,7 +89,12 @@ export function registerSocketHandlers(socket, io) {
       return socket.emit('error', { message: `Need at least ${PLAYER_LIMITS.MIN} players.` });
     }
 
-    const assigned = distributeRoles(players);
+    // config ตั้งไว้ตาม maxPlayers แต่คนเข้าจริงอาจน้อยกว่า — ต้องเช็คกับจำนวนจริงก่อนแจกบทบาท
+    const roleConfig = room.roleConfig || buildDefaultRoleConfig(players.length);
+    const configError = validateConfigForPlayerCount(roleConfig, players.length);
+    if (configError) return socket.emit('error', { message: configError });
+
+    const assigned = distributeRoles(players, roleConfig);
     for (const p of assigned) {
       updatePlayer(roomId, p.id, { role: p.role });
       await pool.query(`UPDATE players SET role = ? WHERE id = ?`, [p.role, p.id]);
@@ -98,11 +104,12 @@ export function registerSocketHandlers(socket, io) {
     initNightActions(roomId);
     await pool.query(`UPDATE rooms SET status = 'in_progress' WHERE id = ?`, [roomId]);
 
+    const durationMs = getPhaseDurationMs(roomId, PHASES.NIGHT);
     const endsAt = startPhaseTimer(io, roomId, PHASES.NIGHT);
 
     for (const p of assigned) {
       const s = findSocketByPlayerId(io, p.id);
-      if (s) s.emit('game:started', { phase: PHASES.NIGHT, myRole: p.role, endsAt, round: 1 });
+      if (s) s.emit('game:started', { phase: PHASES.NIGHT, myRole: p.role, endsAt, durationMs, round: 1 });
     }
 
     io.to(roomId).emit('room:state', serializeRoom(roomId));
@@ -127,9 +134,16 @@ export function registerSocketHandlers(socket, io) {
     const action = submitNightAction(roomId, playerId, { targetId });
     if (!action) return socket.emit('error', { message: 'Invalid night action.' });
 
-    const payload = { playerId, nickname: player.nickname, role: player.role, targetId };
-    socket.emit('night:action:ack', payload);
-    io.to(roomId).emit('night:action:update', payload);
+    socket.emit('night:action:ack', { targetId });
+
+    // เฉพาะหมาป่าเท่านั้นที่เห็นเป้าหมายของเพื่อนร่วมทีม — role ห้ามหลุดออกนอก socket เจ้าตัว
+    if (player.role === 'werewolf') {
+      broadcastToRole(io, room, 'werewolf', 'night:action:update', {
+        playerId,
+        nickname: player.nickname,
+        targetId,
+      });
+    }
   });
 
   socket.on('vote:cast', ({ targetId }) => {
@@ -188,6 +202,8 @@ async function handleLeave(socket, io) {
 
   if (room.players.size === 0) {
     clearPhaseTimer(roomId);
+    clearVoting(roomId);
+    deleteRoom(roomId);
     await pool.query(`DELETE FROM rooms WHERE id = ?`, [roomId]);
     return;
   }

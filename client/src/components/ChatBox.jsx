@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useGame } from '../../context/GameContext.jsx';
+import { useGame } from '../../context/Gamecontext.jsx';
 
 const CHANNEL_COLOR = {
   village:  'var(--color-text)',

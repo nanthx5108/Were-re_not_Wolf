@@ -9,20 +9,22 @@ import {
 } from '../game/gameStore.js';
 import { PLAYER_LIMITS } from '../game/constants.js';
 import { getRoomPlayerLimit } from '../game/roomCapacity.js';
+import { buildDefaultRoomConfig } from '../game/roomConfig.js';
 
-export async function createRoomService({ hostNickname, roomName, userId, maxPlayers, isPrivate }) {
+export async function createRoomService({ hostNickname, roomName, userId, maxPlayers, isPrivate, config }) {
   const roomId = generateRoomCode();
   const hostId = userId || uuidv4();
 
   const safeMaxPlayers = clampMaxPlayers(maxPlayers);
   const safeIsPrivate  = !!isPrivate;
+  const safeConfig     = config || buildDefaultRoomConfig(safeMaxPlayers);
 
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     await conn.query(
-      `INSERT INTO rooms (id, name, host_id, max_players, is_private) VALUES (?, ?, ?, ?, ?)`,
-      [roomId, roomName.trim(), hostId, safeMaxPlayers, safeIsPrivate]
+      `INSERT INTO rooms (id, name, host_id, max_players, is_private, config) VALUES (?, ?, ?, ?, ?, ?)`,
+      [roomId, roomName.trim(), hostId, safeMaxPlayers, safeIsPrivate, JSON.stringify(safeConfig)]
     );
     await conn.query(
       `INSERT INTO players (id, room_id, nickname) VALUES (?, ?, ?)`,
@@ -36,7 +38,10 @@ export async function createRoomService({ hostNickname, roomName, userId, maxPla
     conn.release();
   }
 
-  createRoom({ id: roomId, name: roomName.trim(), hostId, maxPlayers: safeMaxPlayers, isPrivate: safeIsPrivate });
+  createRoom({
+    id: roomId, name: roomName.trim(), hostId,
+    maxPlayers: safeMaxPlayers, isPrivate: safeIsPrivate, config: safeConfig,
+  });
   addPlayerToRoom(roomId, { id: hostId, nickname: hostNickname.trim() });
 
   return { roomId, playerId: hostId };
