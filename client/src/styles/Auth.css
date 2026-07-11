@@ -261,6 +261,10 @@
   transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
   width: 100%;
   margin-top: var(--space-1);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .auth-btn:disabled {
@@ -291,6 +295,41 @@
   transform: translateY(0);
   filter: brightness(0.94);
 }
+
+/* === Divider === */
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+}
+.auth-or::before,
+.auth-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(159,188,208,0.18);
+}
+
+/* === Google sign-in button === */
+.auth-btn-google {
+  background: #ffffff;
+  color: #1f1f1f;
+  border: 1px solid rgba(0,0,0,0.15);
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.auth-btn-google:not(:disabled):hover {
+  filter: brightness(0.97);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
+}
+.auth-btn-google:not(:disabled):active {
+  filter: brightness(0.93);
+  transform: translateY(0);
+}
+.auth-btn-google svg { flex-shrink: 0; }
 
 /* === Switch link (Login ↔ Register) === */
 .auth-switch {

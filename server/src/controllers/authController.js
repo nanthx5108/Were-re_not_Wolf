@@ -1,9 +1,14 @@
+import crypto from 'node:crypto';
 import {
   registerService,
   loginService,
   getUserByIdService,
   updateProfileService,
+  getGoogleAuthUrl,
+  loginWithGoogleService,
 } from '../services/authService.js';
+
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 export async function registerHandler(req, res, next) {
   try {
@@ -70,6 +75,37 @@ export async function meHandler(req, res, next) {
     return res.json({ user });
   } catch (err) {
     next(err);
+  }
+}
+
+export function googleAuthHandler(req, res) {
+  const from = typeof req.query.from === 'string' && req.query.from.startsWith('/') ? req.query.from : '/';
+  const nonce = crypto.randomBytes(16).toString('hex');
+  req.session.oauthState = nonce;
+
+  const state = `${nonce}|${encodeURIComponent(from)}`;
+  res.redirect(getGoogleAuthUrl(state));
+}
+
+export async function googleCallbackHandler(req, res) {
+  try {
+    const { code, state } = req.query;
+    const [nonce, encodedFrom] = String(state || '').split('|');
+    const from = encodedFrom ? decodeURIComponent(encodedFrom) : '/';
+
+    if (!code || !nonce || nonce !== req.session.oauthState) {
+      return res.redirect(`${CLIENT_URL}/login?error=google_auth_failed`);
+    }
+    delete req.session.oauthState;
+
+    const user = await loginWithGoogleService(code);
+    req.session.userId = user.id;
+    req.session.username = user.username;
+
+    return res.redirect(`${CLIENT_URL}${from}`);
+  } catch (err) {
+    console.error('Google auth failed:', err.message);
+    return res.redirect(`${CLIENT_URL}/login?error=google_auth_failed`);
   }
 }
 

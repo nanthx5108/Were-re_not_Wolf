@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { OAuth2Client } from 'google-auth-library';
 import pool from '../../db/connection.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -11,6 +12,12 @@ const UPLOADS_ROOT = path.join(__dirname, '../../uploads');
 const SALT_ROUNDS = 12;
 const GAMES_PER_LEVEL = 5;
 const USERNAME_COOLDOWN_DAYS = 90;
+
+const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_CALLBACK_URL  = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/api/auth/google/callback';
+
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL);
 
 export function calculateLevel(gamesPlayed) {
   return Math.floor((gamesPlayed ?? 0) / GAMES_PER_LEVEL) + 1;
@@ -23,7 +30,8 @@ async function ensureProfileColumns() {
       ADD COLUMN IF NOT EXISTS birthdate DATE DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500) DEFAULT NULL,
-      ADD COLUMN IF NOT EXISTS username_changed_at DATETIME DEFAULT NULL
+      ADD COLUMN IF NOT EXISTS username_changed_at DATETIME DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) DEFAULT NULL UNIQUE
   `);
 }
 
@@ -75,6 +83,10 @@ export async function loginService({ username, password }) {
   }
 
   const user = rows[0];
+  if (!user.password) {
+    throw Object.assign(new Error('This account signs in with Google. Use "Sign in with Google" instead.'), { status: 401 });
+  }
+
   const match = await bcrypt.compare(password, user.password);
 
   if (!match) {
@@ -82,6 +94,81 @@ export async function loginService({ username, password }) {
   }
 
   return toPublicUser(user);
+}
+
+async function generateUniqueUsername(base) {
+  const cleaned = (base || '')
+    .normalize('NFKD')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toLowerCase()
+    .slice(0, 20) || 'player';
+
+  let candidate = cleaned;
+  let suffix = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const [rows] = await pool.query('SELECT id FROM users WHERE username = ?', [candidate]);
+    if (rows.length === 0) return candidate;
+    suffix += 1;
+    candidate = `${cleaned}${suffix}`;
+  }
+}
+
+export function getGoogleAuthUrl(state) {
+  return googleClient.generateAuthUrl({
+    access_type: 'online',
+    scope: ['openid', 'email', 'profile'],
+    prompt: 'select_account',
+    state,
+  });
+}
+
+export async function loginWithGoogleService(code) {
+  await ensureProfileColumns();
+
+  const { tokens } = await googleClient.getToken(code);
+  const ticket = await googleClient.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  const { sub: googleId, email, name, picture } = payload;
+
+  const [byGoogleId] = await pool.query(
+    'SELECT id, username, games_played, display_name, birthdate, email, avatar_url, username_changed_at FROM users WHERE google_id = ?',
+    [googleId]
+  );
+  if (byGoogleId.length > 0) {
+    return toPublicUser(byGoogleId[0]);
+  }
+
+  if (email) {
+    const [byEmail] = await pool.query(
+      'SELECT id, username, games_played, display_name, birthdate, email, avatar_url, username_changed_at FROM users WHERE email = ?',
+      [email]
+    );
+    if (byEmail.length > 0) {
+      await pool.query('UPDATE users SET google_id = ? WHERE id = ?', [googleId, byEmail[0].id]);
+      return toPublicUser(byEmail[0]);
+    }
+  }
+
+  const id = uuidv4();
+  const username = await generateUniqueUsername(name || (email ? email.split('@')[0] : ''));
+
+  await pool.query(
+    'INSERT INTO users (id, username, password, google_id, email, display_name, avatar_url) VALUES (?, ?, NULL, ?, ?, ?, ?)',
+    [id, username, googleId, email || null, name || null, picture || null]
+  );
+
+  return toPublicUser({
+    id,
+    username,
+    games_played: 0,
+    display_name: name || null,
+    email: email || null,
+    avatar_url: picture || null,
+  });
 }
 
 export async function getUserByIdService(id) {
