@@ -8,11 +8,11 @@ import {
   CONFIGURABLE_ROLES, DURATION_LIMITS, DEFAULT_PHASE_DURATIONS,
   defaultRoleConfig, validateRoleConfig,
 } from '../src/constants/game.js';
+import { expNeeded, levelProgress, STARTING_LEVEL } from '../../shared/leveling.js';
 import '../src/styles/HomePage.css';
 
 const BG_IMAGE = bgHome;
 const API = '/api/rooms';
-const GAMES_PER_LEVEL = 5;
 
 const NEWS = [
   {
@@ -812,36 +812,7 @@ export default function HomePage() {
             )}
 
             {/* Player bar */}
-            {!mode && (
-              <div className="player-bar fade-in">
-                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-                <span className="panel-corner panel-corner-br" aria-hidden="true" />
-                <div className="player-ava">
-                  {user ? user.username.charAt(0).toUpperCase() : (
-                    <span className="player-ava-eyes">
-                      <span className="eye-dot" />
-                      <span className="eye-dot" />
-                    </span>
-                  )}
-                </div>
-                <div className="player-info">
-                  <div className="player-name">
-                    {user ? user.username : 'ยังไม่ได้เข้าสู่ระบบ'}
-                  </div>
-                  <div className="player-level">
-                    {user ? `ระดับ ${user.level ?? 1}` : 'เข้าสู่ระบบเพื่อบันทึกความคืบหน้า'}
-                  </div>
-                  {user ? (
-                    <div className="player-exp">
-                      <div className="player-exp-fill"
-                        style={{ width: `${(((user.gamesPlayed ?? 0) % GAMES_PER_LEVEL) / GAMES_PER_LEVEL) * 100}%` }} />
-                    </div>
-                  ) : (
-                    <div className="player-hint">&ldquo;หมาป่าไม่ได้จับตาดูนายอยู่หรอก&hellip; จริง ๆ นะ&rdquo;</div>
-                  )}
-                </div>
-              </div>
-            )}
+            {!mode && <PlayerBar user={user} />}
           </div>
 
           {/* RIGHT — News */}
@@ -907,6 +878,71 @@ function NewsRow({ news }) {
       </div>
       <div className="home-news-item-title">{news.title}</div>
       <div className="home-news-item-desc">{news.desc}</div>
+    </div>
+  );
+}
+
+/**
+ * แถบข้อมูลผู้เล่น — รูป, ชื่อ, เลเวล, แถบ exp แบบ Minecraft
+ * ตัวเลขทุกตัวมาจาก user object ที่ server ส่งมา ไม่มีการคำนวณเลเวลซ้ำฝั่งนี้
+ */
+function PlayerBar({ user }) {
+  const level = user?.level ?? STARTING_LEVEL;
+  const exp   = user?.exp ?? 0;
+  const need  = user?.expNeeded ?? expNeeded(level);
+
+  // เลเวลอัปแล้วให้แถบสว่างวาบทีนึง
+  const [leveledUp, setLeveledUp] = useState(false);
+  const prevLevel = useRef(level);
+
+  useEffect(() => {
+    if (level > prevLevel.current) {
+      setLeveledUp(true);
+      const t = setTimeout(() => setLeveledUp(false), 1200);
+      return () => clearTimeout(t);
+    }
+    prevLevel.current = level;
+  }, [level]);
+
+  return (
+    <div className="player-bar fade-in">
+      <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+      <span className="panel-corner panel-corner-br" aria-hidden="true" />
+
+      <div className="player-ava">
+        {user?.avatarUrl
+          ? <img src={user.avatarUrl} alt="" className="player-ava-img" />
+          : <DerpyWolfAvatar size={48} />}
+      </div>
+
+      <div className="player-info">
+        <div className="player-name">
+          {user ? (user.displayName || user.username) : 'ยังไม่ได้เข้าสู่ระบบ'}
+        </div>
+
+        {user ? (
+          <>
+            <div className="player-level-row">
+              <span className={`player-level-badge ${leveledUp ? 'is-levelup' : ''}`}>
+                Lv. {level}
+              </span>
+              <span className="player-level-count">{exp} / {need} เกม</span>
+            </div>
+
+            <div className="player-exp">
+              <div
+                className={`player-exp-fill ${leveledUp ? 'is-levelup' : ''}`}
+                style={{ width: `${levelProgress(level, exp) * 100}%` }}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="player-level">เข้าสู่ระบบเพื่อบันทึกความคืบหน้า</div>
+            <div className="player-hint">&ldquo;หมาป่าไม่ได้จับตาดูนายอยู่หรอก&hellip; จริง ๆ นะ&rdquo;</div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
