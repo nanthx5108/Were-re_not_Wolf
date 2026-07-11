@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import mysql, { escapeId } from 'mysql2/promise';
 import dotenv from 'dotenv';
+import { migrateLeveling } from './migrateLeveling.js';
 
 dotenv.config();
 
@@ -40,6 +41,8 @@ async function initializeDatabase() {
     if (rows?.[0]?.result === 2) {
       console.log('✅ MySQL connected and schema ready');
     }
+
+    await migrateLeveling(pool);
   } catch (err) {
     console.error('❌ MySQL connection failed:', err.message);
     process.exit(1);

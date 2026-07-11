@@ -11,6 +11,7 @@ import { initNightActions, resolveNightActions } from './nightActions.js';
 import { evaluateWinCondition, endGame } from './winConditions.js';
 import { rollMorningEvent } from './morningEvents.js';
 import { DEFAULT_PHASE_DURATIONS } from './roomConfig.js';
+import { applyExp, EXP_PER_GAME } from '../../../shared/leveling.js';
 
 // RESULTS เป็นแค่หน้าสรุปสั้นๆ — ไม่เปิดให้ host ตั้ง จึงคงที่
 export const RESULTS_DURATION_MS = 10_000;
@@ -252,13 +253,30 @@ async function _endGameAndBroadcast(io, roomId, win) {
     sentAt:  new Date().toISOString(),
   });
 
-  // นับสถิติเฉพาะผู้เล่นที่ล็อกอิน (playerId ของ guest เป็น uuid ที่ไม่มีใน users)
-  const ids = players.map(p => p.id);
-  if (ids.length) {
-    await pool.query(
-      `UPDATE users SET games_played = games_played + 1 WHERE id IN (${ids.map(() => '?').join(',')})`,
-      ids
-    ).catch(err => console.error('[games_played]', err));
+  await _awardGameCompletion(players.map(p => p.id));
+}
+
+// เล่นจบ 1 เกม = +1 exp ให้ทุกคนในห้อง แล้วเลื่อนเลเวลถ้า exp ถึงเกณฑ์
+// เลเวลคำนวณฝั่ง server เท่านั้น — client แค่วาดแถบตามที่ได้รับมา
+async function _awardGameCompletion(playerIds) {
+  if (!playerIds.length) return;
+
+  try {
+    // guest มี playerId เป็น uuid ที่ไม่มีใน users — query นี้จึงคัดเหลือแต่คนที่ล็อกอิน
+    const [users] = await pool.query(
+      `SELECT id, level, exp FROM users WHERE id IN (${playerIds.map(() => '?').join(',')})`,
+      playerIds
+    );
+
+    for (const user of users) {
+      const { level, exp } = applyExp(user.level, user.exp, EXP_PER_GAME);
+      await pool.query(
+        `UPDATE users SET games_played = games_played + 1, level = ?, exp = ? WHERE id = ?`,
+        [level, exp, user.id]
+      );
+    }
+  } catch (err) {
+    console.error('[award exp]', err);
   }
 }
 

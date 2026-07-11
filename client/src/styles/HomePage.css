@@ -1254,7 +1254,7 @@
 }
 
 .player-ava {
-  width: 48px; height: 48px;
+  width: 52px; height: 52px;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 40%, var(--bg-overlay), var(--bg-void));
   border: 1px solid var(--border-default);
@@ -1265,6 +1265,21 @@
   color: var(--silver);
   flex-shrink: 0;
   overflow: hidden;
+}
+
+/* รูปโปรไฟล์จริงของบัญชี */
+.player-ava-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* DerpyWolfAvatar เป็น default — ย่อให้พอดีวงกลม */
+.player-ava svg {
+  width: 44px;
+  height: 44px;
+  transform: translateY(1px);
 }
 
 .player-ava-eyes {
@@ -1316,18 +1331,73 @@
   opacity: 0.75;
 }
 
+/* เลเวล + จำนวนเกม อยู่บรรทัดเดียวกัน คนละฝั่ง */
+.player-level-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: 1px;
+}
+
+.player-level-badge {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  letter-spacing: 0.06em;
+  transition: color 200ms ease, text-shadow 200ms ease;
+}
+.player-level-badge.is-levelup {
+  color: #fff;
+  text-shadow: 0 0 10px var(--gold-bright);
+}
+
+.player-level-count {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* แถบ EXP แบบ Minecraft — รางเข้มฝังลงไป, fill ทองอำพันเรืองแสง */
 .player-exp {
-  height: 3px;
-  background: var(--border-subtle);
-  border-radius: 2px;
+  position: relative;
+  height: 8px;
   margin-top: 6px;
+  border-radius: 3px;
+  background: var(--bg-void);
+  border: 1px solid var(--border-subtle);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.75);
   overflow: hidden;
 }
+
 .player-exp-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--gold-dim), var(--gold-bright));
   border-radius: 2px;
-  transition: width 600ms ease;
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-mid) 55%, var(--gold-dim) 100%);
+  box-shadow: 0 0 8px 1px var(--gold-glow), inset 0 1px 0 rgba(255,255,255,0.35);
+  /* ค่อยๆ เลื่อนตอนได้ exp — ยาวพอให้ทันเห็นว่ามันขยับ */
+  transition: width 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* เลเวลอัป: แถบรีเซ็ตกลับไป 0 แล้วสว่างวาบ */
+.player-exp-fill.is-levelup {
+  animation: expLevelUp 1.2s ease-out;
+}
+@keyframes expLevelUp {
+  0%   { box-shadow: 0 0 0 0 var(--gold-glow); filter: brightness(1); }
+  25%  { box-shadow: 0 0 16px 4px var(--gold-bright); filter: brightness(2.2); }
+  100% { box-shadow: 0 0 8px 1px var(--gold-glow); filter: brightness(1); }
+}
+/* วาบทั้งราง ไม่ใช่แค่ fill (fill กว้าง 0% ตอนเพิ่งเลเวลอัป จะมองไม่เห็น) */
+.player-exp:has(.is-levelup) {
+  animation: expTrackFlash 1.2s ease-out;
+}
+@keyframes expTrackFlash {
+  0%   { background: var(--bg-void); }
+  20%  { background: rgba(224,183,117,0.45); }
+  100% { background: var(--bg-void); }
 }
 
 .home-right { display: flex; flex-direction: column; }

@@ -5,13 +5,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { OAuth2Client } from 'google-auth-library';
 import pool from '../../db/connection.js';
+import { expNeeded, STARTING_LEVEL } from '../../../shared/leveling.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_ROOT = path.join(__dirname, '../../uploads');
 
 const SALT_ROUNDS = 12;
-const GAMES_PER_LEVEL = 5;
 const USERNAME_COOLDOWN_DAYS = 90;
+
+// คอลัมน์ที่ต้องดึงทุกครั้งเพื่อประกอบ public user — เพิ่ม field ที่นี่ที่เดียว
+const USER_FIELDS =
+  'id, username, games_played, exp, level, display_name, birthdate, email, avatar_url, username_changed_at';
 
 const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -19,9 +23,6 @@ const GOOGLE_CALLBACK_URL  = process.env.GOOGLE_CALLBACK_URL || 'http://localhos
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL);
 
-export function calculateLevel(gamesPlayed) {
-  return Math.floor((gamesPlayed ?? 0) / GAMES_PER_LEVEL) + 1;
-}
 
 async function ensureProfileColumns() {
   await pool.query(`
@@ -37,11 +38,15 @@ async function ensureProfileColumns() {
 
 function toPublicUser(user) {
   if (!user) return null;
+  const level = user.level ?? STARTING_LEVEL;
+  const exp   = user.exp ?? 0;
   return {
     id: user.id,
     username: user.username,
     gamesPlayed: user.games_played ?? 0,
-    level: calculateLevel(user.games_played),
+    level,
+    exp,
+    expNeeded: expNeeded(level),   // ส่งไปด้วยเลย client จะได้ไม่ต้องคำนวณเอง
     displayName: user.display_name ?? null,
     birthdate: user.birthdate ?? '',
     email: user.email ?? '',
@@ -74,7 +79,7 @@ export async function loginService({ username, password }) {
   await ensureProfileColumns();
 
   const [rows] = await pool.query(
-    'SELECT id, username, password, games_played, display_name, birthdate, email, avatar_url, username_changed_at FROM users WHERE username = ?',
+    `SELECT ${USER_FIELDS}, password FROM users WHERE username = ?`,
     [username.trim()]
   );
 
@@ -135,7 +140,7 @@ export async function loginWithGoogleService(code) {
   const { sub: googleId, email, name, picture } = payload;
 
   const [byGoogleId] = await pool.query(
-    'SELECT id, username, games_played, display_name, birthdate, email, avatar_url, username_changed_at FROM users WHERE google_id = ?',
+    `SELECT ${USER_FIELDS} FROM users WHERE google_id = ?`,
     [googleId]
   );
   if (byGoogleId.length > 0) {
@@ -144,7 +149,7 @@ export async function loginWithGoogleService(code) {
 
   if (email) {
     const [byEmail] = await pool.query(
-      'SELECT id, username, games_played, display_name, birthdate, email, avatar_url, username_changed_at FROM users WHERE email = ?',
+      `SELECT ${USER_FIELDS} FROM users WHERE email = ?`,
       [email]
     );
     if (byEmail.length > 0) {
@@ -175,7 +180,7 @@ export async function getUserByIdService(id) {
   await ensureProfileColumns();
 
   const [rows] = await pool.query(
-    'SELECT id, username, games_played, display_name, birthdate, email, avatar_url, username_changed_at FROM users WHERE id = ?',
+    `SELECT ${USER_FIELDS} FROM users WHERE id = ?`,
     [id]
   );
   if (rows.length === 0) return null;

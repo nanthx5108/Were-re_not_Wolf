@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS users (
     username           VARCHAR(32)     NOT NULL UNIQUE,
     password           VARCHAR(255)    DEFAULT NULL,
     games_played       INT             NOT NULL DEFAULT 0,
+    exp                INT             NOT NULL DEFAULT 0,
+    level              INT             NOT NULL DEFAULT 0,
     display_name       VARCHAR(32)     DEFAULT NULL,
     birthdate          DATE            DEFAULT NULL,
     email              VARCHAR(255)    DEFAULT NULL,
@@ -77,3 +79,11 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) DEFAULT NULL U
 ALTER TABLE users MODIFY COLUMN password VARCHAR(255) DEFAULT NULL;
 ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE rooms ADD COLUMN IF NOT EXISTS config JSON DEFAULT NULL;
+
+-- ระบบเลเวล: ผู้เล่นใหม่เริ่มที่ Lv.0 exp 0 (ไม่ใช่ Lv.1)
+-- ตารางเดิมอาจมีคอลัมน์ level ที่ default เป็น 1 อยู่ จึงบังคับ default ใหม่ด้วย MODIFY
+ALTER TABLE users ADD COLUMN IF NOT EXISTS exp INT NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS level INT NOT NULL DEFAULT 0;
+ALTER TABLE users MODIFY COLUMN exp INT NOT NULL DEFAULT 0;
+ALTER TABLE users MODIFY COLUMN level INT NOT NULL DEFAULT 0;
+UPDATE users SET level = 0 WHERE games_played = 0;
