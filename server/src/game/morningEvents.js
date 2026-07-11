@@ -211,6 +211,6 @@ function buildLetterNote(ctx, rng = Math.random) {
 
   return {
     playerId: receiver.id,
-    message: `📜 จดหมายไร้ชื่อกระซิบว่า... "${subject.nickname} ไม่ใช่หมาป่า" — จะเชื่อหรือไม่ ก็ตามใจ`,
+    message: `จดหมายไร้ชื่อกระซิบว่า... "${subject.nickname} ไม่ใช่หมาป่า" จะเชื่อหรือไม่ ก็ตามใจ`,
   };
 }

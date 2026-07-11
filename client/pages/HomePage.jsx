@@ -42,6 +42,16 @@ function DerpyWolfAvatar({ size = 96 }) {
   );
 }
 
+// เงาคนไม่มีหน้า — ใช้ตอนยังไม่ล็อกอิน (ยังไม่รู้ว่าเป็นใคร)
+function AnonymousAvatar({ size = 48 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="24" cy="17" r="8" fill="currentColor" />
+      <path d="M8 44v-3c0-6.6 7.2-11 16-11s16 4.4 16 11v3z" fill="currentColor" />
+    </svg>
+  );
+}
+
 /* ── SVG Icons ── */
 function IconCreate() {
   return (
@@ -598,9 +608,9 @@ export default function HomePage() {
                       ))}
 
                       <p className="role-filler">
-                        🧑‍🌾 ที่นั่งที่เหลือจะเป็น Villager อัตโนมัติ ({villagerCount} คน)
+                        ที่นั่งที่เหลือจะเป็น Villager อัตโนมัติ ({villagerCount} คน)
                       </p>
-                      {configError && <p className="role-warning">⚠️ {configError}</p>}
+                      {configError && <p className="role-warning">{configError}</p>}
                     </div>
 
                     <div className="advanced-section">
@@ -909,10 +919,12 @@ function PlayerBar({ user }) {
       <span className="panel-corner panel-corner-tl" aria-hidden="true" />
       <span className="panel-corner panel-corner-br" aria-hidden="true" />
 
-      <div className="player-ava">
-        {user?.avatarUrl
-          ? <img src={user.avatarUrl} alt="" className="player-ava-img" />
-          : <DerpyWolfAvatar size={48} />}
+      <div className={`player-ava ${!user ? 'is-anon' : ''}`}>
+        {!user
+          ? <AnonymousAvatar size={48} />
+          : user.avatarUrl
+            ? <img src={user.avatarUrl} alt="" className="player-ava-img" />
+            : <DerpyWolfAvatar size={48} />}
       </div>
 
       <div className="player-info">

@@ -36,7 +36,7 @@ export default function NightAction() {
   // ผลตรวจของ Seer มาถึงตอน night จบ (phase เป็น day แล้ว) จึงต้องแสดงได้นอก night ด้วย
   const seerReport = myRole === 'seer' && seerResult ? (
     <section style={{ border: '1px solid #9fbcd0', padding: '1rem', borderRadius: '12px', background: 'rgba(8,12,20,0.7)' }}>
-      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>🔮 ผลการตรวจ</h3>
+      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>ผลการตรวจ</h3>
       <p style={{ margin: 0 }}>
         <strong>{alivePlayers.find((p) => p.id === seerResult.targetId)?.nickname
           ?? room.players.find((p) => p.id === seerResult.targetId)?.nickname
@@ -75,7 +75,7 @@ export default function NightAction() {
     <>
     {seerReport}
     <section style={{ border: '1px solid #9fbcd0', padding: '1rem', borderRadius: '12px', background: 'rgba(8,12,20,0.7)' }}>
-      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>🌙 Night Action</h3>
+      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>Night Action</h3>
       <p style={{ marginBottom: '0.75rem' }}>{prompt}</p>
       <p style={{ marginBottom: '0.75rem', color: '#d9e4ec' }}>
         Role: <strong>{myRole}</strong>
@@ -110,7 +110,7 @@ export default function NightAction() {
                     cursor: blocked ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {player.nickname}{blocked ? ' 🛡️' : ''}
+                  {player.nickname}
                 </button>
               );
             })}
@@ -119,7 +119,7 @@ export default function NightAction() {
 
       {myRole === 'werewolf' && (
         <div style={{ marginTop: '0.75rem', color: '#d9e4ec' }}>
-          <strong style={{ color: '#e57373' }}>🐺 ทีมของเจ้า:</strong>{' '}
+          <strong style={{ color: '#e57373' }}>ทีมของเจ้า:</strong>{' '}
           {(teammates || []).length === 0
             ? 'เจ้าล่าเพียงลำพัง'
             : teammates.map((mate) => {

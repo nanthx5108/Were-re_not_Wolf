@@ -504,7 +504,9 @@
 
 .menu-btn {
   display: grid;
-  grid-template-columns: 52px 1fr auto;
+  /* คอลัมน์ซ้าย/ขวากว้างเท่ากัน (ไอคอน 52px, ลูกศร 52px) คำตรงกลางจึงอยู่กึ่งกลางปุ่มจริงๆ
+     ถ้าปล่อยขวาเป็น auto ลูกศรจะกว้างไม่เท่าไอคอน แล้วคำจะเยื้องไปทางขวา */
+  grid-template-columns: 52px 1fr 52px;
   gap: var(--space-4);
   align-items: center;
   padding: 16px 18px;
@@ -512,7 +514,6 @@
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: transparent;
-  text-align: left;
   position: relative;
   transition:
     background var(--ease),
@@ -647,7 +648,9 @@
 .menu-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 3px;
+  text-align: center;
 }
 .menu-title {
   font-family: var(--font-display);
@@ -667,6 +670,8 @@
 }
 
 .menu-arrow {
+  display: grid;
+  place-items: center;
   color: var(--text-muted);
   font-size: 0.85rem;
   opacity: 0;
@@ -1282,23 +1287,10 @@
   transform: translateY(1px);
 }
 
-.player-ava-eyes {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.eye-dot {
-  width: 7px; height: 9px;
-  border-radius: 60% 60% 52% 52%;
-  background: var(--gold-mid);
-  box-shadow: 0 0 8px 1px var(--gold-glow);
-  animation: eyeBlink 5.5s ease-in-out infinite;
-  transform-origin: center;
-}
-.eye-dot:last-child { animation-delay: 0.03s; }
-@keyframes eyeBlink {
-  0%, 88%, 100% { transform: scaleY(1); }
-  92%, 95%      { transform: scaleY(0.08); }
+/* ยังไม่ล็อกอิน — เงาคนไร้หน้า เงียบและไม่เรียกร้องความสนใจ */
+.player-ava.is-anon {
+  color: var(--text-muted);
+  opacity: 0.55;
 }
 
 .player-info {

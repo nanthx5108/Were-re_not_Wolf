@@ -41,12 +41,12 @@ export default function MorningEventBanner() {
         <p className="morning-event-narrator">"{morningEvent.narrator}"</p>
 
         {morningEvent.announcement && (
-          <p className="morning-event-announcement">📣 {morningEvent.announcement}</p>
+          <p className="morning-event-announcement">{morningEvent.announcement}</p>
         )}
 
         {(privateNote || seerText) && (
           <div className="morning-event-private">
-            <p className="morning-event-private-label">🤫 ถึงคุณคนเดียวเท่านั้น</p>
+            <p className="morning-event-private-label">ถึงคุณคนเดียวเท่านั้น</p>
             {seerText && <p>{seerText}</p>}
             {privateNote && <p>{privateNote}</p>}
           </div>
