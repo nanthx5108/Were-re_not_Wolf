@@ -24,7 +24,7 @@ export function evaluateWinCondition(roomId) {
     };
   }
 
-  if (aliveWerewolves >= aliveVillagers && aliveVillagers > 0) {
+  if (aliveWerewolves >= aliveVillagers) {
     return {
       winner: 'werewolf',
       message: 'หมาป่าชนะแล้ว! พวกมันมีจำนวนเท่าหรือมากกว่าชาวบ้าน.',

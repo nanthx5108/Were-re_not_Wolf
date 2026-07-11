@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { GameProvider } from '../context/GameContext.jsx';
+import { GameProvider } from '../context/Gamecontext.jsx';
 import { AuthProvider } from '../context/AuthContext.jsx';
 import HomePage     from '../pages/HomePage.jsx';
 import LoginPage    from '../pages/LoginPage.jsx';

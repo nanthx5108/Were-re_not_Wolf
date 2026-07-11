@@ -5,11 +5,10 @@ import { evaluateWinCondition } from './winConditions.js';
 
 test('werewolf wins when no village players remain alive', () => {
   const roomId = 'test-room-1';
-  createRoom({ id: roomId, name: 'Test', hostId: 'p1' });
+  const room = createRoom({ id: roomId, name: 'Test', hostId: 'p1' });
   addPlayerToRoom(roomId, { id: 'p1', nickname: 'Alice' });
   addPlayerToRoom(roomId, { id: 'p2', nickname: 'Bob' });
 
-  const room = createRoom({ id: roomId, name: 'Test', hostId: 'p1' });
   room.players.get('p1').role = 'werewolf';
   room.players.get('p2').role = 'werewolf';
 

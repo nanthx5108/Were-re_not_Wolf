@@ -1,0 +1,137 @@
+/* ─── Morning Event — ป้ายไม้แกะสลัก + หมุดไม้ + เรืองแสงอำพัน ─── */
+
+.morning-event-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(8, 12, 16, 0.72);
+  backdrop-filter: blur(3px);
+  animation: morning-event-fade 0.35s ease-out;
+}
+
+.morning-event-card {
+  position: relative;
+  max-width: 480px;
+  width: 100%;
+  padding: 2rem 1.75rem 1.75rem;
+  text-align: center;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(214, 158, 76, 0.35);
+  background:
+    linear-gradient(180deg, rgba(214, 158, 76, 0.06) 0%, rgba(0, 0, 0, 0) 40%),
+    var(--bg-elevated);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 32px rgba(214, 158, 76, 0.18),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    inset 0 0 24px rgba(0, 0, 0, 0.35);
+  animation: morning-event-rise 0.4s ease-out;
+}
+
+/* หมุดไม้สี่มุม */
+.morning-event-peg {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #7a5a34, #3a2a16 70%);
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.6), 0 0 4px rgba(0, 0, 0, 0.5);
+}
+.morning-event-peg--tl { top: 10px; left: 10px; }
+.morning-event-peg--tr { top: 10px; right: 10px; }
+.morning-event-peg--bl { bottom: 10px; left: 10px; }
+.morning-event-peg--br { bottom: 10px; right: 10px; }
+
+.morning-event-kicker {
+  font-family: var(--font-meta);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.morning-event-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 0 12px rgba(214, 158, 76, 0.45));
+}
+
+.morning-event-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: #d6a45c; /* อำพัน */
+  text-shadow: 0 0 14px rgba(214, 158, 76, 0.35);
+  margin-bottom: 0.65rem;
+}
+
+.morning-event-narrator {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-bottom: 0.75rem;
+}
+
+.morning-event-announcement {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(214, 158, 76, 0.28);
+  background: rgba(214, 158, 76, 0.08);
+}
+
+.morning-event-private {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-strong);
+  background: var(--bg-input);
+}
+
+.morning-event-private-label {
+  font-family: var(--font-meta);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.morning-event-dismiss {
+  font-family: var(--font-handwritten);
+  font-size: 0.9rem;
+  padding: 0.6rem 1.6rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(214, 158, 76, 0.4);
+  background: rgba(214, 158, 76, 0.12);
+  color: #e0b775;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.morning-event-dismiss:hover {
+  background: rgba(214, 158, 76, 0.22);
+  box-shadow: 0 0 16px rgba(214, 158, 76, 0.25);
+}
+
+@keyframes morning-event-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes morning-event-rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}

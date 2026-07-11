@@ -1,4 +1,5 @@
-import { ROLE_DISTRIBUTION, PLAYER_LIMITS } from './constants.js';
+import { PLAYER_LIMITS, ROLES } from './constants.js';
+import { CONFIGURABLE_ROLES, buildDefaultRoleConfig } from './roomConfig.js';
 
 function shuffle(arr) {
   const a = [...arr];
@@ -9,13 +10,28 @@ function shuffle(arr) {
   return a;
 }
 
-export function distributeRoles(players) {
+// กาง roleConfig ({ werewolf: 2, seer: 1, ... }) เป็นรายการบทบาทตามจำนวนผู้เล่นจริง
+// ที่นั่งที่เหลือหลังหักบทบาทพิเศษจะถูกเติมด้วย villager
+export function buildRoleList(roleConfig, playerCount) {
+  const roles = [];
+  for (const role of CONFIGURABLE_ROLES) {
+    for (let i = 0; i < (roleConfig[role] || 0); i++) roles.push(role);
+  }
+  if (roles.length > playerCount) {
+    throw new Error(`Configured roles (${roles.length}) exceed player count (${playerCount}).`);
+  }
+  while (roles.length < playerCount) roles.push(ROLES.VILLAGER);
+  return roles;
+}
+
+export function distributeRoles(players, roleConfig) {
   const count = players.length;
   if (count < PLAYER_LIMITS.MIN || count > PLAYER_LIMITS.MAX) {
     throw new Error(
       `Player count ${count} is outside allowed range [${PLAYER_LIMITS.MIN}, ${PLAYER_LIMITS.MAX}]`
     );
   }
-  const roles = shuffle(ROLE_DISTRIBUTION[count]);
+  const config = roleConfig || buildDefaultRoleConfig(count);
+  const roles  = shuffle(buildRoleList(config, count));
   return players.map((player, idx) => ({ ...player, role: roles[idx] }));
 }

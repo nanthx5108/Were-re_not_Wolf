@@ -107,9 +107,6 @@
   flex-direction: column;
 }
 
-/* =====================================================
-   TOPBAR
-   ===================================================== */
 .home-topbar {
   position: fixed;
   top: 0; right: 0; left: 0;
@@ -122,7 +119,6 @@
   background: transparent;
 }
 
-/* ── Online users badge (top-left) ── */
 .online-badge {
   display: inline-flex;
   align-items: center;
@@ -270,7 +266,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 14px 6px 6px;
+  padding: 7px 16px 7px 7px;
   border-radius: 999px;
   border: 1px solid var(--border-default);
   background: rgba(255,255,255,0.04);
@@ -342,7 +338,7 @@
 }
 
 .user-avatar-dot {
-  width: 30px; height: 30px;
+  width: 34px; height: 34px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, var(--bg-overlay), var(--bg-void));
   border: 1px solid var(--border-default);
@@ -363,9 +359,9 @@
   line-height: 1.2;
 }
 .user-pill-name {
-  font-size: 0.80rem;
+  font-size: 0.90rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
   color: var(--text-primary);
 }
 
@@ -435,6 +431,23 @@
   .home-grid { grid-template-columns: 1fr; }
   .home-title { font-size: clamp(2.2rem, 10vw, 3.4rem); }
   .home-container { padding: 0 var(--space-4); }
+}
+
+/* ── Join / browse-rooms: full-screen layout ── */
+.home-container.is-wide { max-width: 1400px; }
+
+.home-grid.is-join-browse {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-top: 96px;
+  padding-bottom: var(--space-5);
+}
+
+.home-grid.is-join-browse .home-left {
+  flex: 1;
+  min-height: 0;
 }
 
 .home-left {
@@ -678,6 +691,11 @@
   gap: var(--space-4);
 }
 
+.home-grid.is-join-browse .home-form {
+  flex: 1;
+  min-height: 0;
+}
+
 .form-title {
   font-family: var(--font-logo);
   font-size: 1.1rem;
@@ -862,7 +880,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-height: 320px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -949,6 +968,10 @@
 /* ── Room list panel ── */
 .room-list-panel {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   padding: var(--space-4);
   border-radius: var(--radius-md);
   background: rgba(13,19,26,0.55);
@@ -961,6 +984,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  flex: 1;
   text-align: center;
   gap: 8px;
   padding: 40px 16px;
@@ -1532,3 +1556,110 @@
   background: var(--gold-glow-soft);
   transform: translateY(-2px);
 }
+/* ─── Advanced room config (บทบาท + เวลาแต่ละ phase) ─────────────────────── */
+
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.advanced-toggle:hover { border-color: var(--gold-dim); color: var(--gold-mid); }
+
+.advanced-caret { transition: transform 0.2s; font-size: 0.7rem; }
+.advanced-caret.is-open { transform: rotate(180deg); }
+
+.advanced-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+}
+
+.advanced-section { display: flex; flex-direction: column; gap: 8px; }
+
+.advanced-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.advanced-title {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.role-tally { font-size: 0.75rem; color: var(--text-secondary); }
+.role-tally.is-bad { color: var(--color-danger); }
+
+.role-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+}
+
+.role-icon { font-size: 1.1rem; flex-shrink: 0; }
+.role-meta { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.role-name { font-size: 0.85rem; color: var(--text-primary); font-weight: 600; }
+.role-hint { font-size: 0.68rem; color: var(--text-muted); }
+
+.role-stepper { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+.role-stepper button {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.role-stepper button:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--gold-mid); }
+.role-stepper button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.role-count {
+  min-width: 22px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.role-filler { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+.role-warning {
+  font-size: 0.75rem;
+  color: var(--color-danger);
+  background: var(--danger-soft);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+}
+
+.duration-row { display: flex; gap: var(--space-2); }
+.duration-row .field-col { flex: 1; }
+.duration-hint { font-size: 0.65rem; color: var(--text-muted); }

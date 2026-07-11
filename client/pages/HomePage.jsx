@@ -4,6 +4,10 @@ import { useGame } from '../context/Gamecontext.jsx';
 import bgHome from '../src/assets/bgHome.png';
 import { useAuth } from '../context/AuthContext.jsx';
 import AuthModal from '../src/components/AuthModal.jsx';
+import {
+  CONFIGURABLE_ROLES, DURATION_LIMITS, DEFAULT_PHASE_DURATIONS,
+  defaultRoleConfig, validateRoleConfig,
+} from '../src/constants/game.js';
 import '../src/styles/HomePage.css';
 
 const BG_IMAGE = bgHome;
@@ -232,6 +236,9 @@ export default function HomePage() {
   const [roomCode, setRoomCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(8);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [roleConfig, setRoleConfig] = useState(() => defaultRoleConfig(8));
+  const [phaseDurations, setPhaseDurations] = useState(() => ({ ...DEFAULT_PHASE_DURATIONS }));
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -282,6 +289,7 @@ export default function HomePage() {
           roomName: roomName.trim(),
           maxPlayers,
           isPrivate,
+          config: { roleConfig, phaseDurations },
         }),
       });
       const data = await res.json();
@@ -370,7 +378,28 @@ export default function HomePage() {
     setRoomName(''); setRoomCode('');
     setJoinStep('browse'); setSelectedRoom(null);
     setRoomSearch(''); setRoomFilter('all');
+    setMaxPlayers(8); setIsPrivate(false);
+    setRoleConfig(defaultRoleConfig(8));
+    setPhaseDurations({ ...DEFAULT_PHASE_DURATIONS });
+    setShowAdvanced(false);
   }
+
+  // เปลี่ยนขนาดห้อง = รีเซ็ต role กลับเป็น preset ของขนาดนั้น (กันค่าค้างที่ไม่สมดุล)
+  function handleMaxPlayersChange(next) {
+    setMaxPlayers(next);
+    setRoleConfig(defaultRoleConfig(next));
+  }
+
+  function adjustRole(key, delta) {
+    setRoleConfig(prev => {
+      const next = Math.max(0, Math.min(maxPlayers, (prev[key] || 0) + delta));
+      return { ...prev, [key]: next };
+    });
+  }
+
+  const specialTotal  = CONFIGURABLE_ROLES.reduce((sum, r) => sum + (roleConfig[r.key] || 0), 0);
+  const villagerCount = Math.max(0, maxPlayers - specialTotal);
+  const configError   = validateRoleConfig(roleConfig, maxPlayers);
 
   const HOST_AVATAR_COLORS = ['#b4cbda', '#9fbcd0', '#5FA36A', '#c98a8a', '#b79dd0'];
 
@@ -390,6 +419,8 @@ export default function HomePage() {
     { key: 'open', label: 'ยังไม่เต็ม' },
   ];
 
+  const isJoinBrowse = mode === 'join' && joinStep === 'browse';
+
   return (
     <div className="home-page entrance-page" style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
       <div className="home-overlay" />
@@ -405,7 +436,7 @@ export default function HomePage() {
         <span className="firefly" style={{ left: '58%', top: '73%', animationDuration: '13s', animationDelay: '1.8s' }} />
       </div>
 
-      <div className="home-container">
+      <div className={`home-container ${isJoinBrowse ? 'is-wide' : ''}`}>
         <div className="home-topbar">
           <div className="online-badge" title="ผู้เล่นที่ออนไลน์อยู่ตอนนี้">
             <span className="online-dot" />
@@ -421,7 +452,7 @@ export default function HomePage() {
                   <span className="user-avatar-dot">
                     {user.avatarUrl
                       ? <img src={user.avatarUrl} alt="" className="user-avatar-img" />
-                      : <DerpyWolfAvatar size={20} />}
+                      : <DerpyWolfAvatar size={22} />}
                   </span>
                   <span className="user-pill-name">{user.displayName || user.username}</span>
                 </button>
@@ -455,16 +486,18 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="home-header entrance-logo">
-          <h1 className="home-title">WE'RE NOT WOLF</h1>
-          <div className="title-ornament">
-            <span className="title-ornament-line" />
-            <span className="title-ornament-mark" />
-            <span className="title-ornament-line" />
+        {!isJoinBrowse && (
+          <div className="home-header entrance-logo">
+            <h1 className="home-title">WE'RE NOT WOLF</h1>
+            <div className="title-ornament">
+              <span className="title-ornament-line" />
+              <span className="title-ornament-mark" />
+              <span className="title-ornament-line" />
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="home-grid">
+        <div className={`home-grid ${isJoinBrowse ? 'is-join-browse' : ''}`}>
 
           {/* LEFT */}
           <div className="home-left entrance-menu">
@@ -510,7 +543,7 @@ export default function HomePage() {
                   <div className="field-col">
                     <label htmlFor="maxPlayers" className="field-label">จำนวนผู้เล่นสูงสุด</label>
                     <select id="maxPlayers" value={maxPlayers}
-                      onChange={e => setMaxPlayers(Number(e.target.value))}
+                      onChange={e => handleMaxPlayersChange(Number(e.target.value))}
                       className="field-input">
                       {[4, 5, 6, 7, 8].map(n => (
                         <option key={n} value={n}>{n} คน</option>
@@ -528,9 +561,74 @@ export default function HomePage() {
                     </span>
                   </label>
                 </div>
+
+                <button type="button" className="advanced-toggle"
+                  onClick={() => setShowAdvanced(v => !v)}>
+                  <span>ตั้งค่าบทบาทและเวลา</span>
+                  <span className={`advanced-caret ${showAdvanced ? 'is-open' : ''}`}>▾</span>
+                </button>
+
+                {showAdvanced && (
+                  <div className="advanced-panel fade-in">
+                    <div className="advanced-section">
+                      <div className="advanced-head">
+                        <span className="advanced-title">บทบาท</span>
+                        <span className={`role-tally ${configError ? 'is-bad' : ''}`}>
+                          พิเศษ {specialTotal} · ชาวบ้าน {villagerCount} / {maxPlayers}
+                        </span>
+                      </div>
+
+                      {CONFIGURABLE_ROLES.map(role => (
+                        <div key={role.key} className="role-row">
+                          <span className="role-icon" aria-hidden="true">{role.icon}</span>
+                          <span className="role-meta">
+                            <span className="role-name">{role.label}</span>
+                            <span className="role-hint">{role.hint}</span>
+                          </span>
+                          <span className="role-stepper">
+                            <button type="button" onClick={() => adjustRole(role.key, -1)}
+                              disabled={(roleConfig[role.key] || 0) <= 0}
+                              aria-label={`ลด ${role.label}`}>−</button>
+                            <span className="role-count">{roleConfig[role.key] || 0}</span>
+                            <button type="button" onClick={() => adjustRole(role.key, 1)}
+                              disabled={specialTotal >= maxPlayers}
+                              aria-label={`เพิ่ม ${role.label}`}>+</button>
+                          </span>
+                        </div>
+                      ))}
+
+                      <p className="role-filler">
+                        🧑‍🌾 ที่นั่งที่เหลือจะเป็น Villager อัตโนมัติ ({villagerCount} คน)
+                      </p>
+                      {configError && <p className="role-warning">⚠️ {configError}</p>}
+                    </div>
+
+                    <div className="advanced-section">
+                      <div className="advanced-head">
+                        <span className="advanced-title">เวลาแต่ละช่วง (วินาที)</span>
+                      </div>
+                      <div className="duration-row">
+                        {Object.entries(DURATION_LIMITS).map(([phase, limit]) => (
+                          <div key={phase} className="field-col">
+                            <label htmlFor={`dur-${phase}`} className="field-label">
+                              {limit.label}
+                            </label>
+                            <input id={`dur-${phase}`} type="number" className="field-input"
+                              min={limit.min} max={limit.max} value={phaseDurations[phase]}
+                              onChange={e => setPhaseDurations(prev => ({
+                                ...prev, [phase]: Number(e.target.value),
+                              }))} />
+                            <span className="duration-hint">{limit.min}–{limit.max}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="btn-row">
                   <button type="submit" className="btn-primary"
-                    disabled={loading || !nickname.trim() || !roomName.trim()}>
+                    disabled={loading || !nickname.trim() || !roomName.trim() || !!configError}>
                     {loading ? 'กำลังสร้าง...' : 'สร้างห้อง'}
                   </button>
                   <button type="button" className="btn-back" onClick={reset}>กลับ</button>
@@ -747,35 +845,37 @@ export default function HomePage() {
           </div>
 
           {/* RIGHT — News */}
-          <div className="home-right entrance-news">
-            <div className="panel-box">
-              <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-              <span className="panel-corner panel-corner-br" aria-hidden="true" />
-              <div className="home-news-head">
-                <div>
-                  <div className="home-news-eyebrow">ข่าวสาร</div>
-                  <div className="home-news-heading">กระดานประกาศหมู่บ้าน</div>
+          {!isJoinBrowse && (
+            <div className="home-right entrance-news">
+              <div className="panel-box">
+                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
+                <span className="panel-corner panel-corner-br" aria-hidden="true" />
+                <div className="home-news-head">
+                  <div>
+                    <div className="home-news-eyebrow">ข่าวสาร</div>
+                    <div className="home-news-heading">กระดานประกาศหมู่บ้าน</div>
+                  </div>
+                  <span className="home-news-pin"><IconPin /></span>
                 </div>
-                <span className="home-news-pin"><IconPin /></span>
-              </div>
 
-              <div className="home-news-list">
-                {NEWS.map(n => <NewsRow key={n.id} news={n} />)}
-              </div>
+                <div className="home-news-list">
+                  {NEWS.map(n => <NewsRow key={n.id} news={n} />)}
+                </div>
 
-              <div className="home-dev-note">
-                <div className="home-dev-note-label">Developer Note</div>
-                <div className="home-dev-note-text">&ldquo;เราไม่ได้บัฟหมาป่านะ ชาวบ้านเรียกร้องให้ปรับสมดุล&hellip; เราเลยไม่ทำอะไรเลย&rdquo;</div>
-              </div>
+                <div className="home-dev-note">
+                  <div className="home-dev-note-label">Developer Note</div>
+                  <div className="home-dev-note-text">&ldquo;เราไม่ได้บัฟหมาป่านะ ชาวบ้านเรียกร้องให้ปรับสมดุล&hellip; เราเลยไม่ทำอะไรเลย&rdquo;</div>
+                </div>
 
-              <div className="home-news-footer">
-                <span className="home-news-updated">อัปเดตล่าสุด &middot; {NEWS[0]?.date}</span>
-                <button className="more-btn" onClick={() => navigate('/news')}>
-                  ดูทั้งหมด <span className="more-arrow"><IconArrow /></span>
-                </button>
+                <div className="home-news-footer">
+                  <span className="home-news-updated">อัปเดตล่าสุด &middot; {NEWS[0]?.date}</span>
+                  <button className="more-btn" onClick={() => navigate('/news')}>
+                    ดูทั้งหมด <span className="more-arrow"><IconArrow /></span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

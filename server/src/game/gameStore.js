@@ -1,6 +1,10 @@
+import { buildDefaultRoomConfig } from './roomConfig.js';
+
 const roomStore = new Map();
 
-export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false }) {
+export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false, config }) {
+  const { roleConfig, phaseDurations } = config || buildDefaultRoomConfig(maxPlayers);
+
   roomStore.set(id, {
     id, name, hostId,
     status:      'waiting',
@@ -9,6 +13,8 @@ export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false
     phaseEndsAt: null,
     maxPlayers,
     isPrivate,
+    roleConfig,
+    phaseDurations,
     players:     new Map(),
     nightActions: {},
   });
@@ -80,6 +86,8 @@ export function serializeRoom(roomId) {
     round:       room.round,
     phaseEndsAt: room.phaseEndsAt,
     maxPlayers:  room.maxPlayers ?? 8,
+    roleConfig:     room.roleConfig,
+    phaseDurations: room.phaseDurations,
     playerCount: getPlayersArray(roomId).length,
     players: getPlayersArray(roomId).map(p => ({
       id:       p.id,
