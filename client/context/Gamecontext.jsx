@@ -10,6 +10,8 @@ export const SOCKET_EVENTS = Object.freeze({
   ROOM_STATE:           'room:state',
   ROOM_PLAYERS_UPDATED: 'room:players_updated',
   ROOM_HOST_CHANGED:    'room:host_changed',
+  ROOM_CONFIG:          'room:config',
+  ROOM_CONFIG_UPDATED:  'room:config_updated',
   CHAT_SEND:            'chat:send',
   CHAT_MESSAGE:         'chat:message',
   GAME_START:           'game:start',
@@ -103,6 +105,18 @@ function gameReducer(state, action) {
       return {
         ...state,
         room: state.room ? { ...state.room, hostId: action.newHostId } : state.room,
+      };
+
+    // config ที่ server validate แล้ว — ทุกคนในห้องได้รับเหมือนกัน รวมทั้ง host เอง
+    // แผงตั้งค่าจึงวาดจาก state นี้ตัวเดียว ไม่มี local state ให้ drift
+    case 'CONFIG_UPDATED':
+      return {
+        ...state,
+        room: state.room ? {
+          ...state.room,
+          roleConfig:     action.roleConfig,
+          phaseDurations: action.phaseDurations,
+        } : state.room,
       };
 
     case 'CHAT_MESSAGE':
@@ -250,6 +264,7 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.ROOM_STATE]:           (room)          => dispatch({ type: 'ROOM_STATE', room }),
       [SOCKET_EVENTS.ROOM_PLAYERS_UPDATED]: (players)       => dispatch({ type: 'PLAYERS_UPDATED', players }),
       [SOCKET_EVENTS.ROOM_HOST_CHANGED]:    ({ newHostId }) => dispatch({ type: 'HOST_CHANGED', newHostId }),
+      [SOCKET_EVENTS.ROOM_CONFIG_UPDATED]:  (config)        => dispatch({ type: 'CONFIG_UPDATED', ...config }),
       [SOCKET_EVENTS.CHAT_MESSAGE]:         (message)       => dispatch({ type: 'CHAT_MESSAGE', message }),
       [SOCKET_EVENTS.GAME_STARTED]:         (data)          => dispatch({ type: 'GAME_STARTED', ...data }),
       [SOCKET_EVENTS.PHASE_CHANGED]:        (data)          => dispatch({ type: 'PHASE_CHANGED', ...data }),
@@ -305,6 +320,7 @@ export function GameProvider({ children }) {
   }, []);
   const sendMessage   = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
   const startGame     = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
+  const updateRoomConfig = useCallback((config) => socket.emit(SOCKET_EVENTS.ROOM_CONFIG, { config }), []);
   const advancePhase  = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
   const castVote      = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
   const submitNightAction = useCallback((targetId) => socket.emit(SOCKET_EVENTS.NIGHT_ACTION, { targetId }), []);
@@ -316,7 +332,7 @@ export function GameProvider({ children }) {
       setIdentity, joinRoom, leaveRoom,
       sendMessage, startGame, advancePhase,
       castVote, submitNightAction,
-      clearError,
+      updateRoomConfig, clearError,
     }}>
       {children}
     </GameContext.Provider>

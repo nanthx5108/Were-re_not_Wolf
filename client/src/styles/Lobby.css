@@ -196,3 +196,9 @@
   box-shadow: var(--shadow-card);
   overflow: hidden;
 }
+/* บอกคนที่ไม่ใช่ host ว่าแผงตั้งค่าดูได้อย่างเดียว */
+.section-note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
