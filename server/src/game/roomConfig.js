@@ -109,7 +109,7 @@ export function normalizeRoomConfig(input, maxPlayers) {
 export function validateConfigForPlayerCount(roleConfig, playerCount) {
   const specialTotal = sumRoles(roleConfig);
   if (specialTotal > playerCount) {
-    return `ตั้งบทบาทพิเศษไว้ ${specialTotal} คน แต่มีผู้เล่นแค่ ${playerCount} คน — แก้การตั้งค่าห้องหรือรอคนเพิ่ม`;
+    return `ตั้งบทบาทพิเศษไว้ ${specialTotal} คน แต่มีผู้เล่นแค่ ${playerCount} คน แก้การตั้งค่าห้องหรือรอคนเพิ่ม`;
   }
   return checkFactionBalance(roleConfig, playerCount);
 }
@@ -127,7 +127,7 @@ function checkFactionBalance(roleConfig, playerCount) {
     + fillerVillagerCount(roleConfig, playerCount);
 
   if (wolves >= villagers) {
-    return `หมาป่า ${wolves} ตัว เทียบกับชาวบ้าน ${villagers} คน — หมาป่าชนะทันทีที่เริ่มเกม ต้องมีชาวบ้านมากกว่าหมาป่า`;
+    return `หมาป่า ${wolves} ตัว เทียบกับชาวบ้าน ${villagers} คน หมาป่าชนะทันทีที่เริ่มเกม ต้องมีชาวบ้านมากกว่าหมาป่า`;
   }
   return null;
 }

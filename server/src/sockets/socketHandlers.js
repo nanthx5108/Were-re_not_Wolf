@@ -156,7 +156,7 @@ export function registerSocketHandlers(socket, io) {
     if (!player?.isAlive) return socket.emit('error', { message: 'Dead players cannot act.' });
 
     if (getBlockedProtectTargets(roomId, playerId).includes(targetId)) {
-      return socket.emit('error', { message: 'เจ้าเพิ่งเฝ้าคนนี้เมื่อคืน — ห้ามป้องกันคนเดิม 2 คืนติด' });
+      return socket.emit('error', { message: 'เจ้าเพิ่งเฝ้าคนนี้ไปเมื่อคืน ห้ามป้องกันคนเดิมสองคืนติด' });
     }
 
     const action = submitNightAction(roomId, playerId, { targetId });

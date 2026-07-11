@@ -70,15 +70,16 @@ export function validateRoleConfig(roleConfig, playerCount) {
   const villagers = (roleConfig.seer || 0) + (roleConfig.bodyguard || 0)
     + (roleConfig.silencer || 0) + (playerCount - special);
   if (wolves >= villagers) {
-    return `หมาป่า ${wolves} ตัว vs ชาวบ้าน ${villagers} คน — หมาป่าชนะทันทีที่เริ่มเกม`;
+    return `หมาป่า ${wolves} ตัว เทียบกับชาวบ้าน ${villagers} คน หมาป่าชนะทันทีที่เริ่มเกม`;
   }
   return null;
 }
 
+// สีมาจาก design system (global.css) ไม่ใช่ hex ลอย ๆ — เปลี่ยนธีมทีเดียวได้ทั้งระบบ
 export const PHASE_CONFIG = Object.freeze({
-  night:   { label: 'Night',   color: '#c0392b' },
-  day:     { label: 'Day',     color: '#e8a027' },
-  voting:  { label: 'Voting',  color: '#7c6bbf' },
-  results: { label: 'Results', color: '#27ae60' },
-  lobby:   { label: 'Lobby',   color: '#8a9ab0' },
+  night:   { label: 'Night',   color: 'var(--phase-night)' },
+  day:     { label: 'Day',     color: 'var(--phase-day)' },
+  voting:  { label: 'Voting',  color: 'var(--phase-voting)' },
+  results: { label: 'Results', color: 'var(--phase-results)' },
+  lobby:   { label: 'Lobby',   color: 'var(--phase-lobby)' },
 });

@@ -1,11 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useGame } from '../../context/Gamecontext.jsx';
 
+// prompt = สั่งให้ทำอะไร, hint = ผลที่ตามมา แยกคนละบรรทัดไปเลย
+// จะได้ไม่ต้องยัดสองประโยคเข้าบรรทัดเดียวแล้วคั่นด้วยขีด
 const ROLE_PROMPTS = {
-  werewolf:  'เลือกเหยื่อของคืนนี้',
-  seer:      'เลือกคนที่จะตรวจคืนนี้ — เจ้าจะรู้แค่ว่าเขาอยู่ฝ่ายไหน',
-  bodyguard: 'เลือกคนที่จะปกป้องคืนนี้ — ห้ามเฝ้าคนเดิม 2 คืนติด',
-  silencer:  'เลือกคนที่จะปิดปาก — พรุ่งนี้ทั้งวันเขาจะพิมพ์อะไรไม่ได้เลย',
+  werewolf:  { prompt: 'เลือกเหยื่อของคืนนี้' },
+  seer:      { prompt: 'เลือกคนที่จะตรวจคืนนี้', hint: 'เจ้าจะรู้แค่ว่าเขาอยู่ฝ่ายไหน' },
+  bodyguard: { prompt: 'เลือกคนที่จะปกป้องคืนนี้', hint: 'ห้ามเฝ้าคนเดิมสองคืนติด' },
+  silencer:  { prompt: 'เลือกคนที่จะปิดปาก', hint: 'พรุ่งนี้ทั้งวันเขาจะพิมพ์อะไรไม่ได้เลย' },
 };
 
 const ACTION_ROLES = ['werewolf', 'seer', 'bodyguard', 'silencer'];
@@ -14,7 +16,7 @@ const FACTION_LABEL = {
   village:  'ฝ่ายชาวบ้าน',
   werewolf: 'ฝ่ายหมาป่า',
   neutral:  'ฝ่ายเป็นกลาง',
-  unclear:  'ผลไม่ชัดเจน — หมอกหนาเกินไป',
+  unclear:  'ผลไม่ชัดเจน หมอกหนาเกินไป',
 };
 
 export default function NightAction() {
@@ -41,7 +43,7 @@ export default function NightAction() {
         <strong>{alivePlayers.find((p) => p.id === seerResult.targetId)?.nickname
           ?? room.players.find((p) => p.id === seerResult.targetId)?.nickname
           ?? 'ผู้เล่นคนนั้น'}</strong>
-        {' — '}
+        {' คือ '}
         <strong style={{ color: seerResult.faction === 'werewolf' ? '#e57373' : '#7ddf7d' }}>
           {FACTION_LABEL[seerResult.faction] ?? 'ไม่ทราบ'}
         </strong>
@@ -55,9 +57,9 @@ export default function NightAction() {
   const doubleGuard = myRole === 'bodyguard' && morningEvent?.id === 'boat_return';
   const maxTargets = doubleGuard ? 2 : 1;
 
-  const prompt = doubleGuard
-    ? 'คืนนี้เจ้าแข็งแรงเป็นพิเศษ — เลือกป้องกันได้ 2 คน'
-    : ROLE_PROMPTS[myRole] || 'Take your night action.';
+  const { prompt, hint } = doubleGuard
+    ? { prompt: 'คืนนี้เจ้าแข็งแรงเป็นพิเศษ เลือกป้องกันได้ 2 คน', hint: null }
+    : ROLE_PROMPTS[myRole] ?? { prompt: 'ถึงเวลาใช้ความสามารถของเจ้า', hint: null };
 
   const chosenPlayers = alivePlayers.filter((p) =>
     chosenIds.includes(p.id) || (chosenIds.length === 0 && p.id === myNightAction?.targetId)
@@ -75,15 +77,18 @@ export default function NightAction() {
     <>
     {seerReport}
     <section style={{ border: '1px solid #9fbcd0', padding: '1rem', borderRadius: '12px', background: 'rgba(8,12,20,0.7)' }}>
-      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>Night Action</h3>
-      <p style={{ marginBottom: '0.75rem' }}>{prompt}</p>
+      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>ค่ำคืนนี้</h3>
+      <p style={{ marginBottom: hint ? '0.25rem' : '0.75rem' }}>{prompt}</p>
+      {hint && (
+        <p style={{ marginBottom: '0.75rem', fontSize: '0.82rem', color: '#8a9aaa' }}>{hint}</p>
+      )}
       <p style={{ marginBottom: '0.75rem', color: '#d9e4ec' }}>
-        Role: <strong>{myRole}</strong>
+        บทบาทของเจ้า: <strong>{myRole}</strong>
       </p>
 
       {actionComplete ? (
         <p style={{ color: '#7ddf7d' }}>
-          Your action is set for <strong>{chosenPlayers.map((p) => p.nickname).join(', ') || 'this player'}</strong>.
+          เลือก <strong>{chosenPlayers.map((p) => p.nickname).join(', ') || 'ผู้เล่นคนนี้'}</strong> แล้ว
         </p>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -105,7 +110,9 @@ export default function NightAction() {
                   title={blocked ? 'เจ้าเพิ่งเฝ้าคนนี้เมื่อคืน' : undefined}
                   style={{
                     padding: '0.6rem 0.9rem', borderRadius: '999px',
-                    border: '1px solid #9fbcd0', background: '#111827', color: '#fff',
+                    border: '1px solid var(--color-accent)',
+                    background: 'var(--bg-input)',
+                    color: 'var(--text-primary)',
                     opacity: blocked ? 0.35 : 1,
                     cursor: blocked ? 'not-allowed' : 'pointer',
                   }}

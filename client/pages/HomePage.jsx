@@ -411,7 +411,7 @@ export default function HomePage() {
   const villagerCount = Math.max(0, maxPlayers - specialTotal);
   const configError   = validateRoleConfig(roleConfig, maxPlayers);
 
-  const HOST_AVATAR_COLORS = ['#b4cbda', '#9fbcd0', '#5FA36A', '#c98a8a', '#b79dd0'];
+  const HOST_AVATAR_COLORS = ['#b4cbda', '#9fbcd0', '#5FA36A', '#c98a8a', '#d6a45c'];
 
   const filteredRooms = publicRooms.filter(r => {
     if (roomFilter === 'public' && r.isPrivate) return false;

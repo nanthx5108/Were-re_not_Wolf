@@ -80,7 +80,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
       </div>
 
       {!alreadyVoted && (
-        <p style={s.hint}>กดโหวต 1 ครั้ง — เปลี่ยนใจไม่ได้</p>
+        <p style={s.hint}>โหวตได้ครั้งเดียว เปลี่ยนใจไม่ได้</p>
       )}
     </div>
   );
@@ -121,7 +121,7 @@ const s = {
   },
   progressFill: {
     height:     '100%',
-    background: '#7c6bbf',
+    background: 'var(--phase-voting)',
     borderRadius: '3px',
     transition: 'width 0.4s ease',
   },

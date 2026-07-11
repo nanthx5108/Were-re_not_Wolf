@@ -267,7 +267,7 @@
 .news-card-tag.tag-event     { color: #6ecf8a; background: rgba(42,102,68,0.12); border-color: rgba(42,102,68,0.35); }
 .news-card-tag.tag-notice    { color: var(--silver); background: rgba(255,255,255,0.05); border-color: var(--border-default); }
 .news-card-tag.tag-patch     { color: #7ea8cf; background: rgba(60,90,140,0.14); border-color: rgba(60,90,140,0.35); }
-.news-card-tag.tag-community { color: #d4a8cf; background: rgba(140,80,140,0.12); border-color: rgba(140,80,140,0.32); }
+.news-card-tag.tag-community { color: #d6a45c; background: rgba(214,164,92,0.12); border-color: rgba(214,164,92,0.32); }
 
 .news-card-title {
   font-family: var(--font-display);
