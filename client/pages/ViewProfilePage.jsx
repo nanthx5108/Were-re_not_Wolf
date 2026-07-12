@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { STARTING_LEVEL } from '../../shared/leveling.js';
 import bgHome from '../src/assets/bgHome.png';
 import '../src/styles/ViewProfilePage.css';
 
@@ -104,7 +105,7 @@ export default function ViewProfilePage() {
             {/* ระดับ */}
             <div className="view-profile-field">
               <div className="view-profile-field-label">ระดับ</div>
-              <div className="view-profile-field-value level">{user?.level || 1}</div>
+              <div className="view-profile-field-value level">{user?.level ?? STARTING_LEVEL}</div>
             </div>
           </div>
 
