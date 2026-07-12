@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { socket } from '../src/socket/socket.jsx';
 
 const AuthContext = createContext(null);
 const API = '/api/auth';
@@ -15,6 +16,16 @@ export function AuthProvider({ children }) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  // จบเกมแล้ว server บวก exp ให้ใน DB — รับค่าใหม่มาอัปเดตแถบทันที ไม่ต้องรีโหลดหน้า
+  useEffect(() => {
+    const onProgress = ({ level, exp, expNeeded, gamesPlayed }) => {
+      setUser(prev => (prev ? { ...prev, level, exp, expNeeded, gamesPlayed } : prev));
+    };
+
+    socket.on('player:progress', onProgress);
+    return () => socket.off('player:progress', onProgress);
   }, []);
 
   const register = useCallback(async ({ username, password }) => {
