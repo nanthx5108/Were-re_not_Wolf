@@ -1,18 +1,20 @@
 import 'dotenv/config';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import app from './src/app.js';
+import app, { CLIENT_ORIGINS, IS_PROD } from './src/app.js';
 import { registerSocketHandlers } from './src/sockets/socketHandlers.js';
 
-const PORT       = process.env.PORT || 3001;
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+const PORT = process.env.PORT || 3001;
+// PaaS ส่วนใหญ่ health-check ผ่าน IP ภายใน — ผูกกับ 0.0.0.0 ไม่ใช่ localhost ไม่งั้นถูกมองว่าตาย
+const HOST = process.env.HOST || '0.0.0.0';
 
 const httpServer = http.createServer(app);
 
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: CLIENT_URL,
+    origin: CLIENT_ORIGINS,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
@@ -28,6 +30,7 @@ app.get('/api/stats/online', (_req, res) => {
   res.json({ online: io.engine.clientsCount });
 });
 
-httpServer.listen(PORT, () => {
-  console.log(`🐺 WE'RE not WOLF server → http://localhost:${PORT}`);
+httpServer.listen(PORT, HOST, () => {
+  const where = IS_PROD ? `${HOST}:${PORT}` : `http://localhost:${PORT}`;
+  console.log(`🐺 WE'RE not WOLF server → ${where}`);
 });
