@@ -11,7 +11,7 @@ import { initNightActions, resolveNightActions } from './nightActions.js';
 import { evaluateWinCondition, endGame } from './winConditions.js';
 import { rollMorningEvent } from './morningEvents.js';
 import { DEFAULT_PHASE_DURATIONS } from './roomConfig.js';
-import { applyExp, EXP_PER_GAME } from '../../../shared/leveling.js';
+import { applyExp, expNeeded, EXP_PER_GAME } from '../../../shared/leveling.js';
 
 // RESULTS เป็นแค่หน้าสรุปสั้นๆ — ไม่เปิดให้ host ตั้ง จึงคงที่
 export const RESULTS_DURATION_MS = 10_000;
@@ -253,18 +253,20 @@ async function _endGameAndBroadcast(io, roomId, win) {
     sentAt:  new Date().toISOString(),
   });
 
-  await _awardGameCompletion(players.map(p => p.id));
+  await _awardGameCompletion(io, players);
 }
 
 // เล่นจบ 1 เกม = +1 exp ให้ทุกคนในห้อง แล้วเลื่อนเลเวลถ้า exp ถึงเกณฑ์
 // เลเวลคำนวณฝั่ง server เท่านั้น — client แค่วาดแถบตามที่ได้รับมา
-async function _awardGameCompletion(playerIds) {
-  if (!playerIds.length) return;
+async function _awardGameCompletion(io, players) {
+  if (!players.length) return;
+
+  const playerIds = players.map(p => p.id);
 
   try {
     // guest มี playerId เป็น uuid ที่ไม่มีใน users — query นี้จึงคัดเหลือแต่คนที่ล็อกอิน
     const [users] = await pool.query(
-      `SELECT id, level, exp FROM users WHERE id IN (${playerIds.map(() => '?').join(',')})`,
+      `SELECT id, level, exp, games_played FROM users WHERE id IN (${playerIds.map(() => '?').join(',')})`,
       playerIds
     );
 
@@ -274,6 +276,19 @@ async function _awardGameCompletion(playerIds) {
         `UPDATE users SET games_played = games_played + 1, level = ?, exp = ? WHERE id = ?`,
         [level, exp, user.id]
       );
+
+      // ส่งค่าใหม่กลับให้เจ้าตัวทันที — ไม่งั้นแถบ exp จะค้างค่าเก่าจนกว่าจะรีโหลดหน้า
+      const socketId = players.find(p => p.id === user.id)?.socketId;
+      const s = socketId ? io.sockets.sockets.get(socketId) : null;
+      if (s) {
+        s.emit('player:progress', {
+          level,
+          exp,
+          expNeeded:   expNeeded(level),
+          gamesPlayed: (user.games_played ?? 0) + 1,
+          leveledUp:   level > (user.level ?? 0),
+        });
+      }
     }
   } catch (err) {
     console.error('[award exp]', err);
@@ -348,10 +363,12 @@ async function _resolveVotingAndBroadcast(io, roomId) {
   clearVoting(roomId);
 
   let eliminatedNickname = null;
+  let eliminatedRole     = null;
 
   if (eliminatedId) {
     const target = alivePlayers.find(p => p.id === eliminatedId);
     eliminatedNickname = target?.nickname ?? 'Unknown';
+    eliminatedRole     = target?.role ?? null;
     updatePlayer(roomId, eliminatedId, { isAlive: false });
     await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [eliminatedId]);
   }
@@ -377,4 +394,6 @@ async function _resolveVotingAndBroadcast(io, roomId) {
     content: msg,
     sentAt:  new Date().toISOString(),
   });
+
+  return { eliminatedId, eliminatedRole, eliminatedNickname };
 }
