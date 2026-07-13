@@ -2,33 +2,42 @@
 
 /* =========================================================
    WE'RE NOT WOLF — Global Design System
-   Dark blue-gray + Warm gold / Moonlit village
+   Deep night blue + Lantern amber / Moonlit southern village
    Premium mystery · 40% sarcasm · modern gothic
+
+   พาเลตต์มาจาก Claude Design "Main Menu v2" (accent #E8A94B)
+   accent เป็นตัวเดียวที่กำหนดสีเน้นทั้งเว็บ — ทุกที่อ้าง --accent-rgb
+   ผ่าน rgba() ไม่มีเลข RGB ลอย ๆ กระจายอยู่ในไฟล์อื่นอีก
    ========================================================= */
 
 :root {
-  /* ── Core backgrounds ── */
-  --bg-void:        #080c10;   /* deepest bg */
-  --bg-base:        #0d1117;   /* page bg */
-  --bg-elevated:    #131920;   /* cards, panels */
-  --bg-overlay:     #1a2230;   /* hover states, modals */
-  --bg-input:       #101620;   /* form inputs */
+  /* ── Accent channel — เปลี่ยนค่าเดียวนี้ = เปลี่ยนสีเน้นทั้งเว็บ ── */
+  --accent-rgb:     232, 169, 75;   /* #E8A94B */
 
-  /* ── Borders ── */
-  --border-subtle:  rgba(255,255,255,0.06);
-  --border-default: rgba(255,255,255,0.10);
-  --border-strong:  rgba(255,255,255,0.18);
+  /* ── Core backgrounds — ไล่จากฟ้าคืนอมเขียวลงไปหาดำ ── */
+  --bg-void:        #070c11;   /* deepest bg */
+  --bg-base:        #0a0f14;   /* page bg */
+  --bg-elevated:    #0d131a;   /* cards, panels */
+  --bg-overlay:     #17212b;   /* hover states, modals */
+  --bg-input:       #0b1218;   /* form inputs */
 
-  /* ── Primary accent — misty moonlit blue ── */
-  --gold-bright:    #b4cbda;
-  --gold-mid:       #9fbcd0;
-  --gold-dim:       #6c808d;
-  --gold-glow:      rgba(159,188,208,0.18);
-  --gold-glow-soft: rgba(159,188,208,0.08);
+  /* ── Borders — อมอุ่นเล็กน้อย ให้เข้ากับแสงตะเกียง ไม่ใช่ขาวเทาเฉย ── */
+  --border-subtle:  rgba(232,200,150,0.09);
+  --border-default: rgba(232,200,150,0.16);
+  --border-strong:  rgba(232,200,150,0.26);
 
-  /* ── Secondary accent — moonlight silver ── */
-  --silver:         #a8b4c0;
-  --silver-dim:     #68788a;
+  /* ── Primary accent — lantern amber ──
+     ชื่อ token ยังเป็น gold-* ตามเดิม เพื่อไม่ต้องแก้ทุกไฟล์ที่อ้างถึง */
+  --gold-bright:    #f0ba60;   /* accentStrong — amber ผสมขาว 14% */
+  --gold-mid:       #e8a94b;   /* accent */
+  --gold-dim:       #cf8a2c;   /* accentDeep — amber ผสมดำ 26% */
+  --gold-glow:      rgba(var(--accent-rgb), 0.36);
+  --gold-glow-soft: rgba(var(--accent-rgb), 0.13);
+  --on-accent:      #231603;   /* ตัวอักษร/ไอคอนบนพื้น accent — น้ำตาลเข้ม ไม่ใช่ดำสนิท */
+
+  /* ── Secondary accent — moonlight silver (แสงจันทร์/หมอก ไม่ใช่ปุ่ม) ── */
+  --silver:         #9fbcd0;
+  --silver-dim:     #6c808d;
 
   /* ── Atmosphere accent — Andaman bioluminescent teal ── */
   /* Used ONLY for ambient/decorative elements (fog tint, edge glow, ocean hints) */
@@ -38,18 +47,18 @@
   --teal-glow-dim:  rgba(26,122,123,0.05);
 
   /* ── Text ── */
-  --text-primary:   #e8edf2;
-  --text-secondary: #8a9aaa;
-  --text-muted:     #4a5a6a;
-  --text-gold:      #8ca5b7;
+  --text-primary:   #eef2f4;
+  --text-secondary: #b7c2c9;
+  --text-muted:     #8b97a0;
+  --text-gold:      #c9b48c;   /* ข้อความน้ำเสียงอำพัน — dev note, eyebrow */
 
   /* ── Phase colours ──
      ใช้กับแถบเวลาและป้ายชื่อ phase — ต้องแยกออกจากกันได้ แต่ยังอยู่ตระกูลเดียวกัน
      (desaturated, ค่าความสว่างใกล้กัน) ไม่ใช่สีรุ้งสด ๆ ที่หลุดออกนอกธีม */
-  --phase-night:    #9fbcd0;   /* จันทร์ส่อง — สีเดียวกับ accent หลัก */
-  --phase-day:      #d6a45c;   /* อำพัน — แสงตะเกียง/ไม้แกะสลัก */
+  --phase-night:    #9fbcd0;   /* จันทร์ส่อง — เงินอมฟ้า */
+  --phase-day:      #e8a94b;   /* อำพัน — สีเดียวกับ accent หลัก */
   --phase-voting:   #c05a4e;   /* ถ่านแดง — ความกดดัน */
-  --phase-results:  #7f9c86;   /* เขียวหม่น — สงบลงแล้ว */
+  --phase-results:  #5fa36a;   /* เขียวหมู่บ้าน — สงบลงแล้ว */
   --phase-lobby:    #6c808d;
 
   /* ── Semantic ── */
@@ -86,7 +95,7 @@
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
   --shadow-md:   0 4px 16px rgba(0,0,0,0.45);
   --shadow-lg:   0 12px 40px rgba(0,0,0,0.55);
-  --shadow-gold: 0 0 24px rgba(159,188,208,0.20);
+  --shadow-gold: 0 0 24px rgba(var(--accent-rgb),0.20);
 
   /* ── Transitions ── */
   --ease:    200ms ease;
@@ -176,7 +185,7 @@ input::placeholder, textarea::placeholder {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(159,188,208,0.10);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.10);
 }
 
 /* ── Scrollbar ── */
@@ -215,8 +224,8 @@ input:focus, select:focus, textarea:focus {
   100% { background-position: 200% center; }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 12px rgba(159,188,208,0.15); }
-  50%       { box-shadow: 0 0 24px rgba(159,188,208,0.30); }
+  0%, 100% { box-shadow: 0 0 12px rgba(var(--accent-rgb),0.15); }
+  50%       { box-shadow: 0 0 24px rgba(var(--accent-rgb),0.30); }
 }
 @keyframes fogDrift {
   from { transform: translateX(-2%) translateY(0) scale(1.02); }

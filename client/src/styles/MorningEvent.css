@@ -20,13 +20,13 @@
   padding: 2rem 1.75rem 1.75rem;
   text-align: center;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(214, 158, 76, 0.35);
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
   background:
-    linear-gradient(180deg, rgba(214, 158, 76, 0.06) 0%, rgba(0, 0, 0, 0) 40%),
+    linear-gradient(180deg, rgba(var(--accent-rgb), 0.06) 0%, rgba(0, 0, 0, 0) 40%),
     var(--bg-elevated);
   box-shadow:
     var(--shadow-lg),
-    0 0 32px rgba(214, 158, 76, 0.18),
+    0 0 32px rgba(var(--accent-rgb), 0.18),
     inset 0 0 0 1px rgba(0, 0, 0, 0.5),
     inset 0 0 24px rgba(0, 0, 0, 0.35);
   animation: morning-event-rise 0.4s ease-out;
@@ -71,14 +71,14 @@
   font-size: 2.8rem;
   line-height: 1;
   margin-bottom: 0.5rem;
-  filter: drop-shadow(0 0 12px rgba(214, 158, 76, 0.45));
+  filter: drop-shadow(0 0 12px rgba(var(--accent-rgb), 0.45));
 }
 
 .morning-event-title {
   font-family: var(--font-display);
   font-size: 1.35rem;
-  color: #d6a45c; /* อำพัน */
-  text-shadow: 0 0 14px rgba(214, 158, 76, 0.35);
+  color: var(--gold-mid); /* อำพัน */
+  text-shadow: 0 0 14px rgba(var(--accent-rgb), 0.35);
   margin-bottom: 0.65rem;
 }
 
@@ -88,8 +88,8 @@
   padding: 0.75rem 0.95rem;
   margin-bottom: 0.75rem;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(214, 158, 76, 0.45);
-  background: rgba(214, 158, 76, 0.10);
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  background: rgba(var(--accent-rgb), 0.10);
 }
 
 .morning-event-effect-label {
@@ -97,7 +97,7 @@
   font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #d6a45c;
+  color: var(--gold-mid);
   margin-bottom: 0.3rem;
 }
 
@@ -124,8 +124,8 @@
   padding: 0.6rem 0.9rem;
   margin-bottom: 0.75rem;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(214, 158, 76, 0.28);
-  background: rgba(214, 158, 76, 0.08);
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  background: rgba(var(--accent-rgb), 0.08);
 }
 
 .morning-event-private {
@@ -153,16 +153,16 @@
   font-size: 0.9rem;
   padding: 0.6rem 1.6rem;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(214, 158, 76, 0.4);
-  background: rgba(214, 158, 76, 0.12);
-  color: #e0b775;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--gold-bright);
   cursor: pointer;
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .morning-event-dismiss:hover {
-  background: rgba(214, 158, 76, 0.22);
-  box-shadow: 0 0 16px rgba(214, 158, 76, 0.25);
+  background: rgba(var(--accent-rgb), 0.22);
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.25);
 }
 
 @keyframes morning-event-fade {

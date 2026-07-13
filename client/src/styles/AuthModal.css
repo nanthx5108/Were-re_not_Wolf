@@ -38,7 +38,7 @@
   font-size: 3rem;
   line-height: 1;
   margin-bottom: var(--space-3);
-  filter: drop-shadow(0 0 12px rgba(159,188,208,0.4));
+  filter: drop-shadow(0 0 12px rgba(var(--accent-rgb),0.4));
 }
 
 .modal-title {
@@ -76,10 +76,10 @@
 .modal-btn-primary {
   background: var(--color-accent);
   color: var(--color-bg);
-  box-shadow: 0 2px 12px rgba(159,188,208,0.3);
+  box-shadow: 0 2px 12px rgba(var(--accent-rgb),0.3);
 }
 .modal-btn-primary:hover {
-  box-shadow: 0 4px 20px rgba(159,188,208,0.45);
+  box-shadow: 0 4px 20px rgba(var(--accent-rgb),0.45);
 }
 
 .modal-btn-secondary {
