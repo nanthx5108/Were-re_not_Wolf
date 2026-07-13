@@ -40,6 +40,8 @@ export const CHANNELS = Object.freeze({
   VILLAGE:  'village',
   WEREWOLF: 'werewolf',
   SYSTEM:   'system',
+  // ห้องแชทของคนตาย — คนเป็นต้องไม่เห็นแม้แต่ข้อความเดียว ไม่งั้นคนตายจะใบ้เกมได้
+  DEAD:     'dead',
 });
 
 export const ROLE_DISTRIBUTION = Object.freeze({

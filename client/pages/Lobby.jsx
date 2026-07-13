@@ -5,6 +5,7 @@ import PlayerCard from '../src/components/PlayerCard.jsx';
 import ChatBox    from '../src/components/ChatBox.jsx';
 import Navbar     from '../src/components/Navbar.jsx';
 import RoomConfigPanel from '../src/components/RoomConfigPanel.jsx';
+import { MORNING_EVENT_INFO } from '../src/constants/game.js';
 import '../src/styles/Lobby.css';
 
 const MIN_PLAYERS = 4;
@@ -114,6 +115,29 @@ export default function Lobby() {
             <ul className="rules-list">
               {GAME_RULES.map((rule, i) => (
                 <li key={i} className="rules-item">{rule}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="lobby-section lobby-events">
+            <div className="section-header">
+              <h3 className="section-title">เหตุการณ์ประจำเช้า</h3>
+              <span className="section-note">สุ่ม 1 อย่างทุกเช้า</span>
+            </div>
+            <p className="events-intro">
+              ทุกเช้าหลังจบกลางคืน เกาะจะสุ่มเหตุการณ์ขึ้นมา 1 อย่างและประกาศให้ทุกคนรู้พร้อมกัน
+              บางเหตุการณ์เปลี่ยนกติกาของคืนถัดไป บางอย่างเปลี่ยนเวลาพูดคุย และบางอย่างก็ไม่มีผลอะไรเลย
+              เหตุการณ์ที่เพิ่งออกจะไม่ออกซ้ำติด ๆ กัน
+            </p>
+            <ul className="events-list">
+              {MORNING_EVENT_INFO.map(ev => (
+                <li key={ev.title} className="events-item">
+                  <span className="events-icon" aria-hidden="true">{ev.icon}</span>
+                  <span className="events-text">
+                    <strong className="events-title">{ev.title}</strong>
+                    <span className="events-effect">{ev.effect}</span>
+                  </span>
+                </li>
               ))}
             </ul>
           </section>

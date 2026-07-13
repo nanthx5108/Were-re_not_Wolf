@@ -1,53 +1,47 @@
-import fs from 'fs';
-import path from 'path';
 import mysql, { escapeId } from 'mysql2/promise';
-import dotenv from 'dotenv';
+import { poolConfig, connectionConfig, dbName, describeTarget } from './config.js';
+import { runSchema } from './runSchema.js';
 import { migrateLeveling } from './migrateLeveling.js';
 
-dotenv.config();
-
-const dbName = process.env.DB_NAME || 'were_not_wolf';
-const dbConfig = {
-  host:     process.env.DB_HOST     || 'localhost',
-  port:     parseInt(process.env.DB_PORT || '3306', 10),
-  user:     process.env.DB_USER     || 'root',
-  password: process.env.DB_PASSWORD || '',
-  waitForConnections: true,
-  connectionLimit:    10,
-  queueLimit:         0,
-  multipleStatements: true,
-};
-
 const pool = mysql.createPool({
-  ...dbConfig,
+  ...poolConfig,
   database: dbName,
 });
 
-async function initializeDatabase() {
-  const initConnection = await mysql.createConnection({ ...dbConfig });
+/**
+ * managed host อย่าง Aiven สร้าง database มาให้แล้ว และ user มักไม่มีสิทธิ์ CREATE DATABASE
+ * → ถ้าโดนปฏิเสธสิทธิ์ ให้เดินต่อ แล้วปล่อยให้ pool เป็นคนบอกเองถ้า database ไม่มีจริง
+ */
+async function ensureDatabaseExists() {
+  const connection = await mysql.createConnection({ ...connectionConfig });
 
   try {
-    await initConnection.query(
+    await connection.query(
       `CREATE DATABASE IF NOT EXISTS ${escapeId(dbName)} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
     );
+  } catch (err) {
+    const accessDenied = err.errno === 1044 || err.errno === 1045; // ER_DBACCESS_DENIED_ERROR / ER_ACCESS_DENIED_ERROR
+    if (!accessDenied) throw err;
+    console.warn(`⚠️  ไม่มีสิทธิ์ CREATE DATABASE — ถือว่า "${dbName}" ถูกสร้างไว้บน host แล้ว`);
+  } finally {
+    await connection.end();
+  }
+}
 
-    const schemaPath = path.resolve(process.cwd(), 'db/schema.sql');
-    if (fs.existsSync(schemaPath)) {
-      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-      await initConnection.query(schemaSql);
-    }
+async function initializeDatabase() {
+  try {
+    await ensureDatabaseExists();
+    await runSchema(pool);
 
     const [rows] = await pool.query('SELECT 1 + 1 AS result');
     if (rows?.[0]?.result === 2) {
-      console.log('✅ MySQL connected and schema ready');
+      console.log(`✅ MySQL connected and schema ready — ${describeTarget()}`);
     }
 
     await migrateLeveling(pool);
   } catch (err) {
-    console.error('❌ MySQL connection failed:', err.message);
+    console.error(`❌ MySQL connection failed (${describeTarget()}):`, err.message);
     process.exit(1);
-  } finally {
-    await initConnection.end();
   }
 }
 
