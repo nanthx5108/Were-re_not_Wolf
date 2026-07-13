@@ -758,7 +758,7 @@ export default function HomePage() {
 
                 <div className="home-dev-note">
                   <div className="home-dev-note-label">Developer Note</div>
-                  <div className="home-dev-note-text">&ldquo;เราไม่ได้บัฟหมาป่านะ ชาวบ้านเรียกร้องให้ปรับสมดุล&hellip; เราเลยไม่ทำอะไรเลย&rdquo;</div>
+                  <div className="home-dev-note-text">&ldquo;เพิ่มRole Slicerและในอนาคตจะมีการupdate roleอื่นมาเพิ่มเติม&hellip; Roleใหม่จะทำให้เกมเล่นสนุกกว่าเดิม&rdquo;</div>
                 </div>
 
                 <div className="home-news-footer">

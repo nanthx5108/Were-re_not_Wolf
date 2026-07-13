@@ -49,7 +49,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
           return (
             <div key={p.id} style={{
               ...s.row,
-              background: isMyTarget ? 'rgba(159,188,208,.08)' : 'var(--color-surface-2)',
+              background: isMyTarget ? 'var(--gold-glow-soft)' : 'var(--color-surface-2)',
               borderColor: isMyTarget ? 'var(--color-accent)' : 'var(--color-border)',
             }}>
               <div style={s.playerInfo}>
@@ -127,7 +127,7 @@ const s = {
   },
 
   myVoteBox: {
-    background:   'rgba(159,188,208,.08)',
+    background:   'var(--gold-glow-soft)',
     border:       '1px solid var(--color-accent-dim)',
     borderRadius: 'var(--radius-md)',
     padding:      '8px 12px',
@@ -181,7 +181,7 @@ const s = {
   voteBtnSelected: {
     background:   'var(--color-accent)',
     border:       '1px solid var(--color-accent)',
-    color:        '#0d1117',
+    color: 'var(--on-accent)',
   },
   voteBtnDisabled: {
     opacity: 0.45,

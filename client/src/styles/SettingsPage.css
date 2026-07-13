@@ -211,8 +211,8 @@
   padding: 12px 28px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-accent-dim);
-  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--color-accent) 55%, var(--color-accent-dim) 100%);
-  color: var(--bg-void);
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-mid) 55%, var(--gold-dim) 100%);
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.9rem;

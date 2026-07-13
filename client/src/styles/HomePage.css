@@ -12,12 +12,23 @@
   overflow-x: hidden;
 
   --wood-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.15' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32 0 0 0 0 0.24 0 0 0 0 0.15 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+
+  /* ── Override: gold → green ── */
+  --gold-bright: #5FA36A;
+  --gold-mid:    #4C8A57;
+  --gold-dim:    #3A6E44;
+  --gold-glow:   rgba(95,163,106,0.8);
+  --gold-glow-soft: rgba(95,163,106,0.12);
+  --accent-rgb:  95,163,106;
+  --text-gold:   #8FCB9B;
+  --shadow-gold: 0 6px 20px rgba(95,163,106,0.35);
+
   --kolae-stripe: linear-gradient(90deg,
-    var(--gold-bright) 0%,
-    var(--gold-bright) 30%,
-    #b0472e 30%, #b0472e 55%,
+    #5FA36A 0%,
+    #5FA36A 30%,
+    #2A6644 30%, #2A6644 55%,
     var(--teal-glow) 55%, var(--teal-glow) 78%,
-    var(--gold-mid) 78%, var(--gold-mid) 100%);
+    #4C8A57 78%, #4C8A57 100%);
 }
 
 .home-overlay {
@@ -80,7 +91,6 @@
   .fireflies-layer { display: none; }
 }
 
-/* ── Fog layer — subtle Andaman bioluminescent tint near the water line ── */
 .home-fog {
   position: absolute;
   inset: 0;
@@ -95,7 +105,6 @@
   animation: fogDrift 28s ease-in-out infinite alternate;
 }
 
-/* ── Main container ── */
 .home-container {
   position: relative;
   z-index: 1;
@@ -220,19 +229,14 @@
   box-shadow: 0 4px 16px rgba(168,180,192,0.10);
 }
 
-/* ── auth-btn-primary: Kolae plank — gold paint film over wood grain ── */
 .auth-btn-primary {
   position: relative;
-  border: 1px solid var(--gold-mid);
+  border: 1px solid #3A6E44;
   background:
-    linear-gradient(180deg,
-      rgba(180,203,218,0.55) 0%,
-      rgba(159,188,208,0.42) 50%,
-      rgba(108,128,141,0.38) 100%),
-    var(--wood-grain),
-    linear-gradient(180deg, #4a3a26 0%, #2e2417 100%);
-  background-blend-mode: normal, overlay, normal;
-  color: var(--bg-void);
+    linear-gradient(180deg, #5FA36A 0%, #3A6E44 100%),
+    var(--wood-grain);
+  background-blend-mode: normal, overlay;
+  color: var(--on-accent);
   box-shadow:
     0 3px 10px rgba(0,0,0,0.30),
     inset 0 1px 0 rgba(255,255,255,0.16),
@@ -246,14 +250,18 @@
   bottom: 4px;
   height: 2px;
   border-radius: 2px;
-  background: var(--kolae-stripe);
+  background: linear-gradient(90deg,
+    #5FA36A 0%, #5FA36A 30%,
+    #2A6644 30%, #2A6644 55%,
+    var(--teal-glow) 55%, var(--teal-glow) 78%,
+    #4C8A57 78%, #4C8A57 100%);
   opacity: 0.5;
   transition: opacity var(--ease), transform var(--ease);
 }
 .auth-btn-primary:hover {
   filter: brightness(1.08);
   box-shadow:
-    var(--shadow-gold),
+    0 6px 20px rgba(95,163,106,0.35),
     inset 0 1px 0 rgba(255,255,255,0.22),
     inset 0 -2px 4px rgba(0,0,0,0.2);
 }
@@ -326,7 +334,7 @@
   transition: background var(--ease), color var(--ease);
 }
 .user-dropdown-btn:hover {
-  background: rgba(159,188,208,0.10);
+  background: rgba(var(--accent-rgb),0.10);
   color: var(--gold-bright);
 }
 .user-dropdown-btn.is-danger {
@@ -368,7 +376,7 @@
 .user-level-badge {
   padding: 2px 7px;
   border-radius: 4px;
-  background: rgba(159,188,208,0.12);
+  background: rgba(var(--accent-rgb),0.12);
   border: 1px solid var(--gold-dim);
   color: var(--gold-mid);
   font-size: 0.68rem;
@@ -385,7 +393,7 @@
 
 .home-title {
   font-family: var(--font-logo) !important;
-  font-weight: 700;
+  font-weight: 50;
   font-size: clamp(3rem, 7.5vw, 5.8rem);
   color: var(--text-primary);
   letter-spacing: 0.06em;
@@ -433,7 +441,6 @@
   .home-container { padding: 0 var(--space-4); }
 }
 
-/* ── Join / browse-rooms: full-screen layout ── */
 .home-container.is-wide { max-width: 1400px; }
 
 .home-grid.is-join-browse {
@@ -479,7 +486,6 @@
   background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
 }
 
-/* ── corner-bracket accents shared by all elevated cards ── */
 .panel-corner {
   position: absolute;
   width: 20px;
@@ -502,17 +508,14 @@
 
 .menu-panel { padding: var(--space-4); }
 
-/* คอลัมน์ซ้ายกว้าง ~570px ปุ่มที่ยืดเต็มความกว้างเลยดูยาวเหยียด
-   จำกัดไว้เท่ากันทั้งแผงเมนูและแถบผู้เล่น เพื่อให้ยังเรียงเป็นคอลัมน์เดียวกันอยู่ */
 .menu-panel,
 .player-bar {
   width: 100%;
-  max-width: 430px;
+  max-width: 600px;
 }
 
 .menu-btn {
   display: grid;
-  /* ไอคอนซ้าย · คำชิดขวา · ลูกศรกว้างเท่าตัวมันเอง (โผล่ตอน hover) */
   grid-template-columns: 52px 1fr auto;
   gap: var(--space-4);
   align-items: center;
@@ -550,10 +553,10 @@
 
 .menu-btn::after {
   background-image:
-    radial-gradient(circle 6px at 10px 10px, rgba(159,188,208,0.95) 0%, rgba(159,188,208,0.35) 55%, transparent 78%),
-    radial-gradient(circle 6px at calc(100% - 10px) 10px, rgba(159,188,208,0.95) 0%, rgba(159,188,208,0.35) 55%, transparent 78%),
-    radial-gradient(circle 6px at 10px calc(100% - 10px), rgba(159,188,208,0.95) 0%, rgba(159,188,208,0.35) 55%, transparent 78%),
-    radial-gradient(circle 6px at calc(100% - 10px) calc(100% - 10px), rgba(159,188,208,0.95) 0%, rgba(159,188,208,0.35) 55%, transparent 78%);
+    radial-gradient(circle 6px at 10px 10px, rgba(var(--accent-rgb),0.95) 0%, rgba(var(--accent-rgb),0.35) 55%, transparent 78%),
+    radial-gradient(circle 6px at calc(100% - 10px) 10px, rgba(var(--accent-rgb),0.95) 0%, rgba(var(--accent-rgb),0.35) 55%, transparent 78%),
+    radial-gradient(circle 6px at 10px calc(100% - 10px), rgba(var(--accent-rgb),0.95) 0%, rgba(var(--accent-rgb),0.35) 55%, transparent 78%),
+    radial-gradient(circle 6px at calc(100% - 10px) calc(100% - 10px), rgba(var(--accent-rgb),0.95) 0%, rgba(var(--accent-rgb),0.35) 55%, transparent 78%);
   opacity: 0;
 }
 .menu-btn:hover:not(:disabled)::before {
@@ -576,15 +579,15 @@
 
 .menu-btn.is-primary {
   border-color: var(--border-default);
-  background: linear-gradient(90deg, rgba(159,188,208,0.07) 0%, transparent 60%);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb),0.07) 0%, transparent 60%);
 }
 .menu-btn.is-primary::before {
   opacity: 0.85;
 }
 .menu-btn.is-primary:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(159,188,208,0.12) 0%, transparent 60%);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb),0.12) 0%, transparent 60%);
   border-color: var(--gold-dim);
-  box-shadow: inset 0 0 0 1px rgba(159,188,208,0.08), 0 0 26px rgba(159,188,208,0.16);
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb),0.08), 0 0 26px rgba(var(--accent-rgb),0.16);
   transform: translateY(-2px);
 }
 .menu-btn.is-primary:hover:not(:disabled)::before {
@@ -594,7 +597,6 @@
   opacity: 1;
 }
 
-/* ── corner brackets for the primary (create room) button ── */
 .menu-btn-corner {
   position: absolute;
   width: 18px;
@@ -643,21 +645,21 @@
   color: var(--text-primary);
 }
 .menu-btn.is-primary .menu-icon {
-  background: rgba(159,188,208,0.08);
-  border-color: rgba(159,188,208,0.20);
+  background: rgba(var(--accent-rgb),0.08);
+  border-color: rgba(var(--accent-rgb),0.20);
   color: var(--gold-mid);
 }
 .menu-btn.is-primary:hover:not(:disabled) .menu-icon {
-  background: rgba(159,188,208,0.14);
+  background: rgba(var(--accent-rgb),0.14);
   color: var(--gold-bright);
 }
 
 .menu-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 3px;
-  text-align: right;
+  text-align: left;
 }
 .menu-title {
   font-family: var(--font-display);
@@ -737,7 +739,7 @@
 }
 .field-input:focus {
   border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(159,188,208,0.10);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.10);
 }
 .field-input-code {
   text-transform: uppercase;
@@ -769,22 +771,18 @@
 
 .btn-row { display: flex; gap: var(--space-3); margin-top: var(--space-1); }
 
-/* ── btn-primary: Kolae plank — gold paint film over wood grain ── */
+/* ── btn-primary: Kolae plank — ฟิล์มสีเขียวทับลายไม้ ── */
 .btn-primary {
   position: relative;
   flex: 1;
   padding: 13px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--gold-mid);
+  border: 1px solid var(--gold-dim);
   background:
-    linear-gradient(180deg,
-      rgba(180,203,218,0.55) 0%,
-      rgba(159,188,208,0.42) 50%,
-      rgba(108,128,141,0.38) 100%),
-    var(--wood-grain),
-    linear-gradient(180deg, #4a3a26 0%, #2e2417 100%);
-  background-blend-mode: normal, overlay, normal;
-  color: var(--bg-void);
+    linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-dim) 100%),
+    var(--wood-grain);
+  background-blend-mode: normal, overlay;
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.82rem;
@@ -1051,7 +1049,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(159,188,208,0.14), rgba(159,188,208,0.03));
+  background: linear-gradient(180deg, rgba(var(--accent-rgb),0.14), rgba(var(--accent-rgb),0.03));
   border: 1px solid var(--border-default);
   color: var(--gold-mid);
 }
@@ -1188,9 +1186,9 @@
   font-weight: 700;
   font-size: 0.8rem;
   white-space: nowrap;
-  background: linear-gradient(180deg, var(--gold-bright), var(--gold-mid));
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-dim));
   border: 1px solid var(--gold-dim);
-  color: var(--bg-void);
+  color: var(--on-accent);
   box-shadow: 0 4px 12px var(--gold-glow);
   transition: transform var(--ease), box-shadow var(--ease);
 }
@@ -1213,8 +1211,8 @@
   gap: var(--space-2);
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  background: rgba(159,188,208,0.06);
-  border: 1px solid rgba(159,188,208,0.18);
+  background: rgba(var(--accent-rgb),0.06);
+  border: 1px solid rgba(var(--accent-rgb),0.18);
 }
 .join-selected-label {
   display: inline-flex;
@@ -1359,7 +1357,7 @@
   white-space: nowrap;
 }
 
-/* แถบ EXP แบบ Minecraft — รางเข้มฝังลงไป, fill ทองอำพันเรืองแสง */
+/* แถบ EXP แบบ Minecraft — รางเข้มฝังลงไป, fill สีเขียวเรืองแสง */
 .player-exp {
   position: relative;
   height: 8px;
@@ -1395,7 +1393,7 @@
 }
 @keyframes expTrackFlash {
   0%   { background: var(--bg-void); }
-  20%  { background: rgba(224,183,117,0.45); }
+  20%  { background: rgba(95,163,106,0.45); }
   100% { background: var(--bg-void); }
 }
 
@@ -1570,10 +1568,10 @@
 }
 .more-btn::after {
   background-image:
-    radial-gradient(circle 5px at 9px 9px, rgba(159,188,208,0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at calc(100% - 9px) 9px, rgba(159,188,208,0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at 9px calc(100% - 9px), rgba(159,188,208,0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at calc(100% - 9px) calc(100% - 9px), rgba(159,188,208,0.9) 0%, transparent 75%);
+    radial-gradient(circle 5px at 9px 9px, rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at calc(100% - 9px) 9px, rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at 9px calc(100% - 9px), rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at calc(100% - 9px) calc(100% - 9px), rgba(var(--accent-rgb),0.9) 0%, transparent 75%);
   opacity: 0;
 }
 .more-btn:hover {

@@ -89,10 +89,10 @@
 }
 .profile-back-btn::after {
   background-image:
-    radial-gradient(circle 5px at 8px 8px, rgba(159,188,208,0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at calc(100% - 8px) 8px, rgba(159,188,208,0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at 8px calc(100% - 8px), rgba(159,188,208,0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at calc(100% - 8px) calc(100% - 8px), rgba(159,188,208,0.9) 0%, transparent 75%);
+    radial-gradient(circle 5px at 8px 8px, rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at calc(100% - 8px) 8px, rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at 8px calc(100% - 8px), rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
+    radial-gradient(circle 5px at calc(100% - 8px) calc(100% - 8px), rgba(var(--accent-rgb),0.9) 0%, transparent 75%);
   opacity: 0;
 }
 .profile-back-btn:hover { color: var(--gold-bright); transform: translateX(-3px); }
@@ -277,7 +277,7 @@
 }
 .profile-input:focus {
   border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(159,188,208,0.10);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.10);
 }
 .profile-input:disabled {
   opacity: 0.42;
@@ -312,7 +312,7 @@
 .profile-icon-btn:hover:not(:disabled) {
   color: var(--gold-bright);
   border-color: var(--gold-dim);
-  background: rgba(159,188,208,0.08);
+  background: rgba(var(--accent-rgb),0.08);
 }
 .profile-icon-btn:disabled {
   opacity: 0.35;
@@ -326,14 +326,14 @@
   font-family: var(--font-meta);
   font-size: 0.76rem;
   color: var(--gold-mid);
-  background: rgba(159,188,208,0.08);
-  border: 1px solid rgba(159,188,208,0.25);
+  background: rgba(var(--accent-rgb),0.08);
+  border: 1px solid rgba(var(--accent-rgb),0.25);
   transition: color var(--ease), border-color var(--ease), background var(--ease);
   white-space: nowrap;
 }
 .profile-link-btn:hover:not(:disabled) {
   color: var(--gold-bright);
-  background: rgba(159,188,208,0.14);
+  background: rgba(var(--accent-rgb),0.14);
 }
 .profile-link-btn:disabled {
   opacity: 0.4;
@@ -370,7 +370,7 @@
 }
 .profile-select:focus {
   border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(159,188,208,0.10);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.10);
 }
 .profile-select option {
   background: var(--bg-elevated);
@@ -392,7 +392,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--gold-bright);
-  background: linear-gradient(135deg, rgba(159,188,208,0.22) 0%, rgba(159,188,208,0.10) 100%);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb),0.22) 0%, rgba(var(--accent-rgb),0.10) 100%);
   border: 1px solid var(--gold-mid);
   box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
   transition: transform var(--ease), box-shadow var(--ease), filter var(--ease);
@@ -470,7 +470,7 @@
     linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.08)),
     linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
   background-color: var(--bg-elevated);
-  border: 1px solid rgba(159,188,208,0.18);
+  border: 1px solid rgba(var(--accent-rgb),0.18);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.03),
     0 24px 60px rgba(0,0,0,0.7),
@@ -528,7 +528,7 @@
   font-size: 0.84rem;
   letter-spacing: 0.03em;
   color: var(--gold-bright);
-  background: linear-gradient(135deg, rgba(159,188,208,0.22) 0%, rgba(159,188,208,0.10) 100%);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb),0.22) 0%, rgba(var(--accent-rgb),0.10) 100%);
   border: 1px solid var(--gold-mid);
   transition: transform var(--ease), box-shadow var(--ease);
 }

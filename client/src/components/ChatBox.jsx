@@ -123,9 +123,9 @@ const s = {
   form:      { display:'flex', gap:'6px' },
   select:    { background:'var(--color-surface-2)', border:'1px solid var(--color-border)', borderRadius:'var(--radius-md)', color:'var(--color-text)', fontSize:'13px', padding:'6px 8px', cursor:'pointer', outline:'none' },
   input:     { flex:1, background:'var(--color-surface-2)', border:'1px solid var(--color-border)', borderRadius:'var(--radius-md)', color:'var(--color-text)', fontFamily:'var(--font-body)', fontSize:'14px', padding:'8px 12px', outline:'none' },
-  sendBtn:   { background:'var(--color-accent)', border:'none', borderRadius:'var(--radius-md)', color:'#0d1117', fontWeight:700, fontSize:'16px', padding:'8px 14px', cursor:'pointer', lineHeight:1 },
+  sendBtn:   { background:'var(--color-accent)', border:'none', borderRadius:'var(--radius-md)', color:'var(--on-accent)', fontWeight:700, fontSize:'16px', padding:'8px 14px', cursor:'pointer', lineHeight:1 },
   silenced:  { background:'rgba(139,32,32,.15)', border:'1px solid rgba(229,115,115,.35)', borderRadius:'var(--radius-md)', color:'#e57373', fontSize:'12.5px', padding:'7px 10px', textAlign:'center' },
-  censored:  { background:'rgba(224,183,117,.12)', border:'1px solid rgba(224,183,117,.35)', borderRadius:'var(--radius-md)', color:'#e0b775', fontSize:'12.5px', padding:'7px 10px', textAlign:'center' },
+  censored:  { background:'var(--gold-glow-soft)', border:'1px solid var(--gold-glow)', borderRadius:'var(--radius-md)', color:'var(--gold-bright)', fontSize:'12.5px', padding:'7px 10px', textAlign:'center' },
   inputDisabled: { opacity:.5, cursor:'not-allowed' },
   sendBtnDisabled: { opacity:.4, cursor:'not-allowed' },
 };

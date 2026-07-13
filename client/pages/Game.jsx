@@ -69,7 +69,7 @@ export default function Game() {
       )}
 
       {gameResult && (
-        <div className="lobby-error-banner" style={{ background: 'rgba(159, 188, 208, 0.16)', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
+        <div className="lobby-error-banner" style={{ background: 'var(--gold-glow-soft)', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem' }}>
           <strong>{gameResult.message}</strong>
 
           {gameResult.reveal?.length > 0 && (
