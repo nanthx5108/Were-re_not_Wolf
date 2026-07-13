@@ -186,13 +186,17 @@ function _broadcastMorningEvent(io, roomId, morning, round) {
     icon:  event.icon,
     title: event.title,
     narrator: event.narrator,
+    effect:   event.effect || null,   // ผลต่อเกมแบบตรงไปตรงมา — narrator เล่าอ้อม ๆ ผู้เล่นใหม่จะเดาไม่ออก
     announcement,
     round,
   });
 
-  const chatText = announcement
-    ? `${event.icon} ${event.title}: ${event.narrator} (${announcement})`
-    : `${event.icon} ${event.title}: ${event.narrator}`;
+  // ในแชทเอาผลขึ้นก่อนคำบรรยาย คนที่พลาดป้ายกลางจอจะได้ยังรู้ว่าเกิดอะไรขึ้นกับเกม
+  const chatText = [
+    `${event.icon} ${event.title} — ${event.effect || 'ไม่มีผลต่อเกม'}`,
+    announcement,
+    `"${event.narrator}"`,
+  ].filter(Boolean).join(' · ');
 
   io.to(roomId).emit('chat:message', {
     id:      `sys-event-${Date.now()}`,

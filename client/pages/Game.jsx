@@ -7,6 +7,7 @@ import PhaseTimer from '../src/components/PhaseTimer.jsx';
 import VotingPanel from '../src/components/VotingPanel.jsx';
 import NightAction from '../src/components/NightAction.jsx';
 import MorningEventBanner from '../src/components/MorningEventBanner.jsx';
+import MyRoleCard from '../src/components/MyRoleCard.jsx';
 import Navbar from '../src/components/Navbar.jsx';
 import '../src/styles/Lobby.css';
 
@@ -35,6 +36,8 @@ export default function Game() {
     votes,
     voteResult,
     gameResult,
+    silencedNote,
+    isDead,
     clearError,
   } = useGame();
 
@@ -93,6 +96,26 @@ export default function Game() {
 
       <main className="lobby-main" style={{ alignItems: 'stretch' }}>
         <aside className="lobby-aside" style={{ gap: '1rem' }}>
+          {/* บทบาทของเจ้าเอง — ค่านี้มาถึงเฉพาะ socket ของเจ้าตัว คนอื่นไม่มีทางเห็น */}
+          <MyRoleCard />
+
+          {(silencedNote || isDead) && (
+            <div className="game-status-row">
+              {silencedNote && !isDead && (
+                <div className="game-status is-silenced">
+                  <span className="game-status-icon" aria-hidden="true">🤐</span>
+                  <span>โดนใบ้! ผู้ปิดปากเล่นงานเจ้าเมื่อคืน — วันนี้เจ้าพิมพ์อะไรไม่ได้เลย จนกว่าจะขึ้นคืนใหม่</span>
+                </div>
+              )}
+              {isDead && (
+                <div className="game-status is-dead">
+                  <span className="game-status-icon" aria-hidden="true">👻</span>
+                  <span>เจ้าตายแล้ว — ดูเกมต่อได้ และคุยได้เฉพาะในห้องวิญญาณ</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <section className="lobby-section">
             <h3 className="lobby-section-title">Players</h3>
             <div className="lobby-player-grid custom-scrollbar">

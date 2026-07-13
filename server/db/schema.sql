@@ -1,8 +1,11 @@
-CREATE DATABASE IF NOT EXISTS were_not_wolf
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-
-USE were_not_wolf;
+-- schema ของ WE'RE NOT WOLF — ต้องรันได้ทั้ง MariaDB (local/XAMPP) และ MySQL 8 (Aiven)
+--
+-- ข้อควรรู้ก่อนแก้ไฟล์นี้:
+--  1. ห้ามใส่ CREATE DATABASE / USE — database มาจาก env DB_NAME และถูกเลือกไว้ตั้งแต่ตอน connect
+--  2. ห้ามใช้ `ADD COLUMN IF NOT EXISTS` หรือ `CREATE INDEX IF NOT EXISTS`
+--     เป็น syntax เฉพาะของ MariaDB และเป็น syntax error บน MySQL 8
+--     ความ idempotent มาจาก db/runSchema.js ที่ข้าม error 1050/1060/1061 (มีอยู่แล้ว) ให้แทน
+--     → เขียน ALTER/CREATE INDEX ตรง ๆ ได้เลย รันซ้ำกี่รอบก็ปลอดภัย
 
 CREATE TABLE IF NOT EXISTS rooms (
     id          VARCHAR(8)      NOT NULL PRIMARY KEY,
@@ -37,7 +40,7 @@ CREATE TABLE IF NOT EXISTS messages (
     player_id   VARCHAR(36)     NOT NULL,
     nickname    VARCHAR(32)     NOT NULL,
     content     TEXT            NOT NULL,
-    channel     ENUM('village','werewolf','system') NOT NULL DEFAULT 'village',
+    channel     ENUM('village','werewolf','system','dead') NOT NULL DEFAULT 'village',
     sent_at     TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_messages_room
@@ -45,11 +48,6 @@ CREATE TABLE IF NOT EXISTS messages (
         REFERENCES rooms(id)
         ON DELETE CASCADE
 );
-
-CREATE INDEX IF NOT EXISTS idx_players_room_id   ON players(room_id);
-CREATE INDEX IF NOT EXISTS idx_players_socket_id ON players(socket_id);
-CREATE INDEX IF NOT EXISTS idx_messages_room_id  ON messages(room_id);
-CREATE INDEX IF NOT EXISTS idx_messages_sent_at  ON messages(sent_at);
 
 CREATE TABLE IF NOT EXISTS users (
     id                 VARCHAR(36)     NOT NULL PRIMARY KEY,
@@ -67,23 +65,32 @@ CREATE TABLE IF NOT EXISTS users (
     created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX idx_players_room_id   ON players(room_id);
+CREATE INDEX idx_players_socket_id ON players(socket_id);
+CREATE INDEX idx_messages_room_id  ON messages(room_id);
+CREATE INDEX idx_messages_sent_at  ON messages(sent_at);
+CREATE INDEX idx_users_username    ON users(username);
 
-ALTER TABLE users ADD COLUMN IF NOT EXISTS games_played INT NOT NULL DEFAULT 0;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(32) DEFAULT NULL;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate DATE DEFAULT NULL;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT NULL;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500) DEFAULT NULL;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS username_changed_at DATETIME DEFAULT NULL;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) DEFAULT NULL UNIQUE;
+-- migration สำหรับ database เดิมที่สร้างไว้ก่อนคอลัมน์พวกนี้จะมี
+-- (บน database ใหม่ CREATE TABLE ข้างบนครอบคลุมแล้ว → statement พวกนี้จะโดนข้ามด้วย error 1060)
+ALTER TABLE users ADD COLUMN games_played INT NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN display_name VARCHAR(32) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN birthdate DATE DEFAULT NULL;
+ALTER TABLE users ADD COLUMN email VARCHAR(255) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN username_changed_at DATETIME DEFAULT NULL;
+ALTER TABLE users ADD COLUMN google_id VARCHAR(255) DEFAULT NULL UNIQUE;
 ALTER TABLE users MODIFY COLUMN password VARCHAR(255) DEFAULT NULL;
-ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE rooms ADD COLUMN IF NOT EXISTS config JSON DEFAULT NULL;
+ALTER TABLE rooms ADD COLUMN is_private BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE rooms ADD COLUMN config JSON DEFAULT NULL;
+
+-- ห้องแชทของคนตาย — database เดิมมี enum แค่ 3 ค่า ต้องขยายก่อนถึงจะบันทึกได้
+ALTER TABLE messages MODIFY COLUMN channel ENUM('village','werewolf','system','dead') NOT NULL DEFAULT 'village';
 
 -- ระบบเลเวล: ผู้เล่นใหม่เริ่มที่ Lv.0 exp 0 (ไม่ใช่ Lv.1)
 -- ตารางเดิมอาจมีคอลัมน์ level ที่ default เป็น 1 อยู่ จึงบังคับ default ใหม่ด้วย MODIFY
-ALTER TABLE users ADD COLUMN IF NOT EXISTS exp INT NOT NULL DEFAULT 0;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS level INT NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN exp INT NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN level INT NOT NULL DEFAULT 0;
 ALTER TABLE users MODIFY COLUMN exp INT NOT NULL DEFAULT 0;
 ALTER TABLE users MODIFY COLUMN level INT NOT NULL DEFAULT 0;
 UPDATE users SET level = 0 WHERE games_played = 0;

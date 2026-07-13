@@ -14,6 +14,8 @@ export const SOCKET_EVENTS = Object.freeze({
   ROOM_CONFIG_UPDATED:  'room:config_updated',
   CHAT_SEND:            'chat:send',
   CHAT_MESSAGE:         'chat:message',
+  CHAT_CENSORED:        'chat:censored',
+  CHAT_DEAD_HISTORY:    'chat:dead_history',
   GAME_START:           'game:start',
   GAME_STARTED:         'game:started',
   PHASE_CHANGED:        'phase:changed',
@@ -74,6 +76,7 @@ const initialState = {
   privateNote:   null,
   blockedTargets: [],
   silencedNote:   null,
+  censorNote:     null,
 };
 
 function gameReducer(state, action) {
@@ -124,6 +127,21 @@ function gameReducer(state, action) {
         ...state,
         messages: [...state.messages, action.message].slice(-200),
       };
+
+    // แชทย้อนหลังของห้องวิญญาณ — ขอตอนเพิ่งตาย จะได้เห็นว่าคนที่ตายก่อนหน้าคุยอะไรกันไว้
+    // เรียงใหม่ตามเวลาเสมอ ไม่งั้นข้อความเก่าจะไปต่อท้ายของใหม่
+    case 'DEAD_HISTORY': {
+      const known = new Set(state.messages.map(m => m.id));
+      const merged = [...state.messages, ...action.messages.filter(m => !known.has(m.id))];
+      merged.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
+      return { ...state, messages: merged.slice(-200) };
+    }
+
+    case 'CENSORED':
+      return { ...state, censorNote: action.payload.message };
+
+    case 'CLEAR_CENSOR_NOTE':
+      return { ...state, censorNote: null };
 
     case 'GAME_STARTED':
       return {
@@ -266,6 +284,8 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.ROOM_HOST_CHANGED]:    ({ newHostId }) => dispatch({ type: 'HOST_CHANGED', newHostId }),
       [SOCKET_EVENTS.ROOM_CONFIG_UPDATED]:  (config)        => dispatch({ type: 'CONFIG_UPDATED', ...config }),
       [SOCKET_EVENTS.CHAT_MESSAGE]:         (message)       => dispatch({ type: 'CHAT_MESSAGE', message }),
+      [SOCKET_EVENTS.CHAT_CENSORED]:        (payload)       => dispatch({ type: 'CENSORED', payload }),
+      [SOCKET_EVENTS.CHAT_DEAD_HISTORY]:    ({ messages })  => dispatch({ type: 'DEAD_HISTORY', messages: messages ?? [] }),
       [SOCKET_EVENTS.GAME_STARTED]:         (data)          => dispatch({ type: 'GAME_STARTED', ...data }),
       [SOCKET_EVENTS.PHASE_CHANGED]:        (data)          => dispatch({ type: 'PHASE_CHANGED', ...data }),
       [SOCKET_EVENTS.ERROR]:                ({ message })   => dispatch({ type: 'SET_ERROR', error: message }),
@@ -325,14 +345,24 @@ export function GameProvider({ children }) {
   const castVote      = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
   const submitNightAction = useCallback((targetId) => socket.emit(SOCKET_EVENTS.NIGHT_ACTION, { targetId }), []);
   const clearError    = useCallback(() => dispatch({ type: 'CLEAR_ERROR' }), []);
+  const clearCensorNote  = useCallback(() => dispatch({ type: 'CLEAR_CENSOR_NOTE' }), []);
+  const loadDeadHistory  = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_DEAD_HISTORY), []);
+
+  // ตายหรือยัง — อ่านจาก players ที่ server ส่งมา ไม่ให้ component แต่ละตัวไปคำนวณเอง
+  const isDead = Boolean(
+    state.room?.status === 'in_progress' &&
+    state.room.players?.find(p => p.id === state.playerId)?.isAlive === false
+  );
 
   return (
     <GameContext.Provider value={{
       ...state,
+      isDead,
       setIdentity, joinRoom, leaveRoom,
       sendMessage, startGame, advancePhase,
       castVote, submitNightAction,
       updateRoomConfig, clearError,
+      clearCensorNote, loadDeadHistory,
     }}>
       {children}
     </GameContext.Provider>

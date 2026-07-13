@@ -38,11 +38,20 @@ export default function MorningEventBanner() {
         <p className="morning-event-kicker">เหตุการณ์ประจำเช้า วันที่ {morningEvent.round}</p>
         <div className="morning-event-icon">{morningEvent.icon}</div>
         <h2 className="morning-event-title">{morningEvent.title}</h2>
-        <p className="morning-event-narrator">"{morningEvent.narrator}"</p>
+
+        {/* ผลต่อเกมมาก่อนคำบรรยาย — คำบรรยายเล่าอ้อม ๆ ผู้เล่นใหม่อ่านแล้วเดาไม่ออกว่าจะเกิดอะไร */}
+        {morningEvent.effect && (
+          <div className="morning-event-effect">
+            <p className="morning-event-effect-label">เหตุการณ์นี้ส่งผลอะไร</p>
+            <p className="morning-event-effect-text">{morningEvent.effect}</p>
+          </div>
+        )}
 
         {morningEvent.announcement && (
           <p className="morning-event-announcement">{morningEvent.announcement}</p>
         )}
+
+        <p className="morning-event-narrator">"{morningEvent.narrator}"</p>
 
         {(privateNote || seerText) && (
           <div className="morning-event-private">

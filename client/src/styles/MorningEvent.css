@@ -82,13 +82,39 @@
   margin-bottom: 0.65rem;
 }
 
+/* ผลต่อเกมเป็นตัวเอกของป้ายนี้ — คำบรรยายเป็นบรรยากาศ อ่านทีหลังก็ได้ */
+.morning-event-effect {
+  text-align: left;
+  padding: 0.75rem 0.95rem;
+  margin-bottom: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(214, 158, 76, 0.45);
+  background: rgba(214, 158, 76, 0.10);
+}
+
+.morning-event-effect-label {
+  font-family: var(--font-meta);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d6a45c;
+  margin-bottom: 0.3rem;
+}
+
+.morning-event-effect-text {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
 .morning-event-narrator {
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   line-height: 1.7;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-style: italic;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
 .morning-event-announcement {

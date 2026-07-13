@@ -7,6 +7,8 @@ export const DEFAULT_EVENT_ID = 'full_moon';
 //
 // ฟิลด์ของแต่ละ event:
 //   id, icon, title, narrator  — ข้อมูลแสดงผล
+//   effect                     — ผลต่อเกมเป็นภาษาบ้าน ๆ (narrator เล่าเป็นนิทาน อ่านแล้วเดาผลไม่ออก)
+//                                ข้อความนี้ขึ้นกลางจอตอนเช้า และใช้เป็นคำอธิบายในหน้า Lobby ด้วย
 //   baseWeight                 — น้ำหนักพื้นฐานในการสุ่ม
 //   cooldownDays               — จำนวนวันที่ห้ามเกิดซ้ำหลังเกิดแล้ว
 //   minAlive                   — จำนวนผู้เล่นมีชีวิตขั้นต่ำ (optional)
@@ -22,6 +24,7 @@ export const MORNING_EVENTS = [
     icon: '🕯️',
     title: 'ไฟดับทั้งหมู่บ้าน',
     narrator: 'โคมไฟทุกดวงดับลงพร้อมกัน... ช่างบังเอิญเหลือเกิน คืนนี้ต่อให้ใครเฝ้าใครอยู่ ก็คงมองไม่เห็นอะไรทั้งนั้น',
+    effect: 'คืนนี้การป้องกันของผู้พิทักษ์ใช้ไม่ได้ผล ใครถูกหมาป่าเลือก คนนั้นตายแน่นอน',
     baseWeight: 2,
     cooldownDays: 3,
     minAlive: 5,
@@ -33,6 +36,7 @@ export const MORNING_EVENTS = [
     icon: '🌫️',
     title: 'หมอกลงจัด',
     narrator: 'หมอกทะเลหนาจนมองไม่เห็นปลายจมูกตัวเอง... ตาทิพย์แค่ไหน คืนนี้ก็เห็นแค่เงาราง ๆ',
+    effect: 'คืนนี้ผู้หยั่งรู้ (Seer) ตรวจใครก็ไม่ได้คำตอบ ผลจะขึ้นว่า "มองไม่ชัด"',
     baseWeight: 5,
     cooldownDays: 2,
     nightEffect: 'fog',
@@ -42,6 +46,7 @@ export const MORNING_EVENTS = [
     icon: '🎣',
     title: 'เรือกลับเข้าฝั่ง',
     narrator: 'เรือกลับเข้าฝั่งพร้อมปลาเต็มลำ ชาวบ้านฮึกเหิม... ก็ดีนะ ได้มีแรงสงสัยกันต่อ คืนนี้ผู้พิทักษ์แข็งแรงพอจะเฝ้าได้สองบ้าน',
+    effect: 'คืนนี้ผู้พิทักษ์ (Bodyguard) เลือกป้องกันได้ 2 คน แทนที่จะเป็นคนเดียว',
     baseWeight: 30,
     cooldownDays: 2,
     requires: (ctx) => ctx.lastNight.prevented,
@@ -52,6 +57,7 @@ export const MORNING_EVENTS = [
     icon: '🌊',
     title: 'น้ำขึ้นสูง',
     narrator: 'น้ำทะเลหนุนถึงลานหมู่บ้าน รีบคุยกันหน่อย เดี๋ยวได้ประชุมกันทั้งที่เท้าแช่น้ำ',
+    effect: 'เวลาพูดคุยของวันนี้เหลือแค่ครึ่งเดียว รีบหาข้อสรุปก่อนถึงเวลาโหวต',
     baseWeight: 10,
     cooldownDays: 2,
     dayTimerMod: (ms) => Math.floor(ms / 2),
@@ -61,6 +67,7 @@ export const MORNING_EVENTS = [
     icon: '🐺',
     title: 'เสียงหอนแต่ไกล',
     narrator: 'เสียงหอนลอยมาตามลม... นับดูสิว่ากี่ตัว เผื่อจะได้นอนหลับสนิทขึ้น (หรือไม่)',
+    effect: 'ทุกคนได้รู้ว่าตอนนี้ยังเหลือหมาป่ากี่ตัว (เป็นตัวเลขจริง ไม่หลอก)',
     baseWeight: 10,
     weightMultiplier: (ctx) => (ctx.lastNight.someoneKilled ? 2 : 1),
     buildAnnouncement: (ctx) => {
@@ -73,6 +80,7 @@ export const MORNING_EVENTS = [
     icon: '🦅',
     title: 'อีกาบินวน',
     narrator: 'อีกาบินวนเหนือหมู่บ้านทั้งคืน มันเห็นทุกอย่าง... แต่บอกได้แค่ตัวเลข',
+    effect: 'ทุกคนได้รู้ว่าเมื่อคืนมีการใช้ความสามารถทั้งหมดกี่ครั้ง (แต่ไม่บอกว่าใครใช้)',
     baseWeight: 10,
     weightMultiplier: (ctx) => (ctx.lastNight.skillCount >= 2 ? 2 : 1),
     buildAnnouncement: (ctx) =>
@@ -83,6 +91,7 @@ export const MORNING_EVENTS = [
     icon: '🌙',
     title: 'จันทร์เต็มดวง',
     narrator: 'จันทร์เต็มดวงลอยเด่นเหนือทะเล ผู้เฒ่าว่าคืนแบบนี้อันตรายกว่าปกติ... หรือแกก็แค่อยากขู่ ใครจะรู้',
+    effect: 'ไม่มีผลต่อเกม ทุกอย่างดำเนินไปตามปกติ',
     baseWeight: 12,
   },
   {
@@ -90,6 +99,7 @@ export const MORNING_EVENTS = [
     icon: '🔥',
     title: 'กองไฟกลางหมู่บ้าน',
     narrator: 'ใครบางคนก่อกองไฟกลางลาน คุยกันได้ยาวขึ้นอีกหน่อย... จะได้กล่าวหากันอย่างทั่วถึง',
+    effect: 'เวลาพูดคุยของวันนี้เพิ่มขึ้นอีก 30 วินาที',
     baseWeight: 12,
     dayTimerMod: (ms) => ms + 30_000,
   },
@@ -98,6 +108,7 @@ export const MORNING_EVENTS = [
     icon: '📜',
     title: 'จดหมายไร้ชื่อ',
     narrator: 'มีจดหมายไร้ชื่อเสียบอยู่ที่ประตูบ้านใครบางคน... เชื่อได้แค่ไหนก็อีกเรื่อง',
+    effect: 'สุ่มผู้เล่น 1 คนให้ได้เบาะแสลับว่า "คนนี้ไม่ใช่หมาป่า" — แต่มีโอกาสครึ่งหนึ่งที่เบาะแสนั้นโกหก',
     baseWeight: 7,
     minAlive: 3,
     buildPrivateNote: (ctx) => buildLetterNote(ctx),

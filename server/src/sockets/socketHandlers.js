@@ -16,6 +16,7 @@ import {
 } from '../game/phaseManager.js';
 import { castVote, hasAllVoted, clearVoting } from '../game/voteManager.js';
 import { initNightActions, submitNightAction, getBlockedProtectTargets } from '../game/nightActions.js';
+import { censorProfanity } from '../game/profanity.js';
 
 export function registerSocketHandlers(socket, io) {
 
@@ -60,10 +61,19 @@ export function registerSocketHandlers(socket, io) {
     const room   = getRoom(roomId);
     if (!room) return;
     const player = room.players.get(playerId);
-    if (!player?.isAlive) return socket.emit('error', { message: 'Dead players cannot chat.' });
+    if (!player) return;
 
-    // Silencer ปิดปากไว้เมื่อคืน — มีผลตลอดวันนี้ ทุกช่องแชท
-    if (room.silencedPlayerId === playerId) {
+    // คนตายพูดกับคนเป็นไม่ได้ แต่คุยกันเองในห้องคนตายได้ (คนเป็นไม่เห็นช่องนี้เลย)
+    if (!player.isAlive) {
+      if (channel !== CHANNELS.DEAD) {
+        return socket.emit('error', { message: 'เจ้าตายไปแล้ว พูดได้แค่ในห้องวิญญาณเท่านั้น' });
+      }
+    } else if (channel === CHANNELS.DEAD) {
+      return socket.emit('error', { message: 'คนเป็นเข้าห้องวิญญาณไม่ได้' });
+    }
+
+    // Silencer ปิดปากไว้เมื่อคืน — มีผลตลอดวันนี้ ทุกช่องแชทของคนเป็น
+    if (player.isAlive && room.silencedPlayerId === playerId) {
       return socket.emit('error', { message: 'เจ้าถูกปิดปากไว้ วันนี้พูดไม่ได้' });
     }
 
@@ -71,10 +81,14 @@ export function registerSocketHandlers(socket, io) {
       return socket.emit('error', { message: 'Only werewolves can use this channel.' });
     }
 
+    // กรองคำหยาบฝั่ง server เสมอ — client จะกรองมาก่อนหรือไม่ก็เชื่อไม่ได้
+    const { clean, censored } = censorProfanity(content.trim().slice(0, 300));
+    if (!clean.trim()) return;
+
     const message = {
       id:      `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       playerId, nickname, channel,
-      content: content.trim().slice(0, 300),
+      content: clean,
       sentAt:  new Date().toISOString(),
     };
 
@@ -83,11 +97,46 @@ export function registerSocketHandlers(socket, io) {
       [roomId, playerId, nickname, message.content, channel]
     );
 
+    if (censored) {
+      socket.emit('chat:censored', { message: 'คำหยาบในข้อความของเจ้าถูกกลบไว้แล้ว' });
+    }
+
     if (channel === CHANNELS.WEREWOLF) {
       broadcastToRole(io, room, 'werewolf', 'chat:message', message);
+    } else if (channel === CHANNELS.DEAD) {
+      broadcastToDead(io, room, 'chat:message', message);
     } else {
       io.to(roomId).emit('chat:message', message);
     }
+  });
+
+  // เพิ่งตายกลางเกม — ขอแชทย้อนหลังของห้องวิญญาณ (คนที่ตายก่อนหน้าคุยอะไรกันไว้บ้าง)
+  socket.on('chat:dead_history', async () => {
+    const { roomId, playerId } = socket.data || {};
+    if (!roomId || !playerId) return;
+
+    const player = getRoom(roomId)?.players.get(playerId);
+    if (!player || player.isAlive) return;   // คนเป็นขอไม่ได้ ต่อให้ยิง event ตรง ๆ
+
+    const [rows] = await pool.query(
+      `SELECT id, player_id, nickname, content, channel, sent_at
+       FROM messages
+       WHERE room_id = ? AND channel = ?
+       ORDER BY sent_at DESC, id DESC
+       LIMIT 100`,
+      [roomId, CHANNELS.DEAD]
+    );
+
+    socket.emit('chat:dead_history', {
+      messages: rows.reverse().map(r => ({
+        id:       `db-${r.id}`,
+        playerId: r.player_id,
+        nickname: r.nickname,
+        channel:  r.channel,
+        content:  r.content,
+        sentAt:   new Date(r.sent_at).toISOString(),
+      })),
+    });
   });
 
   // host ปรับบทบาท/เวลาได้ใน Lobby ก่อนเริ่มเกม — validate ฝั่ง server เสมอ ไม่เชื่อ client
@@ -271,7 +320,7 @@ async function handleRejoin(socket, io, roomId, playerId) {
       teammates,
       isSilenced:     room.silencedPlayerId === playerId,
       blockedTargets: getBlockedProtectTargets(roomId, playerId),
-      messages:       await loadRecentMessages(roomId, player.role),
+      messages:       await loadRecentMessages(roomId, player),
     });
   }
 
@@ -283,11 +332,11 @@ async function handleRejoin(socket, io, roomId, playerId) {
   });
 }
 
-// แชทย้อนหลัง — คนที่ไม่ใช่หมาป่าต้องไม่เห็นช่องหมาป่า
-async function loadRecentMessages(roomId, role) {
-  const channels = role === 'werewolf'
-    ? [CHANNELS.VILLAGE, CHANNELS.SYSTEM, CHANNELS.WEREWOLF]
-    : [CHANNELS.VILLAGE, CHANNELS.SYSTEM];
+// แชทย้อนหลัง — คนที่ไม่ใช่หมาป่าต้องไม่เห็นช่องหมาป่า และคนเป็นต้องไม่เห็นห้องวิญญาณ
+async function loadRecentMessages(roomId, player) {
+  const channels = [CHANNELS.VILLAGE, CHANNELS.SYSTEM];
+  if (player?.role === 'werewolf') channels.push(CHANNELS.WEREWOLF);
+  if (player?.isAlive === false)   channels.push(CHANNELS.DEAD);
 
   const [rows] = await pool.query(
     `SELECT id, player_id, nickname, content, channel, sent_at
@@ -398,6 +447,15 @@ function broadcastToRole(io, room, role, event, data) {
       const s = io.sockets.sockets.get(player.socketId);
       if (s) s.emit(event, data);
     }
+  }
+}
+
+// ห้องวิญญาณ — ส่งถึงคนตายเท่านั้น ห้าม io.to(roomId) เด็ดขาด คนเป็นจะเห็นด้วย
+function broadcastToDead(io, room, event, data) {
+  for (const player of room.players.values()) {
+    if (player.isAlive) continue;
+    const s = player.socketId ? io.sockets.sockets.get(player.socketId) : null;
+    if (s) s.emit(event, data);
   }
 }
 
