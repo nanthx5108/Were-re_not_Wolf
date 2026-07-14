@@ -28,12 +28,13 @@ export const NIGHT_ACTION_ROLES = Object.freeze(['werewolf', 'seer', 'bodyguard'
 export const PLAYER_LIMITS = Object.freeze({ MIN: 4, MAX: 8 });
 
 export const PHASES = Object.freeze({
-  LOBBY:   'lobby',
-  NIGHT:   'night',
-  DAY:     'day',
-  VOTING:  'voting',
-  RESULTS: 'results',
-  ENDED:   'ended',
+  LOBBY:      'lobby',
+  NIGHT_ZERO: 'night_zero',   // คืนที่ 0 — แจก role ให้ดู ไม่มี night action ก่อนเข้า Night 1
+  NIGHT:      'night',
+  DAY:        'day',
+  VOTING:     'voting',
+  RESULTS:    'results',
+  ENDED:      'ended',
 });
 
 export const CHANNELS = Object.freeze({

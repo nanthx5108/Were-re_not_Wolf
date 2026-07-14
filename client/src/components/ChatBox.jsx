@@ -2,25 +2,27 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from '../../context/Gamecontext.jsx';
 
 const CHANNEL_COLOR = {
-  village:  'var(--color-text)',
+  village:  'var(--text-primary)',
   werewolf: '#e57373',
-  system:   'var(--color-accent)',
-  dead:     '#9aa8c7',
+  system:   'var(--gold-bright)',
+  dead:     'var(--silver)',
 };
 
 const CHANNEL_TAG = {
-  werewolf: '🐺',
-  dead:     '👻',
+  werewolf: '🐺 ',
+  dead:     '👻 ',
 };
 
 export default function ChatBox({ showWerewolfChannel = false }) {
   const {
-    messages, sendMessage, myRole, silencedNote,
+    room, messages, sendMessage, sendTyping, sendStopTyping, myRole, silencedNote,
     isDead, loadDeadHistory, censorNote, clearCensorNote,
   } = useGame();
   const [input,   setInput]   = useState('');
   const [channel, setChannel] = useState('village');
   const bottomRef = useRef(null);
+  const typingTimer = useRef(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,7 +45,32 @@ export default function ChatBox({ showWerewolfChannel = false }) {
   // คนตายไม่โดนผลของ Silencer แล้ว — ปิดปากมีผลกับคนเป็นเท่านั้น
   const isSilenced  = Boolean(silencedNote) && !isDead;
   const canWerewolf = showWerewolfChannel && myRole === 'werewolf' && !isDead;
-  const blocked     = isSilenced;
+
+  // กลางคืน (รวมคืนที่ 0) หมู่บ้านหลับใหล — คนเป็นพิมพ์ไม่ได้ (ยังอ่านได้) คนตายคุยห้องวิญญาณต่อได้
+  const isNightClosed = (room?.phase === 'night' || room?.phase === 'night_zero') && !isDead;
+  const blocked = isSilenced || isNightClosed;
+
+  // หยุดสถานะ "กำลังพิมพ์" ทันที (ส่งข้อความ / ล้างช่อง / ออกจากหน้า)
+  function stopTyping() {
+    if (typingTimer.current) { clearTimeout(typingTimer.current); typingTimer.current = null; }
+    if (isTypingRef.current) { isTypingRef.current = false; sendStopTyping(); }
+  }
+
+  // แจ้ง server ว่ากำลังพิมพ์ แล้วตั้ง auto-stop 2 วิ ถ้าหยุดพิมพ์ (debounce)
+  // คนตายอยู่ห้องวิญญาณแยก ไม่ต้องประกาศ typing เข้า sidebar หมู่บ้าน
+  function handleInputChange(e) {
+    setInput(e.target.value);
+    if (blocked || isDead) return;
+
+    if (!e.target.value.trim()) { stopTyping(); return; }
+    if (!isTypingRef.current) { isTypingRef.current = true; sendTyping(); }
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(stopTyping, 2000);
+  }
+
+  // เลิก mount / โดนปิดแชท → เคลียร์สถานะพิมพ์ ไม่ให้ค้างใน sidebar คนอื่น
+  useEffect(() => stopTyping, []);
+  useEffect(() => { if (blocked) stopTyping(); }, [blocked]);
 
   function handleSend(e) {
     e.preventDefault();
@@ -51,81 +78,70 @@ export default function ChatBox({ showWerewolfChannel = false }) {
     if (!trimmed || blocked) return;
     sendMessage(trimmed, isDead ? 'dead' : channel);
     setInput('');
+    stopTyping();
   }
 
   return (
-    <div style={s.container}>
-      <div style={s.header}>
-        <h3 style={s.heading}>{isDead ? 'ห้องวิญญาณ' : 'Chat'}</h3>
-        {isDead && <span style={s.deadTag}>👻 เจ้าตายแล้ว — คุยได้เฉพาะกับคนตายด้วยกัน</span>}
+    <div className="gpc gp-panel">
+      <div className="gpc-head">
+        <h3 className="gpc-title">{isDead ? 'ห้องวิญญาณ' : 'วงสนทนา'}</h3>
+        {isDead
+          ? <span className="gpc-headtag">👻 คุยได้เฉพาะกับคนตายด้วยกัน</span>
+          : isNightClosed && <span className="gpc-headtag">🌙 หมู่บ้านหลับใหล</span>}
       </div>
 
-      <div style={s.messages}>
+      <div className="gpc-messages custom-scrollbar">
         {messages.length === 0 && (
-          <p style={s.empty}>The village is quiet for now…</p>
+          <p className="gpc-empty">หมู่บ้านยังเงียบอยู่…</p>
         )}
-        {messages.map(msg => (
-          <div key={msg.id} style={s.message}>
-            <span style={{ ...s.sender, color: CHANNEL_COLOR[msg.channel] || 'var(--color-text)' }}>
-              {CHANNEL_TAG[msg.channel] || ''}{msg.channel === 'system' ? 'SYSTEM' : msg.nickname}
-            </span>
-            <span style={{ ...s.content, ...(msg.channel === 'dead' ? s.deadContent : {}) }}>
-              {msg.content}
-            </span>
-            <span style={s.time}>
-              {new Date(msg.sentAt).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}
-            </span>
-          </div>
-        ))}
+        {messages.map((msg) => {
+          const isSystem = msg.channel === 'system';
+          return (
+            <div key={msg.id} className={`gpc-msg${msg.channel === 'dead' ? ' is-dead' : ''}${isSystem ? ' is-system' : ''}`}>
+              {!isSystem && (
+                <span className="gpc-sender" style={{ color: CHANNEL_COLOR[msg.channel] || 'var(--text-primary)' }}>
+                  {CHANNEL_TAG[msg.channel] || ''}{msg.nickname}
+                </span>
+              )}
+              <span className="gpc-body">{msg.content}</span>
+              {!isSystem && (
+                <span className="gpc-time">
+                  {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 
-      {isSilenced && <p style={s.silenced}>{silencedNote}</p>}
-      {censorNote  && <p style={s.censored}>{censorNote}</p>}
+      {isSilenced   && <p className="gpc-note is-silence">{silencedNote}</p>}
+      {censorNote   && <p className="gpc-note is-censor">{censorNote}</p>}
 
-      <form onSubmit={handleSend} style={s.form}>
-        {canWerewolf && !blocked && (
-          <select value={channel} onChange={e => setChannel(e.target.value)} style={s.select}>
-            <option value="village">Village</option>
-            <option value="werewolf">Werewolf</option>
-          </select>
-        )}
-        <input
-          type="text" value={input} onChange={e => setInput(e.target.value)}
-          disabled={blocked}
-          placeholder={
-            blocked ? 'วันนี้เจ้าพูดไม่ได้…'
-              : isDead ? 'กระซิบกับวิญญาณตนอื่น…'
-              : 'Say something…'
-          }
-          maxLength={300}
-          style={{ ...s.input, ...(blocked ? s.inputDisabled : {}) }}
-        />
-        <button type="submit" disabled={!input.trim() || blocked}
-          style={{ ...s.sendBtn, ...(blocked ? s.sendBtnDisabled : {}) }}>Send</button>
-      </form>
+      {isNightClosed ? (
+        <p className="gpc-note is-night">🌙 กลางคืน — หมู่บ้านหลับใหล พูดคุยไม่ได้จนกว่าฟ้าจะสาง</p>
+      ) : (
+        <form onSubmit={handleSend} className="gpc-form">
+          {canWerewolf && !blocked && (
+            <select value={channel} onChange={(e) => setChannel(e.target.value)} className="gpc-select">
+              <option value="village">หมู่บ้าน</option>
+              <option value="werewolf">หมาป่า</option>
+            </select>
+          )}
+          <input
+            type="text" value={input} onChange={handleInputChange}
+            disabled={blocked}
+            placeholder={
+              blocked ? 'วันนี้เจ้าพูดไม่ได้…'
+                : isDead ? 'กระซิบกับวิญญาณตนอื่น…'
+                : 'พิมพ์อะไรสักหน่อย…'
+            }
+            maxLength={300}
+            className="gpc-input"
+          />
+          <button type="submit" disabled={!input.trim() || blocked} className="gpc-send">ส่ง</button>
+        </form>
+      )}
     </div>
   );
 }
-
-const s = {
-  container: { background:'var(--color-surface)', border:'1px solid var(--color-border)', borderRadius:'var(--radius-lg)', padding:'16px', display:'flex', flexDirection:'column', gap:'10px', height:'100%', minHeight:'300px' },
-  header:    { display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:'8px', flexWrap:'wrap' },
-  heading:   { fontFamily:'var(--font-display)', fontSize:'1.1rem', color:'var(--color-accent)' },
-  deadTag:   { fontSize:'11.5px', color:'#9aa8c7', letterSpacing:'.02em' },
-  messages:  { flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:'4px', paddingRight:'4px', minHeight:'200px', maxHeight:'380px' },
-  empty:     { color:'var(--color-text-muted)', fontSize:'13px', fontStyle:'italic', textAlign:'center', marginTop:'24px' },
-  message:   { display:'flex', gap:'6px', alignItems:'baseline', flexWrap:'wrap', fontSize:'13px', lineHeight:1.4, padding:'3px 0', borderBottom:'1px solid rgba(255,255,255,.03)' },
-  sender:    { fontWeight:700, flexShrink:0, maxWidth:'120px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' },
-  content:   { flex:1, color:'var(--color-text)', wordBreak:'break-word' },
-  deadContent: { color:'#9aa8c7', fontStyle:'italic' },
-  time:      { fontSize:'11px', color:'var(--color-text-muted)', flexShrink:0 },
-  form:      { display:'flex', gap:'6px' },
-  select:    { background:'var(--color-surface-2)', border:'1px solid var(--color-border)', borderRadius:'var(--radius-md)', color:'var(--color-text)', fontSize:'13px', padding:'6px 8px', cursor:'pointer', outline:'none' },
-  input:     { flex:1, background:'var(--color-surface-2)', border:'1px solid var(--color-border)', borderRadius:'var(--radius-md)', color:'var(--color-text)', fontFamily:'var(--font-body)', fontSize:'14px', padding:'8px 12px', outline:'none' },
-  sendBtn:   { background:'var(--color-accent)', border:'none', borderRadius:'var(--radius-md)', color:'var(--on-accent)', fontWeight:700, fontSize:'16px', padding:'8px 14px', cursor:'pointer', lineHeight:1 },
-  silenced:  { background:'rgba(139,32,32,.15)', border:'1px solid rgba(229,115,115,.35)', borderRadius:'var(--radius-md)', color:'#e57373', fontSize:'12.5px', padding:'7px 10px', textAlign:'center' },
-  censored:  { background:'var(--gold-glow-soft)', border:'1px solid var(--gold-glow)', borderRadius:'var(--radius-md)', color:'var(--gold-bright)', fontSize:'12.5px', padding:'7px 10px', textAlign:'center' },
-  inputDisabled: { opacity:.5, cursor:'not-allowed' },
-  sendBtnDisabled: { opacity:.4, cursor:'not-allowed' },
-};

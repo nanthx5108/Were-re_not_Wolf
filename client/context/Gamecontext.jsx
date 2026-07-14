@@ -13,11 +13,16 @@ export const SOCKET_EVENTS = Object.freeze({
   ROOM_CONFIG:          'room:config',
   ROOM_CONFIG_UPDATED:  'room:config_updated',
   CHAT_SEND:            'chat:send',
+  CHAT_TYPING:          'chat:typing',
+  CHAT_STOP_TYPING:     'chat:stop_typing',
+  CHAT_TYPING_UPDATE:   'chat:typing_update',
   CHAT_MESSAGE:         'chat:message',
   CHAT_CENSORED:        'chat:censored',
   CHAT_DEAD_HISTORY:    'chat:dead_history',
   GAME_START:           'game:start',
   GAME_STARTED:         'game:started',
+  PLAYER_READY:         'player:ready',
+  NIGHTZERO_READY:      'nightzero:ready',
   PHASE_CHANGED:        'phase:changed',
   PHASE_ADVANCE:        'phase:advance',
   VOTE_CAST:            'vote:cast',
@@ -77,7 +82,17 @@ const initialState = {
   blockedTargets: [],
   silencedNote:   null,
   censorNote:     null,
+  actionLog:      [],   // narrator เสียดสีของ action log bar — สังเคราะห์จาก event ที่มีอยู่
+  nightZero:      { readyCount: 0, total: 0 },   // ความคืบหน้า "ดูแล้ว" ในคืนที่ 0
+  typingIds:      [],   // ผู้เล่นที่กำลังพิมพ์ — ใช้จัดลำดับ sidebar
 };
+
+let _logSeq = 0;
+// สร้างรายการ log บรรทัดเดียว น้ำเสียง narrator เสียดสี — id กันซ้ำด้วย seq ของตัวเอง
+function pushLog(log, icon, text) {
+  const entry = { id: `log-${Date.now()}-${_logSeq++}`, icon, text, at: new Date().toISOString() };
+  return [...log, entry].slice(-40);
+}
 
 function gameReducer(state, action) {
   switch (action.type) {
@@ -117,8 +132,9 @@ function gameReducer(state, action) {
         ...state,
         room: state.room ? {
           ...state.room,
-          roleConfig:     action.roleConfig,
-          phaseDurations: action.phaseDurations,
+          roleConfig:        action.roleConfig,
+          phaseDurations:    action.phaseDurations,
+          revealRoleOnDeath: action.revealRoleOnDeath === true,
         } : state.room,
       };
 
@@ -158,6 +174,12 @@ function gameReducer(state, action) {
         } : state.room,
       };
 
+    case 'NIGHTZERO_READY':
+      return { ...state, nightZero: { readyCount: action.readyCount ?? 0, total: action.total ?? 0 } };
+
+    case 'TYPING_UPDATE':
+      return { ...state, typingIds: action.typingIds ?? [] };
+
     case 'PHASE_CHANGED':
       return {
         ...state,
@@ -168,6 +190,7 @@ function gameReducer(state, action) {
           phaseDurationMs: action.durationMs ?? null,
           round:           action.round,
         } : state.room,
+        typingIds:  [],   // ขึ้น phase ใหม่ = เริ่มนับ typing ใหม่ กันค้างจาก phase ก่อน
         votes:      action.phase === 'voting' ? { voteMap: {}, counts: {} } : null,
         voteResult: action.phase === 'results' ? state.voteResult : null,
         wolfTargets:   action.phase === 'night' ? {} : state.wolfTargets,
@@ -194,6 +217,14 @@ function gameReducer(state, action) {
           tally:              action.tally,
           wasTie:             action.wasTie,
         },
+        actionLog: pushLog(
+          state.actionLog, '⚖️',
+          action.wasTie
+            ? 'เสียงเท่ากัน ไม่มีใครถูกเนรเทศ — ขี้ขลาดกันทั้งเกาะ'
+            : action.eliminatedNickname
+              ? `${action.eliminatedNickname} ถูกฝูงชนลากออกจากเกาะ ท่ามกลางเสียงปรบมือ`
+              : 'ไม่มีใครถูกโหวตออก — ประชาธิปไตยล้มเหลวอีกครั้ง'
+        ),
       };
 
     case 'SET_ERROR':
@@ -213,7 +244,16 @@ function gameReducer(state, action) {
       };
 
     case 'NIGHT_RESULT':
-      return { ...state, nightResult: action.payload };
+      return {
+        ...state,
+        nightResult: action.payload,
+        actionLog: pushLog(
+          state.actionLog, action.payload?.killedNickname ? '🩸' : '🌅',
+          action.payload?.killedNickname
+            ? `${action.payload.killedNickname} ไม่ตื่นมาเห็นแสงอาทิตย์อีกแล้ว`
+            : 'เช้านี้ไม่มีใครหายไป... น่าเสียดายสำหรับบางคน'
+        ),
+      };
 
     case 'SEER_RESULT':
       return { ...state, seerResult: action.payload };
@@ -223,10 +263,22 @@ function gameReducer(state, action) {
       return { ...state, blockedTargets: action.payload.targetIds || [] };
 
     case 'SILENCED':
-      return { ...state, silencedNote: action.payload.message };
+      return {
+        ...state,
+        silencedNote: action.payload.message,
+        actionLog: pushLog(state.actionLog, '🤐', 'คอเจ้าแห้งผาก วันนี้พูดไม่ออกสักคำ'),
+      };
 
     case 'MORNING_EVENT':
-      return { ...state, morningEvent: action.payload, privateNote: null };
+      return {
+        ...state,
+        morningEvent: action.payload,
+        privateNote: null,
+        actionLog: pushLog(
+          state.actionLog, action.payload?.icon || '📜',
+          action.payload?.announcement || action.payload?.title || 'เกาะมีเรื่องให้เล่าอีกแล้ว'
+        ),
+      };
 
     case 'MORNING_EVENT_PRIVATE':
       return { ...state, privateNote: action.payload.message };
@@ -284,9 +336,11 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.ROOM_HOST_CHANGED]:    ({ newHostId }) => dispatch({ type: 'HOST_CHANGED', newHostId }),
       [SOCKET_EVENTS.ROOM_CONFIG_UPDATED]:  (config)        => dispatch({ type: 'CONFIG_UPDATED', ...config }),
       [SOCKET_EVENTS.CHAT_MESSAGE]:         (message)       => dispatch({ type: 'CHAT_MESSAGE', message }),
+      [SOCKET_EVENTS.CHAT_TYPING_UPDATE]:   ({ typingIds }) => dispatch({ type: 'TYPING_UPDATE', typingIds }),
       [SOCKET_EVENTS.CHAT_CENSORED]:        (payload)       => dispatch({ type: 'CENSORED', payload }),
       [SOCKET_EVENTS.CHAT_DEAD_HISTORY]:    ({ messages })  => dispatch({ type: 'DEAD_HISTORY', messages: messages ?? [] }),
       [SOCKET_EVENTS.GAME_STARTED]:         (data)          => dispatch({ type: 'GAME_STARTED', ...data }),
+      [SOCKET_EVENTS.NIGHTZERO_READY]:      (data)          => dispatch({ type: 'NIGHTZERO_READY', ...data }),
       [SOCKET_EVENTS.PHASE_CHANGED]:        (data)          => dispatch({ type: 'PHASE_CHANGED', ...data }),
       [SOCKET_EVENTS.ERROR]:                ({ message })   => dispatch({ type: 'SET_ERROR', error: message }),
       [SOCKET_EVENTS.NIGHT_ACTION_ACK]:     (payload)       => dispatch({ type: 'NIGHT_ACTION_ACK', payload }),
@@ -339,7 +393,10 @@ export function GameProvider({ children }) {
     return () => socket.off('connect', rejoin);
   }, []);
   const sendMessage   = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
+  const sendTyping     = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_TYPING), []);
+  const sendStopTyping = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_STOP_TYPING), []);
   const startGame     = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
+  const markReady     = useCallback(() => socket.emit(SOCKET_EVENTS.PLAYER_READY), []);
   const updateRoomConfig = useCallback((config) => socket.emit(SOCKET_EVENTS.ROOM_CONFIG, { config }), []);
   const advancePhase  = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
   const castVote      = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
@@ -359,7 +416,7 @@ export function GameProvider({ children }) {
       ...state,
       isDead,
       setIdentity, joinRoom, leaveRoom,
-      sendMessage, startGame, advancePhase,
+      sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase,
       castVote, submitNightAction,
       updateRoomConfig, clearError,
       clearCensorNote, loadDeadHistory,

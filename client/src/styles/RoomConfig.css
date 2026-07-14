@@ -150,3 +150,39 @@
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
+
+/* ── toggle: เปิดเผย role เมื่อผู้เล่นตาย ── */
+.roomcfg-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.roomcfg-switch {
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-input);
+  position: relative;
+  transition: background var(--ease), border-color var(--ease);
+}
+.roomcfg-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform var(--ease), background var(--ease);
+}
+.roomcfg-switch.is-on {
+  background: rgba(var(--accent-rgb), 0.22);
+  border-color: var(--gold-dim);
+}
+.roomcfg-switch.is-on .roomcfg-switch-knob {
+  transform: translateX(20px);
+  background: var(--gold-bright);
+}

@@ -101,6 +101,7 @@ export default function Lobby() {
             <RoomConfigPanel
               roleConfig={room.roleConfig}
               phaseDurations={room.phaseDurations}
+              revealRoleOnDeath={room.revealRoleOnDeath}
               maxPlayers={roomCapacity}
               playerCount={playerCount}
               editable={isHost}

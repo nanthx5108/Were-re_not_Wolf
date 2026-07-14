@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { useGame } from '../../context/Gamecontext.jsx';
 import { ROLE_INFO } from '../constants/game.js';
-import '../styles/MyRoleCard.css';
 
 // บทบาทของเจ้าเอง — server ส่ง myRole มาให้เฉพาะเจ้าของ socket เท่านั้น
-// ไม่มีทางที่ผู้เล่นคนอื่นจะเห็นค่านี้ผ่าน state ของเรา
+// การ์ดคว่ำเป็น default (กันคนชะโงกดูจอ) แตะเพื่อเปิด/ปิดดูได้ตลอดเกม
 export default function MyRoleCard() {
   const { myRole, teammates } = useGame();
-  // ซ่อนได้ เผื่อเล่นอยู่ในห้องเดียวกันแล้วมีคนชะโงกดูจอ
-  const [hidden, setHidden] = useState(false);
+  const [open, setOpen] = useState(false);
 
   if (!myRole) return null;
 
@@ -16,42 +14,48 @@ export default function MyRoleCard() {
     icon: '❓', label: myRole, faction: '', summary: '', detail: '',
   };
 
+  function toggle() { setOpen((o) => !o); }
+
   return (
-    <section className={`my-role-card is-${myRole}`}>
-      <div className="my-role-head">
-        <span className="my-role-kicker">บทบาทของเจ้า · เห็นคนเดียว</span>
-        <button type="button" className="my-role-toggle" onClick={() => setHidden(h => !h)}>
-          {hidden ? 'แสดง' : 'ซ่อน'}
-        </button>
-      </div>
+    <section className={`gpr gp-panel ${open ? 'is-open' : 'is-closed'}`}>
+      <div
+        className="gpr-inner"
+        role="button"
+        tabIndex={0}
+        onClick={toggle}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } }}
+        aria-pressed={open}
+      >
+        <span className="gpr-kicker">บทบาทของเจ้า · เห็นคนเดียว</span>
 
-      {hidden ? (
-        <p className="my-role-hidden">ซ่อนไว้แล้ว — กด "แสดง" เมื่อไม่มีใครมองจอ</p>
-      ) : (
-        <>
-          <div className="my-role-identity">
-            <span className="my-role-icon" aria-hidden="true">{info.icon}</span>
-            <div>
-              <h3 className="my-role-name">{info.label}</h3>
-              <span className="my-role-faction">{info.faction}</span>
+        {!open ? (
+          <>
+            <span className="gpr-qmark" aria-hidden="true">?</span>
+            <span className="gpr-hint">แตะเพื่อเปิดดู</span>
+          </>
+        ) : (
+          <>
+            <div className="gpr-identity">
+              <span className="gpr-icon" aria-hidden="true">{info.icon}</span>
+              <div>
+                <div className="gpr-name">{info.label}</div>
+                <div className="gpr-faction">{info.faction}</div>
+              </div>
             </div>
-          </div>
+            {info.summary && <p className="gpr-summary">{info.summary}</p>}
+            {info.detail  && <p className="gpr-detail">{info.detail}</p>}
 
-          <p className="my-role-summary">{info.summary}</p>
-          <p className="my-role-detail">{info.detail}</p>
-
-          {myRole === 'werewolf' && (
-            <div className="my-role-team">
-              <span className="my-role-team-label">เพื่อนหมาป่าของเจ้า</span>
-              <span className="my-role-team-names">
-                {teammates?.length
-                  ? teammates.map(t => t.nickname).join(' · ')
+            {myRole === 'werewolf' && (
+              <p className="gpr-teammates">
+                🐺 เพื่อนหมาป่า: {teammates?.length
+                  ? teammates.map((t) => t.nickname).join(' · ')
                   : 'ไม่มี — คืนนี้เจ้าล่าเพียงลำพัง'}
-              </span>
-            </div>
-          )}
-        </>
-      )}
+              </p>
+            )}
+            <span className="gpr-toggle">แตะเพื่อคว่ำการ์ด</span>
+          </>
+        )}
+      </div>
     </section>
   );
 }

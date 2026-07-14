@@ -26,10 +26,11 @@ export function getPhaseDurationMs(roomId, phase) {
 }
 
 const NEXT_PHASE = Object.freeze({
-  [PHASES.NIGHT]:   PHASES.DAY,
-  [PHASES.DAY]:     PHASES.VOTING,
-  [PHASES.VOTING]:  PHASES.RESULTS,
-  [PHASES.RESULTS]: PHASES.NIGHT,
+  [PHASES.NIGHT_ZERO]: PHASES.NIGHT,   // จบช่วงดู role → เข้า Night 1 (game loop ปกติ)
+  [PHASES.NIGHT]:      PHASES.DAY,
+  [PHASES.DAY]:        PHASES.VOTING,
+  [PHASES.VOTING]:     PHASES.RESULTS,
+  [PHASES.RESULTS]:    PHASES.NIGHT,
 });
 
 const PHASE_MESSAGES = Object.freeze({

@@ -3,7 +3,7 @@ import { buildDefaultRoomConfig } from './roomConfig.js';
 const roomStore = new Map();
 
 export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false, config }) {
-  const { roleConfig, phaseDurations } = config || buildDefaultRoomConfig(maxPlayers);
+  const { roleConfig, phaseDurations, revealRoleOnDeath } = config || buildDefaultRoomConfig(maxPlayers);
 
   roomStore.set(id, {
     id, name, hostId,
@@ -15,6 +15,7 @@ export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false
     isPrivate,
     roleConfig,
     phaseDurations,
+    revealRoleOnDeath: revealRoleOnDeath === true,
     players:     new Map(),
     nightActions: {},
   });
@@ -93,12 +94,15 @@ export function serializeRoom(roomId) {
     maxPlayers:  room.maxPlayers ?? 8,
     roleConfig:     room.roleConfig,
     phaseDurations: room.phaseDurations,
+    revealRoleOnDeath: room.revealRoleOnDeath === true,
     playerCount: getPlayersArray(roomId).length,
     players: getPlayersArray(roomId).map(p => ({
       id:          p.id,
       nickname:    p.nickname,
       isAlive:     p.isAlive,
       isConnected: p.isConnected !== false,
+      // เปิดเผย role เฉพาะคนที่ตายแล้ว และเฉพาะเมื่อ host เปิด setting — คนเป็นห้ามหลุด role เด็ดขาด
+      ...(room.revealRoleOnDeath === true && p.isAlive === false ? { revealedRole: p.role } : {}),
     })),
   };
 }
