@@ -10,12 +10,13 @@ export const ROLES = Object.freeze({
 });
 
 export const PHASES = Object.freeze({
-  LOBBY:   'lobby',
-  NIGHT:   'night',
-  DAY:     'day',
-  VOTING:  'voting',
-  RESULTS: 'results',
-  ENDED:   'ended',
+  LOBBY:      'lobby',
+  NIGHT_ZERO: 'night_zero',
+  NIGHT:      'night',
+  DAY:        'day',
+  VOTING:     'voting',
+  RESULTS:    'results',
+  ENDED:      'ended',
 });
 
 export const PHASE_DURATIONS_SEC = Object.freeze({

@@ -1,0 +1,832 @@
+/* =========================================================
+   WE'RE NOT WOLF — GamePage layout (redesign)
+   โครง grid ใหม่: TOP BAR / ACTION LOG / LEFT chat / CENTER / RIGHT sidebar
+   ใช้ design token จาก global.css — carved wood panel + หมุดไม้ + เรืองแสงอำพัน
+   ========================================================= */
+
+.gp-page {
+  --wood-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.15' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32 0 0 0 0 0.24 0 0 0 0 0.15 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+
+  min-height: 100dvh;
+  background-color: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 320px 1fr 300px;
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    "top    top     top"
+    "log    log     log"
+    "chat   center  side";
+  align-items: stretch;
+}
+
+/* พื้นบรรยากาศคืนอันดามัน — แสงจันทร์บนสุด, ความมืดขอบล่าง */
+.gp-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% -8%, rgba(180,200,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 120% 80% at 50% 60%, transparent 40%, rgba(0,0,0,0.55) 100%);
+}
+
+.gp-page > * { position: relative; z-index: 1; }
+
+/* ── carved wood panel: base ที่ทุกกล่องในหน้าเกมใช้ร่วมกัน ── */
+.gp-panel {
+  position: relative;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%),
+    var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.gp-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+}
+
+/* ── TOP BAR ─────────────────────────────────────────────── */
+.gp-top {
+  grid-area: top;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.gp-top-left  { justify-self: start; }
+.gp-top-right { justify-self: end; text-align: right; }
+
+/* Setting button — ไอคอน grid + หมุดไม้เรืองอำพันตอน hover */
+.gp-setting-btn {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: rgba(255,255,255,0.02);
+  color: var(--text-secondary);
+}
+.gp-setting-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--ease);
+  background-image:
+    radial-gradient(circle 5px at 7px 7px, rgba(var(--accent-rgb),0.9) 0%, transparent 78%),
+    radial-gradient(circle 5px at calc(100% - 7px) 7px, rgba(var(--accent-rgb),0.9) 0%, transparent 78%),
+    radial-gradient(circle 5px at 7px calc(100% - 7px), rgba(var(--accent-rgb),0.9) 0%, transparent 78%),
+    radial-gradient(circle 5px at calc(100% - 7px) calc(100% - 7px), rgba(var(--accent-rgb),0.9) 0%, transparent 78%);
+}
+.gp-setting-btn:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold-bright);
+  transform: translateY(-1px);
+}
+.gp-setting-btn:hover::after { opacity: 1; }
+
+/* Clock — เวลานับถอยหลังจริงของ phase + ดวงอาทิตย์/จันทร์ */
+.gp-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 180px;
+}
+.gp-clock-face {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.gp-clock-orb {
+  font-size: 1.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(var(--accent-rgb),0.35));
+}
+.gp-clock.is-night .gp-clock-orb {
+  filter: drop-shadow(0 0 10px rgba(159,188,208,0.45));
+}
+.gp-clock-time {
+  font-family: var(--font-meta);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.gp-clock.is-urgent .gp-clock-time { color: var(--phase-voting); }
+.gp-clock-label {
+  font-family: var(--font-meta);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* wrapper กลาง top bar — clock + secondary timer เรียงลงล่าง */
+.gp-clock-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* SECONDARY TIMER — conditional: โผล่เฉพาะ voting / night action (unmount เมื่อไม่ใช้) */
+.gp-sectimer {
+  width: 210px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: rgba(255,255,255,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: fadeUp 220ms ease both;
+}
+.gp-sectimer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.gp-sectimer-label {
+  font-family: var(--font-meta);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.gp-sectimer-count {
+  font-family: var(--font-meta);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.gp-sectimer.is-urgent .gp-sectimer-count { color: var(--phase-voting); }
+.gp-sectimer-track {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bg-void);
+  overflow: hidden;
+}
+.gp-sectimer-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s linear, background 0.3s ease;
+}
+
+/* Badge DAY/NIGHT + room code */
+.gp-daybadge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-family: var(--font-meta);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  border: 1px solid var(--border-strong);
+}
+.gp-daybadge.is-day {
+  color: var(--phase-day);
+  background: rgba(var(--accent-rgb),0.10);
+}
+.gp-daybadge.is-night {
+  color: var(--phase-night);
+  background: rgba(159,188,208,0.10);
+}
+.gp-roomcode {
+  margin-top: 4px;
+  font-family: var(--font-meta);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+.gp-roomcode b {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+/* ── zone placeholders (จะรื้อทีละ part) ─────────────────── */
+.gp-log    { grid-area: log; padding: var(--space-2) var(--space-4); }
+.gp-chat   { grid-area: chat; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; }
+.gp-center { grid-area: center; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; }
+.gp-side   { grid-area: side; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; }
+
+.gp-zone-stub {
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-meta);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.gp-scroll {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── error / game-over overlays ──────────────────────────── */
+.gp-banner {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-danger);
+  background: var(--danger-soft);
+  color: #e88;
+  font-size: 0.9rem;
+}
+.gp-banner button {
+  color: inherit;
+  font-family: var(--font-meta);
+  font-size: 0.75rem;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  padding: 2px 10px;
+}
+
+.gp-endcard {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+.gp-endcard h2 {
+  font-family: var(--font-display);
+  color: var(--gold-bright);
+}
+.gp-reveal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.gp-reveal-chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  border: 1px solid var(--border-default);
+  background: rgba(255,255,255,0.04);
+}
+.gp-reveal-chip.is-wolf { background: rgba(192,90,78,0.18); }
+.gp-reveal-chip.is-dead { text-decoration: line-through; opacity: 0.6; }
+
+.gp-btn {
+  align-self: flex-start;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gold-dim);
+  background: rgba(var(--accent-rgb),0.10);
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.gp-btn:hover {
+  background: rgba(var(--accent-rgb),0.18);
+  transform: translateY(-1px);
+}
+
+/* ── in-game settings modal (top-left) ───────────────────── */
+.gp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(4,6,10,0.72);
+  backdrop-filter: blur(3px);
+}
+.gp-modal {
+  width: min(420px, 92vw);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.gp-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-2);
+}
+.gp-modal-head h3 { font-family: var(--font-display); }
+.gp-modal-close {
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+.gp-modal-close:hover { color: var(--gold-bright); border-color: var(--gold-dim); }
+.gp-modal-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ── LEFT chat component (gpc-) ──────────────────────────── */
+.gpc {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: var(--space-3);
+  gap: var(--space-2);
+}
+.gpc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.gpc-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--gold-bright);
+}
+.gpc-headtag {
+  font-family: var(--font-meta);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--silver);
+}
+
+.gpc-messages {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 4px;
+}
+.gpc-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-style: italic;
+  text-align: center;
+  margin-top: var(--space-5);
+}
+
+.gpc-msg {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  flex-wrap: wrap;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.gpc-sender {
+  font-weight: 700;
+  flex-shrink: 0;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gpc-body { flex: 1; color: var(--text-primary); word-break: break-word; }
+.gpc-time { font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; }
+.gpc-msg.is-dead .gpc-body { color: var(--silver); font-style: italic; }
+
+/* system = narrator เสียดสี — เต็มบรรทัด อำพัน เอียง */
+.gpc-msg.is-system {
+  border-bottom: none;
+  padding: var(--space-2) 0;
+}
+.gpc-msg.is-system .gpc-body {
+  color: var(--text-gold);
+  font-style: italic;
+  font-family: var(--font-meta);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.gpc-note {
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  padding: 6px 10px;
+  text-align: center;
+}
+.gpc-note.is-silence {
+  background: var(--danger-soft);
+  border: 1px solid rgba(229,115,115,0.35);
+  color: #e88;
+}
+.gpc-note.is-censor {
+  background: var(--gold-glow-soft);
+  border: 1px solid var(--gold-glow);
+  color: var(--gold-bright);
+}
+.gpc-note.is-night {
+  background: rgba(159,188,208,0.10);
+  border: 1px solid rgba(159,188,208,0.28);
+  color: var(--silver);
+  font-family: var(--font-meta);
+  letter-spacing: 0.04em;
+}
+
+.gpc-form { display: flex; gap: 6px; }
+.gpc-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  padding: 6px 8px;
+}
+.gpc-input {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 8px 12px;
+}
+.gpc-input:disabled { opacity: 0.5; cursor: not-allowed; }
+.gpc-send {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gold-dim);
+  background: rgba(var(--accent-rgb),0.14);
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 8px 16px;
+}
+.gpc-send:hover:not(:disabled) { background: rgba(var(--accent-rgb),0.24); }
+.gpc-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── RIGHT player sidebar (gps-) ─────────────────────────── */
+.gps {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  padding: var(--space-3);
+  gap: var(--space-2);
+}
+.gps-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.gps-head h3 { font-family: var(--font-display); font-size: 1.05rem; color: var(--gold-bright); }
+.gps-count { font-family: var(--font-meta); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-muted); }
+
+.gps-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 3px;
+}
+
+.gps-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.02);
+  transition: border-color var(--ease), background var(--ease);
+}
+.gps-row.is-me { border-color: var(--gold-dim); background: rgba(var(--accent-rgb),0.06); }
+.gps-row.is-active { border-color: var(--gold-dim); box-shadow: 0 0 12px rgba(var(--accent-rgb),0.14); }
+.gps-row.is-dead { opacity: 0.55; }
+
+.gps-avatar {
+  position: relative;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--on-accent);
+  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold-dim));
+  border: 1px solid var(--border-strong);
+}
+.gps-row.is-dead .gps-avatar {
+  filter: grayscale(1) brightness(0.7);
+}
+.gps-avatar-cross {
+  position: absolute;
+  inset: 0;
+  display: grid; place-items: center;
+  color: var(--danger);
+  font-size: 1.4rem;
+  font-weight: 900;
+  text-shadow: 0 0 4px #000;
+}
+
+.gps-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.gps-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.gps-hostdot { color: var(--gold-bright); font-size: 0.72rem; }
+.gps-tag {
+  font-family: var(--font-meta);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--phase-voting);
+  text-transform: uppercase;
+}
+.gps-tag.is-typing { color: var(--silver); }
+
+/* role status box: การ์ดคว่ำ '?' หรือ role จริง (คนตาย + reveal เปิด) */
+.gps-role {
+  width: 34px; height: 44px;
+  border-radius: var(--radius-sm);
+  display: grid; place-items: center;
+  font-size: 1.1rem;
+  border: 1px solid var(--border-default);
+}
+.gps-role.is-facedown {
+  color: var(--silver-dim);
+  background:
+    repeating-linear-gradient(45deg, rgba(159,188,208,0.05) 0 4px, transparent 4px 8px),
+    var(--bg-overlay);
+  font-family: var(--font-display);
+}
+.gps-role.is-revealed {
+  background: rgba(var(--accent-rgb),0.08);
+  border-color: var(--gold-dim);
+}
+
+.gps-all-btn {
+  margin-top: 2px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: rgba(255,255,255,0.02);
+  color: var(--text-secondary);
+  font-family: var(--font-meta);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+.gps-all-btn:hover { border-color: var(--gold-dim); color: var(--gold-bright); }
+
+/* modal: ผู้เล่นทั้งหมด */
+.gpm {
+  width: min(560px, 94vw);
+  max-height: 82vh;
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.gpm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-2);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── CENTER: character stage + Your Role card ────────────── */
+.gp-center {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* character frame — เว้นช่องไว้รอระบบแต่งตัว (customize) จริง */
+.gpch {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+.gpch-frame {
+  position: relative;
+  width: min(240px, 60%);
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-strong);
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(var(--accent-rgb),0.06), transparent 70%),
+    var(--bg-overlay);
+  overflow: hidden;
+}
+.gpch-silhouette { font-size: 4rem; opacity: 0.35; filter: grayscale(1); }
+.gpch-note {
+  position: absolute;
+  bottom: 10px;
+  font-family: var(--font-meta);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Night of Day 0 — พาเนลเตรียมตัวดู role */
+.gpz {
+  width: 100%;
+  max-width: 360px;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  border-color: var(--gold-dim);
+  background:
+    linear-gradient(135deg, rgba(var(--accent-rgb),0.08) 0%, transparent 55%),
+    var(--bg-elevated);
+}
+.gpz-kicker {
+  font-family: var(--font-meta);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+}
+.gpz-text { font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; }
+.gpz-btn { align-self: center; }
+.gpz-count { font-family: var(--font-meta); font-size: 0.7rem; color: var(--text-muted); }
+
+/* Your Role card — default คว่ำ, แตะ toggle เปิด/ปิดได้ตลอดเกม */
+.gpr {
+  width: 100%;
+  max-width: 360px;
+  padding: 0;
+}
+.gpr-inner {
+  position: relative;
+  width: 100%;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-align: center;
+  cursor: pointer;
+  border-radius: inherit;
+}
+.gpr-kicker {
+  font-family: var(--font-meta);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* facedown */
+.gpr.is-closed .gpr-inner {
+  min-height: 120px;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(45deg, rgba(159,188,208,0.05) 0 6px, transparent 6px 12px),
+    var(--bg-overlay);
+}
+.gpr-qmark {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  color: var(--silver-dim);
+  line-height: 1;
+}
+.gpr-hint { font-family: var(--font-meta); font-size: 0.66rem; color: var(--silver-dim); }
+
+/* open */
+.gpr-identity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+.gpr-icon { font-size: 2.4rem; line-height: 1; }
+.gpr-name { font-family: var(--font-display); font-size: 1.3rem; color: var(--gold-bright); }
+.gpr-faction { font-family: var(--font-meta); font-size: 0.66rem; letter-spacing: 0.08em; color: var(--silver); }
+.gpr-summary { font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; }
+.gpr-detail  { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+.gpr-teammates {
+  margin-top: 2px;
+  font-size: 0.76rem;
+  color: #e88;
+}
+.gpr-toggle {
+  align-self: center;
+  margin-top: 2px;
+  font-family: var(--font-meta);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  color: var(--gold-bright);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 3px 12px;
+}
+
+/* ── ACTION LOG BAR (gpl-) ───────────────────────────────── */
+.gpl {
+  grid-area: log;
+  position: relative;
+  padding: 0;
+}
+.gpl-current {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  text-align: left;
+  background: transparent;
+  color: var(--text-secondary);
+}
+.gpl-icon { font-size: 1.1rem; line-height: 1; flex-shrink: 0; }
+.gpl-text {
+  flex: 1;
+  font-family: var(--font-meta);
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--text-gold);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: fadeIn 260ms ease;
+}
+.gpl-caret {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: transform var(--ease);
+}
+.gpl.is-open .gpl-caret { transform: rotate(180deg); }
+.gpl-current:hover { color: var(--gold-bright); }
+.gpl-empty { color: var(--text-muted); font-style: normal; }
+
+.gpl-history {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  z-index: 40;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+.gpl-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.gpl-item:hover { background: rgba(255,255,255,0.03); }
+.gpl-item-text { flex: 1; color: var(--text-secondary); }
+.gpl-item-time { font-size: 0.66rem; color: var(--text-muted); font-family: var(--font-meta); flex-shrink: 0; }
+
+/* ── responsive: พับเป็นคอลัมน์เดียวบนจอแคบ ── */
+@media (max-width: 1024px) {
+  .gp-page {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "top"
+      "log"
+      "center"
+      "side"
+      "chat";
+    grid-template-rows: auto auto auto auto auto;
+  }
+}

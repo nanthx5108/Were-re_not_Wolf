@@ -110,6 +110,28 @@ export function registerSocketHandlers(socket, io) {
     }
   });
 
+  // typing indicator — ใช้จัดลำดับ sidebar (คนกำลังพิมพ์ขึ้นก่อน)
+  // ปิดตอนกลางคืน/คืนที่ 0 เพราะแชทหมู่บ้านปิดอยู่ ไม่มีอะไรให้ประกาศ
+  socket.on('chat:typing', () => {
+    const { roomId, playerId } = socket.data || {};
+    if (!roomId || !playerId) return;
+    const room = getRoom(roomId);
+    if (!room) return;
+    if (room.phase === PHASES.NIGHT || room.phase === PHASES.NIGHT_ZERO) return;
+
+    if (!(room.typingPlayers instanceof Set)) room.typingPlayers = new Set();
+    if (!room.typingPlayers.has(playerId)) {
+      room.typingPlayers.add(playerId);
+      io.to(roomId).emit('chat:typing_update', { typingIds: [...room.typingPlayers] });
+    }
+  });
+
+  socket.on('chat:stop_typing', () => {
+    const { roomId, playerId } = socket.data || {};
+    if (!roomId || !playerId) return;
+    clearPlayerTyping(io, roomId, playerId);
+  });
+
   // เพิ่งตายกลางเกม — ขอแชทย้อนหลังของห้องวิญญาณ (คนที่ตายก่อนหน้าคุยอะไรกันไว้บ้าง)
   socket.on('chat:dead_history', async () => {
     const { roomId, playerId } = socket.data || {};
@@ -153,8 +175,9 @@ export function registerSocketHandlers(socket, io) {
     if (error) return socket.emit('error', { message: error });
 
     updateRoom(roomId, {
-      roleConfig:     safe.roleConfig,
-      phaseDurations: safe.phaseDurations,
+      roleConfig:        safe.roleConfig,
+      phaseDurations:    safe.phaseDurations,
+      revealRoleOnDeath: safe.revealRoleOnDeath === true,
     });
     await pool.query(`UPDATE rooms SET config = ? WHERE id = ?`, [JSON.stringify(safe), roomId]);
 
@@ -186,12 +209,10 @@ export function registerSocketHandlers(socket, io) {
       await pool.query(`UPDATE players SET role = ? WHERE id = ?`, [p.role, p.id]);
     }
 
-    updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT, round: 1 });
-    initNightActions(roomId);
+    // Night of Day 0 — แจก role ให้ทุกคนดูก่อน ยังไม่มี night action ใด ๆ
+    // round เริ่มที่ 0 เพื่อให้พอ advance เข้า Night จริงจะกลายเป็น Night 1 พอดี
+    updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT_ZERO, round: 0, readyPlayers: new Set() });
     await pool.query(`UPDATE rooms SET status = 'in_progress' WHERE id = ?`, [roomId]);
-
-    const durationMs = getPhaseDurationMs(roomId, PHASES.NIGHT);
-    const endsAt = startPhaseTimer(io, roomId, PHASES.NIGHT);
 
     const wolves = assigned.filter(p => p.role === 'werewolf');
 
@@ -204,17 +225,41 @@ export function registerSocketHandlers(socket, io) {
         ? wolves.filter(w => w.id !== p.id).map(w => ({ id: w.id, nickname: w.nickname }))
         : undefined;
 
+      // ไม่มี endsAt/durationMs — night_zero จบด้วยการที่ทุกคนกด "ดูแล้ว" ไม่ใช่หมดเวลา
       s.emit('game:started', {
-        phase: PHASES.NIGHT, myRole: p.role, endsAt, durationMs, round: 1, teammates,
+        phase: PHASES.NIGHT_ZERO, myRole: p.role, endsAt: null, durationMs: null, round: 0, teammates,
       });
     }
 
     io.to(roomId).emit('room:state', serializeRoom(roomId));
+    io.to(roomId).emit('nightzero:ready', { readyCount: 0, total: getConnectedPlayers(roomId).length });
     io.to(roomId).emit('chat:message', {
       id: `sys-${Date.now()}`, channel: CHANNELS.SYSTEM,
-      content: 'ค่ำคืนมาถึง... หมู่บ้านหลับใหล',
+      content: 'คืนก่อนเริ่มเกม — เปิดการ์ดดูบทบาทของเจ้าให้ดี แล้วกด "ดูแล้ว" เมื่อพร้อม',
       sentAt: new Date().toISOString(),
     });
+  });
+
+  // Night of Day 0 — ผู้เล่นกดยืนยันว่าดู role แล้ว; ครบทุกคน (ที่ยังเชื่อมต่อ) → เข้า Night 1
+  socket.on('player:ready', () => {
+    const { roomId, playerId } = socket.data || {};
+    if (!roomId || !playerId) return;
+
+    const room = getRoom(roomId);
+    if (!room || room.phase !== PHASES.NIGHT_ZERO) return;
+
+    if (!(room.readyPlayers instanceof Set)) room.readyPlayers = new Set();
+    room.readyPlayers.add(playerId);
+
+    const connected = getConnectedPlayers(roomId);
+    io.to(roomId).emit('nightzero:ready', {
+      readyCount: connected.filter(p => room.readyPlayers.has(p.id)).length,
+      total:      connected.length,
+    });
+
+    if (connected.length > 0 && connected.every(p => room.readyPlayers.has(p.id))) {
+      advancePhase(io, roomId).catch(err => console.error('[night_zero ready advance]', err));
+    }
   });
 
   socket.on('night:action', ({ targetId }) => {
@@ -369,6 +414,7 @@ async function handleDisconnect(socket, io) {
   if (room.status !== 'in_progress') return handleLeave(socket, io);
 
   updatePlayer(roomId, playerId, { isConnected: false, socketId: null });
+  clearPlayerTyping(io, roomId, playerId);
   socket.leave(roomId);
 
   io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
@@ -392,6 +438,7 @@ async function handleLeave(socket, io) {
   if (!room) return;
 
   socket.leave(roomId);
+  clearPlayerTyping(io, roomId, playerId);
 
   // ออกกลางเกม = ยอมแพ้ ตายไปเลย — ลบทิ้งไม่ได้ ไม่งั้นเงื่อนไขชนะจะนับผิด
   if (room.status === 'in_progress') {
@@ -439,6 +486,15 @@ async function destroyRoom(roomId) {
   clearVoting(roomId);
   deleteRoom(roomId);
   await pool.query(`DELETE FROM rooms WHERE id = ?`, [roomId]);
+}
+
+// เอาชื่อออกจากรายชื่อคนกำลังพิมพ์ แล้วบอกทั้งห้อง — ใช้ตอน stop_typing / หลุด / ออก
+function clearPlayerTyping(io, roomId, playerId) {
+  const room = getRoom(roomId);
+  if (!room?.typingPlayers) return;
+  if (room.typingPlayers.delete(playerId)) {
+    io.to(roomId).emit('chat:typing_update', { typingIds: [...room.typingPlayers] });
+  }
 }
 
 function broadcastToRole(io, room, role, event, data) {

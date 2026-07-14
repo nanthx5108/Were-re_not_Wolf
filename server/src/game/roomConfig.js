@@ -29,8 +29,9 @@ export function buildDefaultRoleConfig(maxPlayers) {
 
 export function buildDefaultRoomConfig(maxPlayers) {
   return {
-    roleConfig:     buildDefaultRoleConfig(maxPlayers),
-    phaseDurations: { ...DEFAULT_PHASE_DURATIONS },
+    roleConfig:        buildDefaultRoleConfig(maxPlayers),
+    phaseDurations:    { ...DEFAULT_PHASE_DURATIONS },
+    revealRoleOnDeath: false,
   };
 }
 
@@ -99,7 +100,10 @@ export function normalizeRoomConfig(input, maxPlayers) {
     phaseDurations[phase] = n;
   }
 
-  return { config: { roleConfig, phaseDurations } };
+  // เปิดเผย role เมื่อผู้เล่นตาย — host toggle, default ปิด (เก็บใน room config เหมือน role/เวลา)
+  const revealRoleOnDeath = input.revealRoleOnDeath === true;
+
+  return { config: { roleConfig, phaseDurations, revealRoleOnDeath } };
 }
 
 /**

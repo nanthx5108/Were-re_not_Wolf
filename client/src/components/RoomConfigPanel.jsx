@@ -9,9 +9,14 @@ import '../styles/RoomConfig.css';
  * จึงไม่มีทางที่หน้าจอ host กับผู้เล่นคนอื่นจะไม่ตรงกัน
  */
 export default function RoomConfigPanel({
-  roleConfig, phaseDurations, maxPlayers, playerCount, editable, onChange,
+  roleConfig, phaseDurations, revealRoleOnDeath = false, maxPlayers, playerCount, editable, onChange,
 }) {
   if (!roleConfig || !phaseDurations) return null;
+
+  // ทุก onChange ต้องแนบ config ครบทุก field ไม่งั้นค่าที่ไม่ได้แตะจะถูก server เซ็ตกลับเป็น default
+  function emit(patch) {
+    onChange({ roleConfig, phaseDurations, revealRoleOnDeath, ...patch });
+  }
 
   const specialTotal = CONFIGURABLE_ROLES.reduce((sum, r) => sum + (roleConfig[r.key] || 0), 0);
   const villagerSeats = Math.max(0, maxPlayers - specialTotal);
@@ -22,11 +27,11 @@ export default function RoomConfigPanel({
 
   function adjustRole(key, delta) {
     const next = Math.max(0, Math.min(maxPlayers, (roleConfig[key] || 0) + delta));
-    onChange({ roleConfig: { ...roleConfig, [key]: next }, phaseDurations });
+    emit({ roleConfig: { ...roleConfig, [key]: next } });
   }
 
   function setDuration(phase, value) {
-    onChange({ roleConfig, phaseDurations: { ...phaseDurations, [phase]: value } });
+    emit({ phaseDurations: { ...phaseDurations, [phase]: value } });
   }
 
   return (
@@ -102,6 +107,28 @@ export default function RoomConfigPanel({
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="roomcfg-section">
+        <div className="roomcfg-toggle">
+          <span className="roomcfg-role-meta">
+            <span className="roomcfg-role-name">เปิดเผยบทบาทเมื่อผู้เล่นตาย</span>
+            <span className="roomcfg-role-hint">ตายแล้วจะเห็นบทบาทจริงในรายชื่อ — ปิดไว้เพื่อเพิ่มความลับ</span>
+          </span>
+          {editable ? (
+            <button
+              type="button"
+              className={`roomcfg-switch ${revealRoleOnDeath ? 'is-on' : ''}`}
+              role="switch"
+              aria-checked={revealRoleOnDeath}
+              onClick={() => emit({ revealRoleOnDeath: !revealRoleOnDeath })}
+            >
+              <span className="roomcfg-switch-knob" />
+            </button>
+          ) : (
+            <span className="roomcfg-count">{revealRoleOnDeath ? 'เปิด' : 'ปิด'}</span>
+          )}
         </div>
       </div>
     </div>
