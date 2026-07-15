@@ -9,7 +9,7 @@ const pool = mysql.createPool({
 });
 
 /**
- * managed host อย่าง Aiven สร้าง database มาให้แล้ว และ user มักไม่มีสิทธิ์ CREATE DATABASE
+ * managed host บางเจ้าสร้าง database มาให้แล้ว และ user มักไม่มีสิทธิ์ CREATE DATABASE
  * → ถ้าโดนปฏิเสธสิทธิ์ ให้เดินต่อ แล้วปล่อยให้ pool เป็นคนบอกเองถ้า database ไม่มีจริง
  */
 async function ensureDatabaseExists() {

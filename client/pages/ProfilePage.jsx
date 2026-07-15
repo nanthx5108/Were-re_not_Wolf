@@ -1,12 +1,12 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import bgHome from '../src/assets/bgHome.png';
+import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/ProfilePage.css';
 
 const USERNAME_COOLDOWN_DAYS = 90;
 const MAX_BIRTH_YEAR = 2026;
-const MIN_BIRTH_YEAR = 1950;
+const MIN_BIRTH_YEAR = 1950;7
 
 const THAI_MONTHS = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',

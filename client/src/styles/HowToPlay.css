@@ -1,0 +1,252 @@
+/* ── หน้าต่าง "วิธีการเล่น" — คู่มือที่ปักไว้ที่กระดานหมู่บ้าน ──
+   ใช้ภาษาการออกแบบเดียวกับแผงอื่นในเกม: ไม้ + มุมทองเหลือง + เรืองแสงอำพัน */
+
+.htp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: rgba(6, 10, 14, 0.78);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 200ms ease;
+}
+
+.htp-card {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%),
+    var(--bg-elevated);
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(var(--accent-rgb), 0.10);
+  animation: fadeUp 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+
+.htp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.htp-eyebrow {
+  font-family: var(--font-meta);
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-gold);
+}
+.htp-title {
+  margin-top: 4px;
+  font-family: var(--font-logo);
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+}
+.htp-close {
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  transition: color var(--ease), border-color var(--ease), background var(--ease);
+}
+.htp-close:hover {
+  color: var(--gold-bright);
+  border-color: var(--gold-dim);
+  background: var(--gold-glow-soft);
+}
+
+/* ── แท็บสามหัวข้อ ── */
+.htp-tabs {
+  display: flex;
+  gap: 6px;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+.htp-tab {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  transition: all var(--ease);
+}
+.htp-tab:hover { color: var(--text-primary); border-color: var(--gold-dim); }
+.htp-tab.is-active {
+  background: var(--gold-glow-soft);
+  border-color: var(--gold-mid);
+  color: var(--gold-bright);
+}
+
+.htp-body {
+  padding: var(--space-5);
+  overflow-y: auto;
+}
+
+.htp-lead {
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+.htp-note {
+  margin-top: var(--space-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--gold-glow-soft);
+  border: 1px solid var(--gold-glow);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-gold);
+}
+.htp-h3 {
+  margin: var(--space-5) 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--gold-bright);
+}
+
+/* ── ลำดับเฟสในหนึ่งวัน ── */
+.htp-flow { list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
+.htp-flow-item {
+  display: flex;
+  gap: var(--space-3);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  border-left: 2px solid var(--gold-dim);
+}
+.htp-flow-icon { font-size: 1.2rem; line-height: 1.4; flex-shrink: 0; }
+.htp-flow-name { font-family: var(--font-display); font-size: 0.92rem; color: var(--text-primary); }
+.htp-flow-text { margin-top: 3px; font-size: 0.82rem; line-height: 1.6; color: var(--text-muted); }
+
+/* ── เงื่อนไขชนะ ── */
+.htp-win-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.htp-win {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.htp-win strong { font-family: var(--font-display); color: var(--text-primary); }
+.htp-win.is-village { background: rgba(42,102,68,0.10);  border-color: rgba(95,163,106,0.32); }
+.htp-win.is-wolf    { background: rgba(139,32,32,0.10);  border-color: rgba(229,115,115,0.30); }
+.htp-win.is-fool    { background: rgba(185,142,224,0.08); border-color: rgba(185,142,224,0.28); }
+
+.htp-tips {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.htp-tips li {
+  position: relative;
+  padding-left: var(--space-4);
+  font-size: 0.83rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.htp-tips li::before {
+  content: '•';
+  position: absolute;
+  left: 2px;
+  color: var(--gold-mid);
+  font-weight: 700;
+}
+
+/* ── บทบาท ── */
+.htp-roles {
+  margin-top: var(--space-4);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+.htp-role {
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--gold-dim);
+}
+.htp-role.is-werewolf { border-left-color: #e57373; }
+.htp-role.is-fool     { border-left-color: #b98ee0; }
+.htp-role-head { display: flex; align-items: center; gap: 10px; }
+.htp-role-icon { font-size: 1.6rem; line-height: 1; }
+.htp-role-name { font-family: var(--font-display); font-size: 1rem; color: var(--text-primary); }
+.htp-role-faction { font-size: 0.7rem; color: var(--gold-mid); letter-spacing: 0.04em; }
+.htp-role-summary { margin-top: 9px; font-size: 0.84rem; line-height: 1.5; color: var(--text-secondary); }
+.htp-role-detail  { margin-top: 5px; font-size: 0.76rem; line-height: 1.55; color: var(--text-muted); }
+
+/* ── เหตุการณ์ + โอกาส ── */
+.htp-events {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.htp-event {
+  padding: 13px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-subtle);
+}
+.htp-event.is-conditional {
+  border-style: dashed;
+  border-color: var(--gold-glow);
+}
+.htp-event-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.htp-event-icon { font-size: 1.15rem; line-height: 1; width: 22px; text-align: center; flex-shrink: 0; }
+.htp-event-name { flex: 1; font-family: var(--font-display); font-size: 0.94rem; color: var(--text-primary); }
+.htp-event-chance {
+  flex-shrink: 0;
+  font-family: var(--font-meta);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-bright);
+}
+
+/* แถบเทียบโอกาส — คูณ 4 เพื่อให้ต่างกันเห็นชัด (23% เต็มแถบพอดี) */
+.htp-event-bar {
+  margin-top: 7px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.htp-event-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--gold-mid), var(--gold-bright));
+}
+
+.htp-event-effect { margin-top: 8px; font-size: 0.84rem; line-height: 1.55; color: var(--text-secondary); }
+.htp-event-note   { margin-top: 4px; font-size: 0.74rem; line-height: 1.5; color: var(--text-muted); font-style: italic; }
+
+@media (max-width: 560px) {
+  .htp-body { padding: var(--space-4); }
+  .htp-roles { grid-template-columns: 1fr; }
+}

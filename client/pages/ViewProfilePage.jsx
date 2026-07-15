@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { STARTING_LEVEL } from '../../shared/leveling.js';
-import bgHome from '../src/assets/bgHome.png';
+import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/ViewProfilePage.css';
 
 function DerpyWolfAvatar({ size = 120 }) {

@@ -13,22 +13,14 @@
 
   --wood-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.15' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32 0 0 0 0 0.24 0 0 0 0 0.15 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
 
-  /* ── Override: gold → green ── */
-  --gold-bright: #5FA36A;
-  --gold-mid:    #4C8A57;
-  --gold-dim:    #3A6E44;
-  --gold-glow:   rgba(95,163,106,0.8);
-  --gold-glow-soft: rgba(95,163,106,0.12);
-  --accent-rgb:  95,163,106;
-  --text-gold:   #8FCB9B;
-  --shadow-gold: 0 6px 20px rgba(95,163,106,0.35);
-
+  /* สีเน้นใช้อำพันของ global (--gold-*) ไม่ override ที่นี่
+     แถบสีกอและยังเก็บไว้เป็นลายเฉพาะของหน้านี้ */
   --kolae-stripe: linear-gradient(90deg,
-    #5FA36A 0%,
-    #5FA36A 30%,
-    #2A6644 30%, #2A6644 55%,
+    var(--gold-bright) 0%,
+    var(--gold-bright) 30%,
+    #b0472e 30%, #b0472e 55%,
     var(--teal-glow) 55%, var(--teal-glow) 78%,
-    #4C8A57 78%, #4C8A57 100%);
+    var(--gold-mid) 78%, var(--gold-mid) 100%);
 }
 
 .home-overlay {
@@ -46,19 +38,7 @@
     );
 }
 
-.home-moon-glow {
-  position: fixed;
-  top: -10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(600px, 60vw);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(168,180,192,0.10) 0%, rgba(168,180,192,0) 65%);
-  z-index: 0;
-  pointer-events: none;
-  filter: blur(2px);
-}
+/* พื้นหลังมีพระจันทร์วาดอยู่แล้ว — ไม่ต้องเติมดวงใหม่ทับโลโก้ */
 
 .fireflies-layer {
   position: fixed;
@@ -134,9 +114,9 @@
   gap: 9px;
   padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(10,15,20,0.55);
+  /* ไม่ใช้ backdrop-filter — ฉากหลังขยับตลอด จะบังคับเบลอใหม่ทุกเฟรม */
+  background: rgba(8,12,17,0.82);
   border: 1px solid var(--border-default);
-  backdrop-filter: blur(8px);
   white-space: nowrap;
 }
 .online-dot {
@@ -174,10 +154,6 @@
   flex-wrap: nowrap;
 }
 
-.auth-btn {
-  white-space: nowrap;
-}
-
 .home-brand { display: none; }
 
 .home-auth-actions {
@@ -186,7 +162,8 @@
   gap: var(--space-3);
 }
 
-.auth-btn {
+/* ── ปุ่ม topbar — ชื่อ class เฉพาะหน้านี้ ไม่ชนกับ .auth-btn ของ Auth.css ── */
+.top-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -196,78 +173,57 @@
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.06em;
+  white-space: nowrap;
   cursor: pointer;
   position: relative;
   overflow: hidden;
   transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--ease), background var(--ease);
 }
 
-.auth-btn::before {
+.top-btn::before {
   content: '';
   position: absolute;
   top: 0; left: -60%;
   width: 40%; height: 100%;
-  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.18), transparent);
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.22), transparent);
   transform: skewX(-20deg);
   transition: left 500ms ease;
   pointer-events: none;
 }
-.auth-btn:hover::before { left: 130%; }
+.top-btn:hover::before { left: 130%; }
 
-.auth-btn:hover { transform: translateY(-2px) scale(1.03); }
-.auth-btn:active { transform: translateY(0) scale(0.98); }
+.top-btn:hover { transform: translateY(-2px) scale(1.03); }
+.top-btn:active { transform: translateY(0) scale(0.98); }
 
-.auth-btn-secondary {
+.top-btn-ghost {
   border: 1px solid var(--border-strong);
   background: rgba(255,255,255,0.05);
   color: var(--text-secondary);
 }
-.auth-btn-secondary:hover {
+.top-btn-ghost:hover {
   background: rgba(255,255,255,0.10);
   color: var(--text-primary);
   border-color: var(--silver-dim);
   box-shadow: 0 4px 16px rgba(168,180,192,0.10);
 }
 
-.auth-btn-primary {
-  position: relative;
-  border: 1px solid #3A6E44;
-  background:
-    linear-gradient(180deg, #5FA36A 0%, #3A6E44 100%),
-    var(--wood-grain);
-  background-blend-mode: normal, overlay;
-  color: var(--on-accent);
+/* สมัครสมาชิก — เหลืองตะเกียงชัด ๆ + ประกายวิ่งผ่านตอน hover */
+.top-btn-gold {
+  border: 1px solid #b5811d;
+  background: linear-gradient(180deg, #ffd95e 0%, #f2b83c 55%, #d9992a 100%);
+  color: #3a2604;
+  font-weight: 700;
   box-shadow:
-    0 3px 10px rgba(0,0,0,0.30),
-    inset 0 1px 0 rgba(255,255,255,0.16),
-    inset 0 -2px 4px rgba(0,0,0,0.22);
-  overflow: hidden;
+    0 3px 12px rgba(242,184,60,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    inset 0 -2px 4px rgba(120,74,10,0.35);
 }
-.auth-btn-primary::after {
-  content: '';
-  position: absolute;
-  left: 10%; right: 10%;
-  bottom: 4px;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(90deg,
-    #5FA36A 0%, #5FA36A 30%,
-    #2A6644 30%, #2A6644 55%,
-    var(--teal-glow) 55%, var(--teal-glow) 78%,
-    #4C8A57 78%, #4C8A57 100%);
-  opacity: 0.5;
-  transition: opacity var(--ease), transform var(--ease);
-}
-.auth-btn-primary:hover {
-  filter: brightness(1.08);
+.top-btn-gold:hover {
+  filter: brightness(1.06);
   box-shadow:
-    0 6px 20px rgba(95,163,106,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.22),
-    inset 0 -2px 4px rgba(0,0,0,0.2);
-}
-.auth-btn-primary:hover::after {
-  opacity: 1;
-  animation: brushDraw 380ms ease-out;
+    0 6px 22px rgba(242,184,60,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.5),
+    inset 0 -2px 4px rgba(120,74,10,0.3);
 }
 
 .user-pill {
@@ -1248,8 +1204,7 @@
   border: 1px solid var(--border-subtle);
   background:
     linear-gradient(135deg, rgba(255,255,255,0.025) 0%, transparent 50%),
-    rgba(19,25,32,0.72);
-  backdrop-filter: blur(8px);
+    rgba(15,20,26,0.88);
   box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.03);
   display: flex;
   align-items: center;
@@ -1393,11 +1348,11 @@
 }
 @keyframes expTrackFlash {
   0%   { background: var(--bg-void); }
-  20%  { background: rgba(95,163,106,0.45); }
+  20%  { background: rgba(var(--accent-rgb),0.45); }
   100% { background: var(--bg-void); }
 }
 
-.home-right { display: flex; flex-direction: column; }
+.home-right { display: flex; flex-direction: column; gap: var(--space-5); }
 
 .panel-box {
   padding: var(--space-5);
@@ -1631,4 +1586,635 @@
   padding: 9px 12px;
   border-left: 2px solid var(--border-default);
   line-height: 1.55;
+}
+/* ═══════════════════════════════════════════════════════════
+   Masterpiece layer — ดาว, ดาวตก, ค้างคาว, ตาหมาป่า, grain,
+   โลโก้ตัวอักษรทยอยโผล่, คำคม, แถบสถิติ, ทำเนียบนักล่า
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── ชั้นดาวระยิบ ── */
+.home-stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  will-change: transform; /* parallax เขียน transform จาก JS ตรง ๆ */
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #dfe8f2;
+  opacity: 0.3;
+  animation: starTwinkle ease-in-out infinite;
+}
+.star.is-bright {
+  background: #fff;
+  box-shadow: 0 0 6px 1px rgba(200,220,255,0.55);
+}
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.14; }
+  50%      { opacity: 0.85; }
+}
+
+/* ── ดาวตก — นาน ๆ ทีวาบผ่านมุมฟ้า ── */
+.shooting-star {
+  position: absolute;
+  top: 13%;
+  left: 72%;
+  width: 120px;
+  height: 2px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(190,210,255,0.35) 45%, transparent);
+  transform: rotate(-32deg);
+  opacity: 0;
+  animation: shootingStar 12s linear infinite;
+}
+.shooting-star.is-alt {
+  top: 24%;
+  left: 22%;
+  width: 90px;
+  animation-duration: 17s;
+}
+@keyframes shootingStar {
+  0%, 91% { opacity: 0; transform: rotate(-32deg) translateX(0); }
+  92.5%   { opacity: 0.95; }
+  97%     { opacity: 0; transform: rotate(-32deg) translateX(-360px); }
+  100%    { opacity: 0; }
+}
+
+/* ── หิ่งห้อย: parallax เขียน transform จาก JS ตรง ๆ ── */
+.fireflies-layer {
+  will-change: transform;
+}
+
+/* ── ค้างคาวบินผ่าน ── */
+.home-bats {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.bat {
+  position: absolute;
+  top: 17%;
+  left: -6%;
+  width: 34px;
+  color: #17202c;
+  opacity: 0;
+  animation: batFly 27s linear infinite;
+}
+.bat svg {
+  width: 100%;
+  display: block;
+  /* ไม่ใส่ drop-shadow — filter บน element ที่ animate ตลอดเวลาแพงเกินคุ้ม */
+}
+.bat-wing {
+  animation: batFlap 340ms ease-in-out infinite alternate;
+}
+.bat-wing-l { transform-origin: 22px 10px; }
+.bat-wing-r { transform-origin: 26px 10px; }
+@keyframes batFlap {
+  from { transform: scaleY(1); }
+  to   { transform: scaleY(0.5); }
+}
+@keyframes batFly {
+  0%, 54% { opacity: 0; transform: translate(0, 0) scale(0.95); }
+  56%     { opacity: 0.8; }
+  70%     { transform: translate(40vw, -7vh) scale(0.75); }
+  84%     { opacity: 0.7; transform: translate(80vw, -2vh) scale(0.6); }
+  88%, 100% { opacity: 0; transform: translate(108vw, -9vh) scale(0.55); }
+}
+.bat-2 { top: 26%; width: 25px; animation-duration: 33s; animation-delay: 9s; }
+.bat-3 { top: 11%; width: 19px; animation-duration: 39s; animation-delay: 18s; }
+
+/* ── ตาหมาป่าเรืองแสง — โผล่มาจ้องแล้วกะพริบหาย ── */
+.wolf-eyes {
+  position: fixed;
+  left: 5.5%;
+  bottom: 10%;
+  display: flex;
+  gap: 11px;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  animation: wolfWatch 19s ease-in-out infinite 6s;
+}
+.wolf-eye {
+  width: 8px;
+  height: 8px;
+  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
+  background: radial-gradient(circle at 50% 38%, #ffd9a0 0%, var(--gold-mid) 45%, #a3541e 100%);
+  box-shadow: 0 0 14px 3px rgba(var(--accent-rgb), 0.55);
+}
+@keyframes wolfWatch {
+  0%, 55%, 100% { opacity: 0; }
+  59%, 63%      { opacity: 0.9; }
+  64.5%         { opacity: 0; }   /* กะพริบ */
+  66%, 79%      { opacity: 0.9; }
+  84%           { opacity: 0; }
+}
+
+/* ── vignette + film grain — ให้ทั้งหน้าดูเป็นหนัง ── */
+.home-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse 110% 95% at 50% 42%, transparent 58%, rgba(2,4,8,0.42) 100%);
+}
+/* grain นิ่ง ๆ พอ — เวอร์ชันขยับตลอดเวลาบังคับ composite ทั้งจอทุกเฟรม กินเครื่องเปล่า ๆ */
+.home-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── โลโก้: ตัวอักษรทยอยลอยขึ้น + เด้งรับเมาส์ ──
+   ตอนชี้ใช้ translate/scale (คนละ property กับ transform)
+   เพราะ animation แบบ forwards ยังถือ transform สุดท้ายอยู่ — สองอย่างนี้ประกอบกันได้ */
+.title-ch {
+  display: inline-block;
+  white-space: pre;
+  opacity: 0;
+  transform: translateY(26px) rotate(3deg);
+  filter: blur(7px);
+  animation: titleRise 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(120ms + var(--ch-i) * 48ms);
+  transition: translate 240ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              scale 240ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              text-shadow 240ms ease;
+}
+@keyframes titleRise {
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* ชี้ตัวไหน ตัวนั้นเด้ง (เฉพาะ WE'RE NOT — WOLF เด้งทั้งคำ) */
+.home-title > .title-ch:hover {
+  translate: 0 -12px;
+  scale: 1.16;
+  text-shadow:
+    0 2px 4px rgba(0,0,0,0.8),
+    0 0 24px rgba(190,210,235,0.45);
+}
+
+/* WOLF: เด้งขึ้นทั้งคำเมื่อเอาเมาส์ชี้ (ไม่มีประกายสีฟุ้งรอบคำแล้ว) */
+.title-wolf {
+  display: inline-block;
+  transition: translate 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              scale 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.title-wolf:hover {
+  translate: 0 -12px;
+  scale: 1.1;
+}
+.title-wolf .title-ch {
+  background: linear-gradient(180deg, #f6dca6 0%, var(--gold-mid) 52%, #a3541e 125%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── คำคมหมู่บ้านใต้โลโก้ ── */
+.lore-quote {
+  margin-top: var(--space-4);
+  font-family: var(--font-thai);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #e2cf9f;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 18px rgba(0,0,0,0.8);
+  animation: quoteIn 650ms ease both;
+}
+@keyframes quoteIn {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── ทำเนียบนักล่า ── */
+.leaderboard-box { flex: 0 0 auto; }
+.leaderboard-trophy {
+  display: inline-flex;
+  color: var(--gold-mid);
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-subtle);
+  animation: lbRowIn 480ms ease both;
+  animation-delay: calc(var(--lb-i) * 70ms);
+  transition: border-color var(--ease), background var(--ease), transform var(--ease);
+}
+.leaderboard-row:hover {
+  border-color: var(--gold-dim);
+  transform: translateX(2px);
+}
+@keyframes lbRowIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: none; }
+}
+.leaderboard-rank {
+  width: 20px;
+  text-align: center;
+  font-family: var(--font-logo);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.leaderboard-row.is-gold {
+  border-color: rgba(var(--accent-rgb), 0.35);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.10), transparent 65%);
+}
+.leaderboard-row.is-gold .leaderboard-rank {
+  color: var(--gold-bright);
+  text-shadow: 0 0 9px var(--gold-glow);
+}
+.leaderboard-row.is-silver .leaderboard-rank { color: #ccd8e4; }
+.leaderboard-row.is-bronze .leaderboard-rank { color: #c98a5b; }
+.leaderboard-ava {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.leaderboard-ava img { width: 100%; height: 100%; object-fit: cover; }
+.leaderboard-ava-initial {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--silver);
+}
+.leaderboard-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.leaderboard-meta {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.leaderboard-level {
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--gold-mid);
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--gold-glow-soft);
+  border: 1px solid var(--gold-glow);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.leaderboard-empty {
+  padding: 22px 8px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* ── ลดทุก motion ตกแต่งเมื่อ user ขอ ── */
+@media (prefers-reduced-motion: reduce) {
+  .home-stars, .home-bats, .wolf-eyes, .home-grain, .shooting-star { display: none; }
+  .moon-halo, .moon-cloud, .title-wolf { animation: none; }
+  .title-ch {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+  .lore-quote, .leaderboard-row { animation: none; opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Micro-interactions — ลูกเล่นทุกปุ่ม/ทุกช่องบนหน้า Home
+   ทั้งหมดใช้แค่ transform / opacity / color — ไม่มีตัวไหนบังคับ
+   repaint ทั้งจอ เพื่อให้ลื่นแม้เครื่องไม่แรง
+   ═══════════════════════════════════════════════════════════ */
+
+/* เมนูหลัก: ไอคอนเด้ง + เอียงนิด ๆ ตอน hover, ชื่อเมนูติดสีทอง */
+.menu-icon {
+  transition: background var(--ease), border-color var(--ease), color var(--ease),
+              transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.menu-btn:hover:not(:disabled) .menu-icon {
+  transform: scale(1.12) rotate(-6deg);
+}
+.menu-btn:active:not(:disabled) .menu-icon {
+  transform: scale(0.96);
+}
+.menu-title { transition: color var(--ease); }
+.menu-btn:hover:not(:disabled) .menu-title { color: var(--gold-bright); }
+
+/* ปุ่มยืนยันหลัก: แสงวิ่งผ่านหน้าปุ่มตอน hover (สไตล์เดียวกับปุ่ม topbar) */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 40%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.30), transparent);
+  transform: skewX(-20deg);
+  transition: left 500ms ease;
+  pointer-events: none;
+}
+.btn-primary:not(:disabled):hover::before { left: 130%; }
+
+/* ปุ่มเข้าร่วมในลิสต์ห้อง: แสงวิ่งผ่าน + กดแล้วยุบรับนิ้ว */
+.room-row-join-btn {
+  position: relative;
+  overflow: hidden;
+}
+.room-row-join-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -70%;
+  width: 45%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: skewX(-20deg);
+  transition: left 450ms ease;
+  pointer-events: none;
+}
+.room-row-join-btn:hover:not(.is-disabled)::before { left: 140%; }
+.room-row-join-btn:active:not(.is-disabled) { transform: scale(0.96); }
+
+/* แท็บตัวกรองห้อง: ลอยขึ้นตอน hover กดแล้วยุบ */
+.join-filter-tab { transition: color var(--ease), border-color var(--ease), background var(--ease), transform var(--ease); }
+.join-filter-tab:hover { transform: translateY(-1px); }
+.join-filter-tab:active { transform: scale(0.94); }
+
+/* ปุ่มรีเฟรช: ลอยขึ้น + ไอคอนหมุนตามที่กด (transform ของไอคอนคุมด้วย state อยู่แล้ว) */
+.refresh-btn { transition: color var(--ease), border-color var(--ease), transform var(--ease); }
+.refresh-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.refresh-btn:active:not(:disabled) { transform: scale(0.96); }
+
+/* ปุ่มโซเชียล: ไอคอนโยกตอน hover */
+.soc-btn svg { transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.soc-btn:hover svg { transform: rotate(-12deg) scale(1.18); }
+
+/* ช่องกรอก: label ติดสีทองเมื่อ focus */
+.field-label { transition: color var(--ease); }
+.field-col:focus-within .field-label { color: var(--gold-mid); }
+.field-input { transition: border-color var(--ease), box-shadow var(--ease); }
+
+/* ค้นหาห้อง: ไอคอนแว่นติดสีทองเมื่อ focus */
+.join-search-wrap svg { transition: color var(--ease); }
+.join-search-wrap:focus-within svg { color: var(--gold-mid); }
+.join-search-input { transition: border-color var(--ease), box-shadow var(--ease); }
+.join-search-input:focus {
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.10);
+}
+
+/* user pill: วงแหวนรอบรูปโปรไฟล์เรืองทองตอน hover */
+.user-avatar-dot { transition: border-color var(--ease), box-shadow var(--ease); }
+.user-pill:hover .user-avatar-dot {
+  border-color: var(--gold-mid);
+  box-shadow: 0 0 10px var(--gold-glow);
+}
+
+/* เมนูดรอปดาวน์: รายการขยับเข้าตอน hover */
+.user-dropdown-btn { transition: background var(--ease), color var(--ease), padding-left var(--ease); }
+.user-dropdown-btn:hover { padding-left: 15px; }
+
+/* ป้ายออนไลน์ / ชิปสถิติ: ตอบสนองเมาส์เบา ๆ */
+.online-badge { transition: border-color var(--ease); }
+.online-badge:hover { border-color: var(--gold-dim); }
+/* toggle ห้องส่วนตัว: ข้อความสว่างขึ้นตอน hover */
+.privacy-toggle { transition: color var(--ease); }
+.privacy-toggle:hover { color: var(--text-primary); }
+
+/* ปุ่มกลับ: ลูกศร(ตัวอักษร)ขยับ และกดแล้วยุบ */
+.btn-back:active { transform: scale(0.97); }
+
+/* ห้องในลิสต์: เลขลำดับติดทองตอน hover */
+.room-row-index { transition: color var(--ease); }
+.room-row-rich:not(.is-disabled):hover .room-row-index { color: var(--gold-mid); }
+
+/* ═══════════════════════════════════════════════════════════
+   Atmosphere polish — ลำแสงจันทร์, ประกายผิวน้ำ, แสงตะเกียง,
+   scrollbar, ornament, ดีเทลเล็ก ๆ (opacity/transform เท่านั้น)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── ลำแสงจันทร์ส่องเฉียงจากมุมซ้ายบน (ตำแหน่งพระจันทร์ในภาพ) ── */
+.home-moonbeams {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(190,210,235,0.075) 0%, transparent 32%),
+    linear-gradient(115deg, transparent 6%, rgba(190,210,235,0.045) 13%, transparent 25%),
+    linear-gradient(115deg, transparent 16%, rgba(160,190,220,0.035) 24%, transparent 38%);
+  /* นิ่ง ๆ พอ — ชั้นเต็มจอที่หายใจตลอดเวลาคือ composite ถาวรทั้งจอ */
+  opacity: 0.8;
+}
+
+/* ── ประกายผิวน้ำ — แถบเรืองบาง ๆ ล่างจอ หายใจช้า ๆ ── */
+.home-water-shimmer {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 26vh;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 42% 34% at 22% 88%, rgba(var(--accent-rgb),0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 30% 26% at 46% 96%, rgba(190,215,235,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 36% 30% at 12% 99%, var(--teal-glow-soft) 0%, transparent 72%);
+  opacity: 0.8;
+}
+
+/* ── แสงตะเกียงมุมขวาล่าง — วูบวาบเหมือนไฟจริง ── */
+.home-lantern-glow {
+  position: fixed;
+  right: -6vw;
+  bottom: -8vh;
+  width: 38vw;
+  height: 46vh;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 55% 55% at 72% 78%,
+    rgba(var(--accent-rgb),0.14) 0%,
+    rgba(var(--accent-rgb),0.06) 42%,
+    transparent 72%);
+  animation: lanternFlicker 5.2s ease-in-out infinite;
+}
+@keyframes lanternFlicker {
+  0%, 100% { opacity: 0.75; }
+  18%      { opacity: 1; }
+  27%      { opacity: 0.82; }
+  36%      { opacity: 0.97; }
+  58%      { opacity: 0.7; }
+  71%      { opacity: 0.93; }
+  86%      { opacity: 0.78; }
+}
+
+/* ── ornament ใต้โลโก้: เส้นวาดตัวเองตอนเข้า + จุดกลางหายใจเรืองทอง ── */
+.title-ornament-line {
+  transform-origin: center;
+  animation: ornamentDraw 900ms cubic-bezier(0.22, 1, 0.36, 1) 1100ms both;
+}
+@keyframes ornamentDraw {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+.title-ornament-mark {
+  animation: markPulse 3.6s ease-in-out infinite 2s;
+}
+@keyframes markPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--gold-glow); opacity: 0.85; }
+  50%      { box-shadow: 0 0 16px 3px var(--gold-glow); opacity: 1; }
+}
+
+/* ── scrollbar ของลิสต์ห้อง (class ถูกใช้ใน JSX แต่ยังไม่เคยมีสไตล์) ── */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--accent-rgb),0.35) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar { width: 8px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(var(--accent-rgb),0.35), rgba(var(--accent-rgb),0.18));
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(var(--accent-rgb),0.55), rgba(var(--accent-rgb),0.3));
+  background-clip: padding-box;
+}
+
+/* ── มุมทองของ panel สว่างรับตอน hover ── */
+.panel-corner { transition: opacity var(--ease-md), border-color var(--ease-md); }
+.menu-panel:hover .panel-corner,
+.panel-box:hover .panel-corner,
+.home-form:hover .panel-corner,
+.player-bar:hover .panel-corner {
+  opacity: 1;
+  border-color: var(--gold-bright);
+}
+
+/* ── หมุดกระดานข่าวโยกตอน hover ── */
+.home-news-pin { transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), color var(--ease); }
+.panel-box:hover .home-news-pin {
+  transform: rotate(-4deg) scale(1.15);
+  color: var(--gold-mid);
+}
+
+/* ── ถ้วยรางวัล leaderboard เด้งตอน hover panel ── */
+.leaderboard-trophy { transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.leaderboard-box:hover .leaderboard-trophy { transform: rotate(8deg) scale(1.2); }
+
+/* ── รูปโปรไฟล์ใน player bar: วงแหวนทองตอน hover ── */
+.player-ava { transition: border-color var(--ease-md), box-shadow var(--ease-md); }
+.player-bar:hover .player-ava:not(.is-anon) {
+  border-color: var(--gold-dim);
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.7), 0 0 14px var(--gold-glow);
+}
+
+/* ── footer: version เป็นชิป + เส้นคั่นไล่เฉด ── */
+.home-footer {
+  border-top: none;
+  background: linear-gradient(90deg, transparent, rgba(232,200,150,0.14), transparent) top / 100% 1px no-repeat;
+}
+.version {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.03);
+  font-family: var(--font-meta);
+}
+
+/* ── สีตอนลากเลือกข้อความ ให้เข้าธีม ── */
+.home-page ::selection {
+  background: rgba(var(--accent-rgb),0.30);
+  color: #fff;
+}
+
+/* ── ปิดชั้นแสงเมื่อขอ reduced motion (เหลือภาพนิ่ง ไม่หายใจ) ── */
+@media (prefers-reduced-motion: reduce) {
+  .home-moonbeams, .home-water-shimmer, .home-lantern-glow,
+  .title-ornament-mark { animation: none; }
+  .title-ornament-line { animation: none; transform: none; opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Easter eggs — คำวิ่งหนีบนปุ่มเมนู + เส้นใต้โลโก้ลับ
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── ปุ่มเมนู: ชี้ที่ตัวหนังสือแล้วคำหลบหาย 3 วิ ค่อยเด้งกลับ ── */
+.menu-title {
+  transition: color var(--ease),
+              opacity 260ms ease,
+              translate 260ms ease,
+              scale 260ms ease;
+}
+.menu-title.is-hiding {
+  opacity: 0;
+  translate: 14px 0;
+  scale: 0.75;
+}
+.menu-title.is-back {
+  animation: menuTitleReturn 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes menuTitleReturn {
+  0%   { opacity: 0; translate: -10px 6px; scale: 0.6; }
+  60%  { opacity: 1; scale: 1.12; }
+  100% { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+/* ── โลโก้: ชี้ WOLF ครบ 5 ครั้ง → เส้นใต้ลากซ้าย→ขวา ค้าง 20 วิ
+   แล้วถอนกลับ (origin ซ้ายเหมือนเดิม ปลายขวาจึงหดกลับมาทางซ้าย) ── */
+/* inline-block ให้กล่องหดเท่าความกว้างข้อความ — เส้นใต้จะยาวพอดีคำ
+   (แม่ .home-header จัด text-align: center ให้อยู่กลางเหมือนเดิม) */
+.home-title {
+  position: relative;
+  display: inline-block;
+}
+
+.title-underline {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: -14px;
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--gold-dim) 12%,
+    var(--gold-bright) 50%,
+    var(--gold-dim) 88%,
+    transparent 100%);
+  box-shadow: 0 0 14px var(--gold-glow);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.home-title.has-underline .title-underline {
+  transform: scaleX(1);
 }

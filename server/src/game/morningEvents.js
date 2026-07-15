@@ -18,7 +18,19 @@ export const DEFAULT_EVENT_ID = 'full_moon';
 //   dayTimerMod(ms)            — ปรับเวลาแชท Day Phase (optional)
 //   buildAnnouncement(ctx)     — ข้อความประกาศเพิ่มเติมต่อท้าย narrator (optional)
 //   buildPrivateNote(ctx)      — ข้อความส่วนตัวถึงผู้เล่นคนเดียว (optional)
+// เช้าที่ไม่มีอะไรเกิดขึ้น — เป็นตัวเลือกหนึ่งในการสุ่มเหมือน event อื่น ๆ
+// ต่างกันแค่ตอนถูกเลือกแล้วจะไม่มีป้ายขึ้นกลางจอ (rollMorningEvent คืน null)
+// มีไว้เพื่อไม่ให้ผู้เล่นชินว่า "เช้าไหนก็ต้องมีอะไรสักอย่าง" — ความเงียบก็เป็นข้อมูลอย่างหนึ่ง
+export const NO_EVENT = Object.freeze({
+  id: 'quiet_morning',
+  icon: '—',
+  title: 'เช้าที่เงียบสงบ',
+  effect: 'ไม่มีเหตุการณ์เกิดขึ้นเลย เกมดำเนินไปตามปกติ',
+  baseWeight: 20,
+});
+
 export const MORNING_EVENTS = [
+  NO_EVENT,
   {
     id: 'blackout', // B1
     icon: '🕯️',
@@ -182,6 +194,9 @@ export function rollMorningEvent(roomId, rng = Math.random) {
     eventHistory:      [...history, { id: event.id, round: ctx.round }],
     activeNightEffect: event.nightEffect || null,
   });
+
+  // เช้าเงียบ — ยังบันทึกลง history (เพื่อให้ cooldown ของอันอื่นเดินต่อ) แต่ไม่มีอะไรจะประกาศ
+  if (event.id === NO_EVENT.id) return null;
 
   return {
     event,
