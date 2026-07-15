@@ -152,6 +152,14 @@ async function _advancePhase(io, roomId) {
 
   if (morning) {
     _broadcastMorningEvent(io, roomId, morning, round);
+  } else if (nextPhase === PHASES.DAY) {
+    // เช้าเงียบ — ไม่มีป้ายขึ้นกลางจอ บอกในแชทพอ ผู้เล่นจะได้รู้ว่าไม่ได้พลาดอะไรไป
+    io.to(roomId).emit('chat:message', {
+      id:      `sys-quiet-${Date.now()}`,
+      channel: CHANNELS.SYSTEM,
+      content: '— เช้านี้ผ่านไปเงียบ ๆ ไม่มีเหตุการณ์อะไรเกิดขึ้น',
+      sentAt:  new Date().toISOString(),
+    });
   }
 }
 

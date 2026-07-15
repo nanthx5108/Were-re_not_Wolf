@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import bgHome from '../src/assets/bgHome.png';
+import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/Auth.css';
 
 function GoogleIcon() {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import bgHome from '../src/assets/bgHome.png';
+import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/NewsPage.css';
 
 const ALL_NEWS = [

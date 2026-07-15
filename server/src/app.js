@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import roomRoutes from './routes/roomRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import statsRoutes from './routes/statsRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -51,6 +52,8 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/api/auth',  authRoutes);
 app.use('/api/rooms', roomRoutes);
+// /api/stats/online ถูก register ที่ server.js (ต้องเห็นตัว io) — router นี้ไม่ทับกันเพราะไม่มี /online
+app.use('/api/stats', statsRoutes);
 
 // เสิร์ฟ React build จาก origin เดียวกับ API — client เรียก /api/* แบบ relative ได้เลย
 // ไม่ต้องตั้ง VITE_API_URL และไม่เจอปัญหา cookie ข้าม site

@@ -1,4 +1,4 @@
--- schema ของ WE'RE NOT WOLF — ต้องรันได้ทั้ง MariaDB (local/XAMPP) และ MySQL 8 (Aiven)
+-- schema ของ WE'RE NOT WOLF — ต้องรันได้ทั้ง MariaDB (local/XAMPP) และ MySQL 8
 --
 -- ข้อควรรู้ก่อนแก้ไฟล์นี้:
 --  1. ห้ามใส่ CREATE DATABASE / USE — database มาจาก env DB_NAME และถูกเลือกไว้ตั้งแต่ตอน connect

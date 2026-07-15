@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import bgHome from '../src/assets/bgHome.png';
+import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/HomePage.css';
 
 export default function CustomizePage() {

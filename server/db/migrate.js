@@ -3,8 +3,7 @@
  *
  *   npm run db:migrate          # ใช้ค่าจาก server/.env
  *
- * ใช้ connection config ชุดเดียวกับ server (db/config.js) จึงรันได้ทั้ง
- * local (DB_SSL=false) และ Aiven (DB_SSL=true + DB_CA_CERT)
+ * ใช้ connection config ชุดเดียวกับ server (db/config.js)
  * รันซ้ำได้ปลอดภัย — statement ที่ถูก apply ไปแล้วจะถูกข้าม
  */
 import mysql, { escapeId } from 'mysql2/promise';
@@ -24,7 +23,7 @@ async function migrate() {
     console.log(`📦 database "${dbName}" พร้อมใช้งาน`);
   } catch (err) {
     if (err.errno !== 1044 && err.errno !== 1045) throw err;
-    // Aiven: user ไม่มีสิทธิ์ CREATE DATABASE — ต้องสร้าง database จาก Aiven Console เอง
+    // managed host บางเจ้า user ไม่มีสิทธิ์ CREATE DATABASE — ต้องสร้างจาก console ของ host เอง
     console.warn(`⚠️  ไม่มีสิทธิ์ CREATE DATABASE — ถือว่า "${dbName}" ถูกสร้างไว้บน host แล้ว`);
   } finally {
     await bootstrap.end();
@@ -51,12 +50,5 @@ try {
 } catch (err) {
   console.error(`❌ migrate ล้มเหลว (${describeTarget()})`);
   console.error(`   [${err.code ?? 'ERROR'}] ${err.message}`);
-
-  if (err.code === 'SELF_SIGNED_CERT_IN_CHAIN' || err.code === 'DEPTH_ZERO_SELF_SIGNED_CERT') {
-    console.error('   → Aiven ใช้ CA ของตัวเอง: โหลด ca.pem จาก Aiven Console แล้วตั้ง DB_CA_CERT ให้ชี้ไปที่ไฟล์นั้น');
-  }
-  if (err.code === 'ER_NOT_SUPPORTED_AUTH_MODE' || err.code === 'HANDSHAKE_NO_SSL_SUPPORT') {
-    console.error('   → server ปลายทางไม่รองรับ SSL: ตั้ง DB_SSL=false สำหรับ MySQL/MariaDB ในเครื่อง');
-  }
   process.exit(1);
 }

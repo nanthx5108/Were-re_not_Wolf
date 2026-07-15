@@ -8,7 +8,7 @@ const schemaPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'sche
  * error ที่แปลว่า "statement นี้ถูก apply ไปแล้ว" — ข้ามได้ ไม่ใช่ความล้มเหลว
  * นี่คือสิ่งที่ทำให้ schema.sql รันซ้ำได้ทุกครั้งที่ server start โดยไม่ต้องพึ่ง
  * `ADD COLUMN IF NOT EXISTS` / `CREATE INDEX IF NOT EXISTS` ซึ่งเป็น syntax ของ MariaDB
- * และเป็น syntax error บน MySQL 8 (ที่ Aiven ใช้)
+ * และเป็น syntax error บน MySQL 8
  */
 const ALREADY_APPLIED = new Set([
   1007, // ER_DB_CREATE_EXISTS
