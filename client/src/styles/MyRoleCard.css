@@ -1,9 +1,8 @@
 /* การ์ดบทบาทส่วนตัวในหน้าเกม — ข้อมูลนี้ไม่ควรหลุดถึงผู้เล่นคนอื่น
-   สีขอบเปลี่ยนตามฝ่าย เพื่อให้จำได้เร็วโดยไม่ต้องอ่านทุกครั้ง */
+   ฝ่ายสื่อผ่านสีของป้าย faction (ไม่ใช้แถบสีข้างการ์ด) เพื่อให้จำได้เร็ว */
 .my-role-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-accent);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   display: flex;
@@ -11,8 +10,8 @@
   gap: 8px;
 }
 
-.my-role-card.is-werewolf { border-left-color: #e57373; }
-.my-role-card.is-fool     { border-left-color: #b98ee0; }
+.my-role-card.is-werewolf { --faction-color: #e57373; }
+.my-role-card.is-fool     { --faction-color: #b98ee0; }
 
 .my-role-head {
   display: flex;
@@ -66,8 +65,9 @@
 
 .my-role-faction {
   font-size: 0.72rem;
-  color: var(--color-accent);
+  color: var(--faction-color, var(--color-accent));
   letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
 .my-role-summary {
