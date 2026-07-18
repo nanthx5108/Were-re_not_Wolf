@@ -26,7 +26,7 @@
   background:
     linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%),
     var(--bg-elevated);
-  box-shadow: var(--shadow-lg), 0 0 40px rgba(var(--accent-rgb), 0.10);
+  box-shadow: var(--shadow-lg);
   animation: fadeUp 260ms cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
 }
@@ -185,14 +185,14 @@
   border-radius: var(--radius-md);
   background: rgba(255,255,255,0.02);
   border: 1px solid var(--border-subtle);
-  border-left: 3px solid var(--gold-dim);
 }
-.htp-role.is-werewolf { border-left-color: #e57373; }
-.htp-role.is-fool     { border-left-color: #b98ee0; }
+/* ฝ่ายสื่อผ่านสีป้าย faction ไม่ใช้แถบสีข้างการ์ด */
+.htp-role.is-werewolf { --faction-color: #e57373; }
+.htp-role.is-fool     { --faction-color: #b98ee0; }
 .htp-role-head { display: flex; align-items: center; gap: 10px; }
 .htp-role-icon { font-size: 1.6rem; line-height: 1; }
 .htp-role-name { font-family: var(--font-display); font-size: 1rem; color: var(--text-primary); }
-.htp-role-faction { font-size: 0.7rem; color: var(--gold-mid); letter-spacing: 0.04em; }
+.htp-role-faction { font-size: 0.7rem; color: var(--faction-color, var(--gold-mid)); letter-spacing: 0.04em; font-weight: 600; }
 .htp-role-summary { margin-top: 9px; font-size: 0.84rem; line-height: 1.5; color: var(--text-secondary); }
 .htp-role-detail  { margin-top: 5px; font-size: 0.76rem; line-height: 1.55; color: var(--text-muted); }
 

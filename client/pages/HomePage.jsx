@@ -13,10 +13,24 @@ const API = '/api/rooms';
 
 const NEWS = [
   {
+    id: 3,
+    tag: 'อัปเดต',
+    title: 'อัปเดตเวอร์ชัน 1.2.2',
+    desc: 'คืนอนิเมชั่นปุ่มเข้าสู่ระบบแบบเดิม (เรืองเงินนวล) และเพิ่มหิ่งห้อยลอยเรือง ๆ ในหมู่บ้านกลางคืนเล็กน้อย',
+    date: '18/07/2026',
+  },
+  {
+    id: 2,
+    tag: 'อัปเดต',
+    title: 'อัปเดตเวอร์ชัน 1.2.1',
+    desc: 'ยกเครื่องอนิเมชั่นหน้าแรก — ปุ่มขวาบน/ปุ่มหลักเด้งและเรืองแสงตอนชี้, รูปบัญชีเด้งเมื่อชี้แถบผู้เล่น, กระดานประกาศเด้งทั้งกล่อง, ไฮไลต์ 3 อันดับแรกของทำเนียบนักล่า และเอาปุ่ม “เข้าเร็ว” ออก',
+    date: '18/07/2026',
+  },
+  {
     id: 1,
     tag: 'อัปเดต',
     title: 'อัปเดตเวอร์ชัน 1.0.1',
-    desc: 'อัพเดตUIของหน้าHomepage ให้ดูดีขึ้น',
+    desc: 'ปรับโฉม UI ของหน้าแรกใหม่ทั้งหน้า สวยขึ้นและลื่นขึ้น',
     date: '06/07/2026',
   },
 ];
@@ -214,16 +228,6 @@ function IconBlock() {
 const BGM_SRC = null;
 const HOVER_SFX_SRC = null;
 
-/* ── คำคมหมู่บ้าน — สุ่มวนใต้โลโก้ ── */
-const LORE_QUOTES = [
-  'ในหมู่บ้านนี้ทุกคนไว้ใจได้… จนกว่าจะถึงคืนแรก',
-  'คนที่พูดว่า "เชื่อฉันสิ" คือคนแรกที่ควรสงสัย',
-  'หมาป่าไม่น่ากลัวหรอก ที่น่ากลัวคือเพื่อนข้างบ้าน',
-  'โหวตผิดชีวิตเปลี่ยน โหวตถูกก็แค่รอดไปอีกคืน',
-  'คืนนี้พระจันทร์สวยดีนะ… เสียดายที่บางคนจะไม่ได้เห็นพรุ่งนี้',
-  'เงียบเกินไปก็โดนสงสัย พูดเยอะเกินไปก็โดนแขวน',
-];
-
 /* ── ชั้นดาวระยิบ — ตำแหน่ง/จังหวะสุ่มครั้งเดียวตอน mount ── */
 function StarsLayer() {
   const stars = useMemo(() =>
@@ -246,40 +250,31 @@ function StarsLayer() {
             animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s`,
           }} />
       ))}
-      <span className="shooting-star" style={{ animationDelay: '4s' }} />
-      <span className="shooting-star is-alt" style={{ animationDelay: '13s' }} />
     </div>
   );
 }
 
-/* ── ค้างคาวบินผ่านเป็นระยะ ── */
-function BatSvg() {
+/* ── หิ่งห้อยไม่กี่ตัว — จุดเรืองอำพันลอยช้า ๆ ในหมู่บ้านกลางคืน ── */
+function FirefliesLayer() {
+  const flies = useMemo(() =>
+    Array.from({ length: 7 }, (_, i) => ({
+      id: i,
+      left: 8 + Math.random() * 84,
+      top: 18 + Math.random() * 56,
+      dur: 4 + Math.random() * 3,
+      delay: Math.random() * 5,
+      dx: (Math.random() * 2 - 1) * 26,
+      dy: -14 - Math.random() * 22,
+    })), []);
   return (
-    <svg viewBox="0 0 48 20" fill="currentColor">
-      <path className="bat-wing bat-wing-l" d="M22 10 C16 2, 8 0, 0 4 C6 6, 10 9, 13 13 C16 10, 19 9.5, 22 10 Z" />
-      <path className="bat-wing bat-wing-r" d="M26 10 C32 2, 40 0, 48 4 C42 6, 38 9, 35 13 C32 10, 29 9.5, 26 10 Z" />
-      <ellipse cx="24" cy="10.5" rx="3.2" ry="4.4" />
-      <path d="M22.4 6.8 L21.6 3.8 L23.4 5.6 Z M25.6 6.8 L26.4 3.8 L24.6 5.6 Z" />
-    </svg>
-  );
-}
-
-function BatsLayer() {
-  return (
-    <div className="home-bats" aria-hidden="true">
-      <span className="bat bat-1"><BatSvg /></span>
-      <span className="bat bat-2"><BatSvg /></span>
-      <span className="bat bat-3"><BatSvg /></span>
-    </div>
-  );
-}
-
-/* ── ตาหมาป่าเรืองแสงในเงามืด — โผล่มาจ้องเป็นพัก ๆ ── */
-function WolfEyes() {
-  return (
-    <div className="wolf-eyes" aria-hidden="true">
-      <span className="wolf-eye" />
-      <span className="wolf-eye" />
+    <div className="home-fireflies" aria-hidden="true">
+      {flies.map(f => (
+        <span key={f.id} className="firefly" style={{
+          left: `${f.left}%`, top: `${f.top}%`,
+          '--ff-dur': `${f.dur}s`, '--ff-delay': `${f.delay}s`,
+          '--ff-dx': `${f.dx}px`, '--ff-dy': `${f.dy}px`,
+        }} />
+      ))}
     </div>
   );
 }
@@ -322,31 +317,6 @@ function TitleLetters() {
   );
 }
 
-/* ── คำคมหมุนเวียนใต้โลโก้ ── */
-function LoreQuote() {
-  const [idx, setIdx] = useState(() => Math.floor(Math.random() * LORE_QUOTES.length));
-  useEffect(() => {
-    const id = setInterval(() => setIdx(i => (i + 1) % LORE_QUOTES.length), 7000);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <p key={idx} className="lore-quote">&ldquo;{LORE_QUOTES[idx]}&rdquo;</p>
-  );
-}
-
-function IconDice() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="4" />
-      <circle cx="8.2" cy="8.2" r="1.3" fill="currentColor" stroke="none" />
-      <circle cx="15.8" cy="8.2" r="1.3" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
-      <circle cx="8.2" cy="15.8" r="1.3" fill="currentColor" stroke="none" />
-      <circle cx="15.8" cy="15.8" r="1.3" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
 function IconTrophy() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -361,12 +331,9 @@ function Leaderboard({ players, loading }) {
   const RANK_CLASS = ['is-gold', 'is-silver', 'is-bronze'];
   return (
     <div className="panel-box leaderboard-box">
-      <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-      <span className="panel-corner panel-corner-br" aria-hidden="true" />
       <div className="home-news-head">
         <div>
-          <div className="home-news-eyebrow">อันดับ</div>
-          <div className="home-news-heading">ทำเนียบนักล่าประจำหมู่บ้าน</div>
+          <h2 className="home-news-heading">ทำเนียบนักล่าประจำหมู่บ้าน</h2>
         </div>
         <span className="leaderboard-trophy"><IconTrophy /></span>
       </div>
@@ -452,43 +419,6 @@ export default function HomePage() {
   const [loadingTop, setLoadingTop] = useState(true);
   const ddRef = useRef(null);
   const pageRef = useRef(null);
-
-  // หิ่งห้อยสุ่มตำแหน่ง/ขนาด/จังหวะ ครั้งเดียวตอน mount — เยอะและหลากหลายกว่าเดิม
-  const fireflies = useMemo(() =>
-    Array.from({ length: 10 }, (_, i) => ({
-      id: i,
-      left: 4 + Math.random() * 92,
-      top: 55 + Math.random() * 40,
-      dur: 8 + Math.random() * 7,
-      delay: Math.random() * 6,
-      scale: 0.7 + Math.random() * 0.9,
-    })), []);
-
-  // parallax เบา ๆ ตามเมาส์ — เขียน transform ใส่ชั้นที่ขยับตรง ๆ
-  // (ไม่ตั้ง CSS var ที่ root เพราะจะพา browser คำนวณ style ใหม่ทั้งหน้าทุกเฟรม)
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const page = pageRef.current;
-    if (!page) return;
-    const stars = page.querySelector('.home-stars');
-    const flies = page.querySelector('.fireflies-layer');
-    let raf = 0;
-    function onMove(e) {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const px = (e.clientX / window.innerWidth) - 0.5;
-        const py = (e.clientY / window.innerHeight) - 0.5;
-        if (stars) stars.style.transform = `translate3d(${px * -7}px, ${py * -5}px, 0)`;
-        if (flies) flies.style.transform = `translate3d(${px * 14}px, ${py * 9}px, 0)`;
-      });
-    }
-    window.addEventListener('mousemove', onMove);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
 
   // สถิติหมู่บ้าน — จำนวนห้องเปิด/คนในห้อง โชว์ใต้โลโก้
   // ทำเนียบนักล่า
@@ -597,29 +527,6 @@ export default function HomePage() {
     return () => clearInterval(id);
   }, [mode]);
 
-  // เข้าเร็ว — สุ่มห้องสาธารณะที่ยังรอคนและไม่เต็ม แล้วพาไปกรอกชื่อเลย
-  async function handleQuickJoin() {
-    if (!user) { setShowModal(true); return; }
-    setMode('join');
-    setJoinStep('browse');
-    setError(null);
-    try {
-      const res = await fetch(API, { credentials: 'include' });
-      const data = await res.json();
-      if (!res.ok) throw new Error();
-      const open = (data.rooms || []).filter(r =>
-        !r.isPrivate && r.status === 'waiting' && r.playerCount < r.maxPlayers
-      );
-      if (open.length === 0) {
-        setError('ตอนนี้ยังไม่มีห้องว่างให้สุ่มเข้า — เป็นคนจุดตะเกียงแรกเองเลยดีกว่า');
-        return;
-      }
-      selectRoomToJoin(open[Math.floor(Math.random() * open.length)]);
-    } catch {
-      setError('ดึงรายชื่อห้องไม่สำเร็จ ลองใหม่อีกครั้ง');
-    }
-  }
-
   function selectRoomToJoin(room) {
     setError(null);
     setSelectedRoom(room);
@@ -679,26 +586,14 @@ export default function HomePage() {
   const isJoinBrowse = mode === 'join' && joinStep === 'browse';
 
   return (
-    <div ref={pageRef} className="home-page entrance-page" style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
+    <div ref={pageRef} className="home-page" style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
       <div className="home-overlay" />
       <StarsLayer />
       <div className="home-moonbeams" aria-hidden="true" />
       <div className="home-fog" />
       <div className="home-water-shimmer" aria-hidden="true" />
       <div className="home-lantern-glow" aria-hidden="true" />
-      <BatsLayer />
-      <WolfEyes />
-
-      <div className="fireflies-layer" aria-hidden="true">
-        {fireflies.map(f => (
-          <span key={f.id} className="firefly"
-            style={{
-              left: `${f.left}%`, top: `${f.top}%`,
-              animationDuration: `${f.dur}s`, animationDelay: `${f.delay}s`,
-              width: `${4 * f.scale}px`, height: `${4 * f.scale}px`,
-            }} />
-        ))}
-      </div>
+      <FirefliesLayer />
 
       <div className="home-vignette" aria-hidden="true" />
       <div className="home-grain" aria-hidden="true" />
@@ -754,29 +649,27 @@ export default function HomePage() {
         </div>
 
         {!isJoinBrowse && (
-          <div className="home-header entrance-logo">
+          <div className="home-header">
             <TitleLetters />
             <div className="title-ornament">
               <span className="title-ornament-line" />
               <span className="title-ornament-mark" />
               <span className="title-ornament-line" />
             </div>
-            <LoreQuote />
           </div>
         )}
 
         <div className={`home-grid ${isJoinBrowse ? 'is-join-browse' : ''}`}>
 
           {/* LEFT */}
-          <div className="home-left entrance-menu">
+          <div className="home-left">
             {!mode && (
               <div className="menu-panel">
-                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-                <span className="panel-corner panel-corner-br" aria-hidden="true" />
                 <MenuBtn
                   primary
                   icon={<IconCreate />}
                   title="สร้างห้อง"
+                  emoji="🏠"
                   onClick={() => user ? setMode('create') : setShowModal(true)}
                   onHover={playHoverSfx}
                 />
@@ -784,21 +677,15 @@ export default function HomePage() {
                 <MenuBtn
                   icon={<IconJoin />}
                   title="เข้าร่วมห้อง"
+                  emoji="🚪"
                   onClick={() => user ? setMode('join') : setShowModal(true)}
-                  onHover={playHoverSfx}
-                />
-                <div className="menu-divider" />
-                <MenuBtn
-                  icon={<IconDice />}
-                  title="เข้าเร็ว"
-                  sub="สุ่มห้องว่างให้ ไม่ต้องเลือกเอง"
-                  onClick={handleQuickJoin}
                   onHover={playHoverSfx}
                 />
                 <div className="menu-divider" />
                 <MenuBtn
                   icon={<IconBook />}
                   title="วิธีการเล่น"
+                  emoji="📖"
                   onClick={() => setShowHowTo(true)}
                   onHover={playHoverSfx}
                 />
@@ -806,6 +693,7 @@ export default function HomePage() {
                 <MenuBtn
                   icon={<IconSettings />}
                   title="การตั้งค่า"
+                  emoji="⚙️"
                   onClick={() => navigate('/settings')}
                   onHover={playHoverSfx}
                 />
@@ -814,8 +702,6 @@ export default function HomePage() {
 
             {mode === 'create' && (
               <form onSubmit={handleCreate} className="home-form fade-in">
-                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-                <span className="panel-corner panel-corner-br" aria-hidden="true" />
                 <h2 className="form-title">สร้างห้องใหม่</h2>
                 {error && <ErrorBox msg={error} />}
                 <Field label="ชื่อของคุณ" id="nick" value={nickname}
@@ -863,8 +749,6 @@ export default function HomePage() {
               <form onSubmit={joinStep === 'code' ? confirmRoomCode : handleJoin} className="home-form fade-in">
                 {joinStep !== 'browse' && (
                   <>
-                    <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-                    <span className="panel-corner panel-corner-br" aria-hidden="true" />
                   </>
                 )}
 
@@ -907,8 +791,6 @@ export default function HomePage() {
                     </div>
 
                     <div className="room-list-panel">
-                      <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-                      <span className="panel-corner panel-corner-br" aria-hidden="true" />
 
                       {filteredRooms.length === 0 ? (
                         <div className="room-list-empty-rich">
@@ -1040,14 +922,11 @@ export default function HomePage() {
 
           {/* RIGHT — News */}
           {!isJoinBrowse && (
-            <div className="home-right entrance-news">
+            <div className="home-right">
               <div className="panel-box">
-                <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-                <span className="panel-corner panel-corner-br" aria-hidden="true" />
                 <div className="home-news-head">
                   <div>
-                    <div className="home-news-eyebrow">ข่าวสาร</div>
-                    <div className="home-news-heading">กระดานประกาศหมู่บ้าน</div>
+                    <h2 className="home-news-heading">กระดานประกาศหมู่บ้าน</h2>
                   </div>
                   <span className="home-news-pin"><IconPin /></span>
                 </div>
@@ -1077,7 +956,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="home-footer">
-        <span className="version">v1.2.0</span>
+        <span className="version">v1.2.2</span>
         <div className="socials">
           <a className="soc-btn" title="Discord" href="https://discord.gg/gvDNBHQKT" target="_blank" rel="noopener noreferrer">
             <IconDiscord />
@@ -1132,8 +1011,6 @@ function PlayerBar({ user }) {
 
   return (
     <div className="player-bar fade-in">
-      <span className="panel-corner panel-corner-tl" aria-hidden="true" />
-      <span className="panel-corner panel-corner-br" aria-hidden="true" />
 
       <div className={`player-ava ${!user ? 'is-anon' : ''}`}>
         {!user
@@ -1166,8 +1043,7 @@ function PlayerBar({ user }) {
           </>
         ) : (
           <>
-            <div className="player-level">เข้าสู่ระบบเพื่อบันทึกความคืบหน้า</div>
-            <div className="player-hint">&ldquo;หมาป่าไม่ได้จับตาดูนายอยู่หรอก&hellip; จริง ๆ นะ&rdquo;</div>
+            <div className="player-level">เข้าสู่ระบบเพื่อบันทึกเลเวลและสถิติของนาย</div>
           </>
         )}
       </div>
@@ -1176,18 +1052,6 @@ function PlayerBar({ user }) {
 }
 
 function MenuBtn({ title, sub, onClick, primary = false, icon, onHover }) {
-  // ลูกเล่นแกล้งคน: ชี้ที่ตัวหนังสือปุ๊บ คำวิ่งหนีหายไป 3 วิ แล้วค่อยเด้งกลับมา
-  // 'idle' → ยังไม่โดนแกล้ง, 'hidden' → กำลังหลบ, 'back' → เด้งกลับมาแล้ว
-  const [titlePhase, setTitlePhase] = useState('idle');
-  const hideTimer = useRef(null);
-  useEffect(() => () => clearTimeout(hideTimer.current), []);
-
-  function handleTitleEnter() {
-    if (titlePhase === 'hidden') return;
-    setTitlePhase('hidden');
-    hideTimer.current = setTimeout(() => setTitlePhase('back'), 3000);
-  }
-
   return (
     <button type="button" onClick={onClick} disabled={!onClick}
       onMouseEnter={onHover}
@@ -1196,12 +1060,7 @@ function MenuBtn({ title, sub, onClick, primary = false, icon, onHover }) {
       {primary && <span className="menu-btn-corner menu-btn-corner-br" aria-hidden="true" />}
       <div className="menu-icon">{icon}</div>
       <div className="menu-text">
-        <div
-          className={`menu-title ${titlePhase === 'hidden' ? 'is-hiding' : ''} ${titlePhase === 'back' ? 'is-back' : ''}`}
-          onMouseEnter={handleTitleEnter}
-        >
-          {title}
-        </div>
+        <div className="menu-title">{title}</div>
         {sub && <div className="menu-sub">{sub}</div>}
       </div>
       <span className="menu-arrow"><IconArrow /></span>
