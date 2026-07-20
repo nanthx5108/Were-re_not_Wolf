@@ -26,8 +26,12 @@ export async function createRoomService({ hostNickname, roomName, userId, maxPla
       `INSERT INTO rooms (id, name, host_id, max_players, is_private, config) VALUES (?, ?, ?, ?, ?, ?)`,
       [roomId, roomName.trim(), hostId, safeMaxPlayers, safeIsPrivate, JSON.stringify(safeConfig)]
     );
+    // logged-in user ใช้ userId เป็น player id (คงที่ทั่วระบบเพื่อผูก exp/level)
+    // ถ้าเคยมี player row ค้างจากห้องก่อน → ย้ายตัวตนมาห้องใหม่แทนที่จะชน PK แล้ว 500
     await conn.query(
-      `INSERT INTO players (id, room_id, nickname) VALUES (?, ?, ?)`,
+      `INSERT INTO players (id, room_id, nickname) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE room_id = VALUES(room_id), nickname = VALUES(nickname),
+                               role = NULL, is_alive = TRUE, socket_id = NULL`,
       [hostId, roomId, hostNickname.trim()]
     );
     await conn.commit();
@@ -122,8 +126,11 @@ export async function joinRoomService({ roomId, nickname, userId }) {
   }
 
   const playerId = userId || uuidv4();
+  // ดู createRoomService — logged-in user ที่เคยอยู่ห้องอื่นต้องย้ายมา ไม่ใช่ชน PK แล้ว 500
   await pool.query(
-    `INSERT INTO players (id, room_id, nickname) VALUES (?, ?, ?)`,
+    `INSERT INTO players (id, room_id, nickname) VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE room_id = VALUES(room_id), nickname = VALUES(nickname),
+                             role = NULL, is_alive = TRUE, socket_id = NULL`,
     [playerId, upperRoomId, nickname.trim()]
   );
 
