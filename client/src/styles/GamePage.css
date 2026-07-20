@@ -709,7 +709,7 @@
   color: var(--text-muted);
 }
 
-/* facedown */
+/* facedown — ลายทางเฉียงเป็น fallback ตอนไฟล์หลังการ์ดโหลดไม่ขึ้นเท่านั้น */
 .gpr.is-closed .gpr-inner {
   min-height: 120px;
   justify-content: center;
@@ -717,6 +717,7 @@
     repeating-linear-gradient(45deg, rgba(159,188,208,0.05) 0 6px, transparent 6px 12px),
     var(--bg-overlay);
 }
+.gpr.is-closed .gpr-inner:has(.gpr-art-back) { background: none; }
 .gpr-qmark {
   font-family: var(--font-display);
   font-size: 3rem;
@@ -726,6 +727,20 @@
 .gpr-hint { font-family: var(--font-meta); font-size: 0.66rem; color: var(--silver-dim); }
 
 /* open */
+/* ภาพการ์ดจริง (public/roles/*.png) — สัดส่วน 1:1 ตามไฟล์ต้นฉบับ */
+.gpr-art {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  margin: 0 auto;
+  border-radius: var(--radius-sm);
+}
+
+/* หลังการ์ดวางในสถานะคว่ำ — ใช้สเกลเดียวกับหน้าการ์ดเพื่อไม่ให้ขนาดกระตุกตอน toggle */
+.gpr-art-back { max-width: 220px; }
+
 .gpr-identity {
   display: flex;
   align-items: center;
