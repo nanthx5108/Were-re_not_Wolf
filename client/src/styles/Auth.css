@@ -11,11 +11,16 @@
   overflow: hidden;
   font-family: var(--font-body);
 
-  /* ── Override: gold/accent → green ── */
-  --gold-bright: #5FA36A;
-  --color-accent: #4C8A57;
-  --color-accent-dim: #3A6E44;
-  --accent-rgb: 95,163,106;
+  /* ── Override สีเน้นทั้งหน้า: ทอง → เขียวทะเล teal (ชุดเดียวกับหน้าแรก) ──
+     ตั้งที่ scope นี้ตัวเดียว ทุก var(--gold-*) / var(--accent-rgb) / legacy alias
+     ที่ถูกใช้ในหน้านี้จะ resolve เป็น teal อัตโนมัติ */
+  --accent-rgb:       79,209,197;
+  --gold-bright:      #4fd1c5;
+  --gold-mid:         #2a9d9e;
+  --gold-dim:         #1a5f60;
+  --on-accent:        #04231f;
+  --color-accent:     #4fd1c5;
+  --color-accent-dim: #1a5f60;
 }
 
 /* === Layered atmosphere — warm lantern night === */
@@ -276,21 +281,23 @@
   filter: none !important;
 }
 
+/* ปุ่มหลัก = CTA เขียวทะเลชุดเดียวกับปุ่ม "เปิดห้องใหม่" ที่หน้าแรก */
 .auth-btn-primary {
-  background: linear-gradient(180deg, #5FA36A 0%, #4C8A57 55%, #3A6E44 100%);
-  color: #c9c9c9;
-  border: 1px solid rgba(95,163,106,0.40);
+  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 100%);
+  color: var(--on-teal);
+  border: 1px solid var(--teal-mid);
   box-shadow:
-    0 4px 16px rgba(95,163,106,0.25),
-    inset 0 1px 0 rgba(202,218,229,0.25);
+    0 4px 16px rgba(79,209,197,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
 .auth-btn-primary:not(:disabled):hover {
   transform: translateY(-2px);
   box-shadow:
-    0 8px 24px rgba(95,163,106,0.35),
-    inset 0 1px 0 rgba(202,218,229,0.30);
-  filter: brightness(1.08);
+    0 0 16px rgba(79,209,197,0.4),
+    0 8px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  filter: brightness(1.06);
 }
 
 .auth-btn-primary:not(:disabled):active {

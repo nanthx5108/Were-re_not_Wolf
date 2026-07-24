@@ -36,6 +36,24 @@ async function ensureProfileColumns() {
   `);
 }
 
+/**
+ * birthdate เป็นคอลัมน์ DATE — mysql2 คืนมาเป็น Date object (ไม่ได้ตั้ง dateStrings)
+ * ถ้าปล่อยผ่าน JSON จะกลายเป็น ISO เต็ม "2000-05-15T00:00:00.000Z" ซึ่งฝั่ง client
+ * แยกด้วย split('-') แล้วได้วันเป็น "15T00:00:00.000Z" → Number() = NaN → วันหายไป
+ *
+ * ต้องใช้ getter แบบ local ไม่ใช่ toISOString() — Date object เป็นเที่ยงคืนตามโซนของ server
+ * ถ้าแปลงเป็น UTC วันที่จะเลื่อนถอยหลัง 1 วันในโซนที่ offset เป็นบวก (เช่นไทย +7)
+ */
+function toDateOnly(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value.slice(0, 10);
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return '';
+  const yyyy = value.getFullYear();
+  const mm = String(value.getMonth() + 1).padStart(2, '0');
+  const dd = String(value.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function toPublicUser(user) {
   if (!user) return null;
   const level = user.level ?? STARTING_LEVEL;
@@ -48,7 +66,7 @@ function toPublicUser(user) {
     exp,
     expNeeded: expNeeded(level),   // ส่งไปด้วยเลย client จะได้ไม่ต้องคำนวณเอง
     displayName: user.display_name ?? null,
-    birthdate: user.birthdate ?? '',
+    birthdate: toDateOnly(user.birthdate),
     email: user.email ?? '',
     avatarUrl: user.avatar_url ?? null,
     usernameChangedAt: user.username_changed_at ?? null,

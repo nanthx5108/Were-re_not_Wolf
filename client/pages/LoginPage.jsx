@@ -79,7 +79,7 @@ export default function LoginPage() {
               id="username"
               type="text"
               className="auth-input"
-              placeholder="ชื่อที่คนอื่นจะเห็น..."
+              placeholder="กรอกชื่อผู้ใช้"
               value={username}
               onChange={e => setUsername(e.target.value)}
               maxLength={32}
@@ -94,7 +94,7 @@ export default function LoginPage() {
               id="password"
               type="password"
               className="auth-input"
-              placeholder="รหัสลับที่คุณซ่อนไว้..."
+              placeholder="กรอกรหัสผ่านให้ถูกต้อง"
               value={password}
               onChange={e => setPassword(e.target.value)}
               autoComplete="current-password"
@@ -106,7 +106,7 @@ export default function LoginPage() {
             className="auth-btn auth-btn-primary"
             disabled={loading || !username.trim() || !password}
           >
-            {loading ? 'กำลังเข้าสู่หมู่บ้าน...' : 'เข้าสู่ระบบ'}
+            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
           </button>
         </form>
 

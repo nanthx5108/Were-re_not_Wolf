@@ -147,7 +147,7 @@
 }
 
 .news-subtitle {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.82rem;
   color: var(--text-muted);
   font-style: italic;
@@ -260,14 +260,17 @@
   padding: 2px 9px;
   border-radius: 3px;
   margin-bottom: var(--space-2);
-  color: var(--gold-mid);
-  background: rgba(var(--accent-rgb),0.10);
-  border: 1px solid rgba(var(--accent-rgb),0.20);
+  /* default = หมวด "อัปเดต" — สนิม (ย้ายออกจากทองพร้อมหน้าแรก) */
+  color: var(--rust-bright);
+  background: rgba(168,84,63,0.12);
+  border: 1px solid rgba(168,84,63,0.3);
 }
-.news-card-tag.tag-event     { color: #6ecf8a; background: rgba(42,102,68,0.12); border-color: rgba(42,102,68,0.35); }
-.news-card-tag.tag-notice    { color: var(--silver); background: rgba(255,255,255,0.05); border-color: var(--border-default); }
-.news-card-tag.tag-patch     { color: #7ea8cf; background: rgba(60,90,140,0.14); border-color: rgba(60,90,140,0.35); }
-.news-card-tag.tag-community { color: var(--gold-mid); background: rgba(214,164,92,0.12); border-color: rgba(214,164,92,0.32); }
+/* 5 หมวดข่าว — สีมาจาก semantic palette กลาง ไม่ใช่ hex ลอย ๆ
+   อัปเดต = ทอง (ค่า default ของ .news-card-tag ด้านบน) */
+.news-card-tag.tag-event     { color: var(--sage-mid);       background: rgba(107,140,90,0.12);  border-color: rgba(107,140,90,0.35); }
+.news-card-tag.tag-notice    { color: var(--silver);         background: rgba(255,255,255,0.05); border-color: var(--border-default); }
+.news-card-tag.tag-patch     { color: var(--teal-mid);       background: rgba(42,157,158,0.12);  border-color: rgba(42,157,158,0.35); }
+.news-card-tag.tag-community { color: var(--dustypink-mid);  background: rgba(168,102,106,0.12); border-color: rgba(168,102,106,0.35); }
 
 .news-card-title {
   font-family: var(--font-display);

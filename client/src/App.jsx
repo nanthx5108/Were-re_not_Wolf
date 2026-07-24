@@ -17,6 +17,13 @@ export default function App() {
   return (
     <AuthProvider>
       <GameProvider>
+        {/* ตัวกรองเส้นมือวาด — ประกาศครั้งเดียวระดับ root ทุกหน้าที่ใช้ .sketch-border อ้างถึงได้ */}
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+          <filter id="sketch-edge">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" result="noise" seed="3" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+          </filter>
+        </svg>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/"              element={<HomePage />} />

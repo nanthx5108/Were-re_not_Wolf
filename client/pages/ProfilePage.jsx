@@ -6,7 +6,7 @@ import '../src/styles/ProfilePage.css';
 
 const USERNAME_COOLDOWN_DAYS = 90;
 const MAX_BIRTH_YEAR = 2026;
-const MIN_BIRTH_YEAR = 1950;7
+const MIN_BIRTH_YEAR = 1950;
 
 const THAI_MONTHS = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -18,9 +18,14 @@ function daysInMonth(month, year) {
   return new Date(year, month, 0).getDate();
 }
 
+/**
+ * รับได้ทั้ง "2000-05-15" และ ISO เต็ม "2000-05-15T00:00:00.000Z"
+ * (server แปลงให้เป็น date-only แล้ว แต่กันไว้เผื่อ response เก่าที่ยัง cache อยู่ —
+ * ถ้าไม่ตัดส่วนเวลาออก Number("15T00:00:00.000Z") จะเป็น NaN แล้ววันหายไปทั้งช่อง)
+ */
 function parseBirthdate(str) {
   if (!str) return { day: '', month: '', year: '' };
-  const [y, m, d] = str.split('-');
+  const [y, m, d] = String(str).slice(0, 10).split('-');
   return { day: Number(d) || '', month: Number(m) || '', year: Number(y) || '' };
 }
 
@@ -81,6 +86,57 @@ function ConfirmModal({ open, title, message, confirmLabel = 'ยืนยัน
   );
 }
 
+/* แสดงวันเกิดแบบอ่านง่าย — "15 พฤษภาคม 2000" */
+function formatBirthdate(day, month, year) {
+  if (!day || !month || !year) return '';
+  return `${day} ${THAI_MONTHS[month - 1]} ${year}`;
+}
+
+/**
+ * แถวข้อมูลหนึ่งช่อง — ปกติโชว์ค่าเฉย ๆ (readView)
+ * คลิกที่ช่อง → ปุ่มดินสอโผล่เฉพาะช่องนั้น · กดดินสอ → สลับเป็นช่องแก้ไข (editView)
+ */
+function ProfileField({
+  name, label, labelFor, aside,
+  active, onActivate,
+  unlocked, onEdit, editDisabled, editTitle,
+  readView, editView, note,
+}) {
+  return (
+    <div
+      className={`profile-field ${active ? 'is-active' : ''}`}
+      onClick={() => onActivate(name)}
+    >
+      <div className="profile-label-row">
+        <label className="profile-label" htmlFor={labelFor}>{label}</label>
+        {aside}
+      </div>
+
+      {unlocked ? editView : (
+        <div className="profile-readrow">
+          <span className={`profile-readvalue ${readView ? '' : 'is-empty'}`}>
+            {readView || 'ยังไม่ได้ตั้ง'}
+          </span>
+          {/* ซ่อนไว้ก่อน โผล่เฉพาะตอนช่องนี้ถูกคลิก */}
+          {active && (
+            <button
+              type="button"
+              className="profile-icon-btn"
+              onClick={e => { e.stopPropagation(); onEdit(); }}
+              disabled={editDisabled}
+              title={editTitle}
+            >
+              <IconEdit />
+            </button>
+          )}
+        </div>
+      )}
+
+      {note}
+    </div>
+  );
+}
+
 /* Days remaining until the account name can be changed again */
 function useUsernameCooldown(lastChangedAt) {
   return useMemo(() => {
@@ -117,6 +173,14 @@ export default function ProfilePage() {
 
   const [modal, setModal] = useState(null); // 'edit-username' | 'link-email' | 'reset' | null
 
+  // ช่องที่ผู้ใช้คลิกล่าสุด — ปุ่มดินสอโผล่เฉพาะช่องนี้ช่องเดียว
+  const [activeField, setActiveField] = useState(null);
+  // ช่องที่ปลดล็อกให้แก้ไขแล้ว (username ยังต้องผ่าน modal ยืนยันก่อน)
+  const [unlocked, setUnlocked] = useState({});
+  const unlock = (name) => setUnlocked(prev => ({ ...prev, [name]: true }));
+
+  const [viewerOpen, setViewerOpen] = useState(false);
+
   const usernameChanged = username.trim() !== (user?.username || '');
   const birthdate = buildBirthdate(day, month, year);
 
@@ -142,6 +206,7 @@ export default function ProfilePage() {
   }
   function confirmEditUsername() {
     setUsernameUnlocked(true);
+    unlock('username');
     setModal(null);
   }
 
@@ -172,6 +237,9 @@ export default function ProfilePage() {
     setAvatarFile(null);
     setError('');
     setModal(null);
+    // กลับไปเป็นโหมดอ่านอย่างเดียวทุกช่อง ไม่งั้นช่องที่เคยปลดล็อกจะยังเปิดค้าง
+    setUnlocked({});
+    setActiveField(null);
   }
 
   async function handleSave(e) {
@@ -234,8 +302,7 @@ export default function ProfilePage() {
           <span className="profile-card-corner tl" />
           <span className="profile-card-corner br" />
 
-          <h1 className="profile-title">ตัวตนของคุณในหมู่บ้าน</h1>
-          <p className="profile-sub">แก้ไขได้ แต่เปลี่ยนไม่ได้ว่าใครจะเชื่อคุณ</p>
+          <h1 className="profile-title">บัญชีของคุณ</h1>
 
           {error && <div className="profile-error">{error}</div>}
 
@@ -246,7 +313,7 @@ export default function ProfilePage() {
                 {avatarPreview
                   ? <img src={avatarPreview} alt="avatar" className="profile-avatar-img" />
                   : <DerpyWolfAvatar />}
-                <div className="profile-avatar-edit-badge">แก้ไข</div>
+                <div className="profile-avatar-edit-badge">เปลี่ยนรูป</div>
               </div>
               <input
                 ref={fileInputRef}
@@ -256,33 +323,54 @@ export default function ProfilePage() {
                 className="profile-avatar-input"
               />
               <p className="profile-avatar-hint">
-                คลิกที่รูปเพื่อเปลี่ยน ไม่เปลี่ยนก็ได้ หมาป่าหน้าโง่ก็ดูดีอยู่แล้ว
+                คลิกที่รูปเพื่อเปลี่ยนรูป หรือ
+                <button type="button" className="profile-view-link" onClick={() => setViewerOpen(true)}>
+                  กดดูรูป
+                </button>
               </p>
             </div>
 
-            {/* Display name — freely editable */}
-            <div className="profile-field">
-              <label className="profile-label" htmlFor="displayName">ชื่อที่แสดงในเกม</label>
-              <input
-                id="displayName"
-                type="text"
-                className="profile-input"
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-                maxLength={32}
-                placeholder="ชื่อที่คนอื่นจะเห็นตอนเล่น"
-              />
-            </div>
+            {/* ชื่อในเกม */}
+            <ProfileField
+              name="displayName"
+              label="ชื่อที่แสดงในเกม"
+              labelFor="displayName"
+              active={activeField === 'displayName'}
+              onActivate={setActiveField}
+              unlocked={!!unlocked.displayName}
+              onEdit={() => unlock('displayName')}
+              editTitle="แก้ไขชื่อที่แสดงในเกม"
+              readView={displayName}
+              editView={
+                <input
+                  id="displayName"
+                  type="text"
+                  className="profile-input"
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  maxLength={32}
+                  placeholder="ชื่อที่คนอื่นจะเห็นตอนเล่น"
+                  autoFocus
+                />
+              }
+            />
 
-            {/* Username — locked by default, edit requires confirmation */}
-            <div className="profile-field">
-              <div className="profile-label-row">
-                <label className="profile-label" htmlFor="username">ชื่อบัญชี (ใช้ล็อกอิน)</label>
-                {usernameOnCooldown && (
-                  <span className="profile-cooldown">เปลี่ยนได้อีกใน {daysLeft} วัน</span>
-                )}
-              </div>
-              <div className="profile-input-with-btn">
+            {/* ชื่อบัญชี — ต้องยืนยันก่อนแก้ และมีคูลดาวน์ */}
+            <ProfileField
+              name="username"
+              label="ชื่อบัญชี (ใช้ล็อกอิน)"
+              labelFor="username"
+              aside={usernameOnCooldown && (
+                <span className="profile-cooldown">เปลี่ยนได้อีกใน {daysLeft} วัน</span>
+              )}
+              active={activeField === 'username'}
+              onActivate={setActiveField}
+              unlocked={usernameUnlocked}
+              onEdit={requestEditUsername}
+              editDisabled={usernameOnCooldown}
+              editTitle={usernameOnCooldown ? `รออีก ${daysLeft} วัน` : 'แก้ไขชื่อบัญชี'}
+              readView={username}
+              editView={
                 <input
                   id="username"
                   type="text"
@@ -290,94 +378,100 @@ export default function ProfilePage() {
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   maxLength={32}
-                  disabled={!usernameUnlocked}
+                  autoFocus
                 />
-                <button
-                  type="button"
-                  className="profile-icon-btn"
-                  onClick={requestEditUsername}
-                  disabled={usernameOnCooldown || usernameUnlocked}
-                  title={usernameOnCooldown ? `รออีก ${daysLeft} วัน` : 'แก้ไขชื่อบัญชี'}
-                >
-                  <IconEdit />
-                </button>
-              </div>
-              <span className="profile-hint">
-                {usernameOnCooldown
-                  ? 'เปลี่ยนไปแล้วเมื่อไม่นานมานี้ ต้องรอให้ครบกำหนดก่อน'
-                  : usernameUnlocked
-                    ? `พิมพ์ชื่อใหม่ได้เลย เปลี่ยนแล้วต้องรออีก ${USERNAME_COOLDOWN_DAYS} วันถึงจะเปลี่ยนได้อีกครั้ง`
-                    : 'กดไอคอนดินสอเพื่อแก้ไขชื่อบัญชี'}
-              </span>
-            </div>
+              }
+            />
 
-            {/* Birthdate — custom day/month/year selects, capped at MAX_BIRTH_YEAR */}
-            <div className="profile-field">
-              <label className="profile-label">วันเดือนปีเกิด</label>
-              <div className="profile-birthdate-row">
-                <select
-                  className="profile-select"
-                  value={day}
-                  onChange={e => setDay(Number(e.target.value))}
-                >
-                  <option value="">วัน</option>
-                  {days.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-                <select
-                  className="profile-select profile-select-month"
-                  value={month}
-                  onChange={e => setMonth(Number(e.target.value))}
-                >
-                  <option value="">เดือน</option>
-                  {THAI_MONTHS.map((m, i) => (
-                    <option key={m} value={i + 1}>{m}</option>
-                  ))}
-                </select>
-                <select
-                  className="profile-select"
-                  value={year}
-                  onChange={e => setYear(Number(e.target.value))}
-                >
-                  <option value="">ปี</option>
-                  {years.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-              <span className="profile-hint">เลือกได้ถึงปี {MAX_BIRTH_YEAR} เท่านั้น</span>
-            </div>
+            {/* วันเดือนปีเกิด */}
+            <ProfileField
+              name="birthdate"
+              label="วันเดือนปีเกิด"
+              active={activeField === 'birthdate'}
+              onActivate={setActiveField}
+              unlocked={!!unlocked.birthdate}
+              onEdit={() => unlock('birthdate')}
+              editTitle="แก้ไขวันเดือนปีเกิด"
+              readView={formatBirthdate(day, month, year)}
+              editView={
+                <div className="profile-birthdate-row">
+                  <select
+                    className="profile-select"
+                    value={day}
+                    onChange={e => setDay(Number(e.target.value))}
+                  >
+                    <option value="">วัน</option>
+                    {days.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <select
+                    className="profile-select profile-select-month"
+                    value={month}
+                    onChange={e => setMonth(Number(e.target.value))}
+                  >
+                    <option value="">เดือน</option>
+                    {THAI_MONTHS.map((m, i) => (
+                      <option key={m} value={i + 1}>{m}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="profile-select"
+                    value={year}
+                    onChange={e => setYear(Number(e.target.value))}
+                  >
+                    <option value="">ปี</option>
+                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              }
+              note={unlocked.birthdate && (
+                <span className="profile-hint">เลือกได้ถึงปี {MAX_BIRTH_YEAR} เท่านั้น</span>
+              )}
+            />
 
-            {/* Email — requires confirmation before linking */}
-            <div className="profile-field">
-              <div className="profile-label-row">
-                <label className="profile-label" htmlFor="email">อีเมล</label>
+            {/* อีเมล */}
+            <ProfileField
+              name="email"
+              label="อีเมล"
+              labelFor="email"
+              aside={
                 <span className={`profile-email-status ${emailLinked ? 'is-linked' : ''}`}>
                   {emailLinked ? '● ผูกแล้ว' : '○ ยังไม่ได้ผูก'}
                 </span>
-              </div>
-              <div className="profile-input-with-btn">
-                <input
-                  id="email"
-                  type="email"
-                  className="profile-input"
-                  value={email}
-                  onChange={e => { setEmail(e.target.value); setEmailLinked(false); }}
-                  placeholder="example@email.com"
-                />
-                <button
-                  type="button"
-                  className="profile-link-btn"
-                  onClick={requestLinkEmail}
-                  disabled={!email.trim() || emailLinked}
-                >
-                  {emailLinked ? 'ผูกแล้ว' : 'ผูกอีเมล'}
-                </button>
-              </div>
-              <span className="profile-email-note">
-                ใช้สำหรับกู้คืนบัญชีเท่านั้น (ยังไม่มีการยืนยันอีเมลในตอนนี้)
-              </span>
-            </div>
+              }
+              active={activeField === 'email'}
+              onActivate={setActiveField}
+              unlocked={!!unlocked.email}
+              onEdit={() => unlock('email')}
+              editTitle="แก้ไขอีเมล"
+              readView={email}
+              editView={
+                <div className="profile-input-with-btn">
+                  <input
+                    id="email"
+                    type="email"
+                    className="profile-input"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setEmailLinked(false); }}
+                    placeholder="example@email.com"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    className="profile-link-btn"
+                    onClick={requestLinkEmail}
+                    disabled={!email.trim() || emailLinked}
+                  >
+                    {emailLinked ? 'ผูกแล้ว' : 'ผูกอีเมล'}
+                  </button>
+                </div>
+              }
+              note={unlocked.email && (
+                <span className="profile-email-note">ใช้สำหรับกู้คืนบัญชีเท่านั้น</span>
+              )}
+            />
 
             <div className="profile-btn-row">
-              <button type="submit" className="profile-btn-save" disabled={saving}>
+              <button type="submit" className="profile-btn-save sketch-border" disabled={saving}>
                 {saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
               </button>
             </div>
@@ -386,10 +480,39 @@ export default function ProfilePage() {
           <div className="profile-divider" />
 
           <button className="profile-logout-btn" onClick={requestReset}>
-            เปลี่ยนใจแล้วเหรอ? ล้างสิ่งที่แก้ไขทั้งหมด
+            ต้องการยกเลิกการแก้ไข?
           </button>
         </div>
       </div>
+
+      {/* ดูรูปโปรไฟล์เต็ม ๆ — มีปุ่มเปลี่ยนรูปอยู่ในนี้อีกทาง */}
+      {viewerOpen && (
+        <div className="profile-viewer-overlay" onClick={() => setViewerOpen(false)}>
+          <div className="profile-viewer sketch-border" onClick={e => e.stopPropagation()}>
+            <div className="profile-viewer-img">
+              {avatarPreview
+                ? <img src={avatarPreview} alt="รูปโปรไฟล์" />
+                : <DerpyWolfAvatar size={220} />}
+            </div>
+            <div className="profile-viewer-actions">
+              <button
+                type="button"
+                className="profile-viewer-edit"
+                onClick={() => { setViewerOpen(false); fileInputRef.current?.click(); }}
+              >
+                แก้ไขรูปโปรไฟล์
+              </button>
+              <button
+                type="button"
+                className="profile-viewer-close"
+                onClick={() => setViewerOpen(false)}
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         open={modal === 'edit-username'}

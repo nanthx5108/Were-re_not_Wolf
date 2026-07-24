@@ -7,9 +7,12 @@ import '../styles/RoomConfig.css';
  * host แก้ได้ (editable) คนอื่นเห็นอย่างเดียว
  * ไม่มี state ของตัวเอง: ค่าที่แสดงมาจาก room ที่ server ส่งมา เปลี่ยนแล้วยิงกลับไปที่ server เลย
  * จึงไม่มีทางที่หน้าจอ host กับผู้เล่นคนอื่นจะไม่ตรงกัน
+ *
+ * section = 'roles' | 'timing' | 'all' — หน้า Lobby แบ่งเป็นสองแท็บ จึงขอทีละส่วนได้
  */
 export default function RoomConfigPanel({
   roleConfig, phaseDurations, revealRoleOnDeath = false, maxPlayers, playerCount, editable, onChange,
+  section = 'all',
 }) {
   if (!roleConfig || !phaseDurations) return null;
 
@@ -34,8 +37,12 @@ export default function RoomConfigPanel({
     emit({ phaseDurations: { ...phaseDurations, [phase]: value } });
   }
 
+  const showRoles  = section === 'all' || section === 'roles';
+  const showTiming = section === 'all' || section === 'timing';
+
   return (
     <div className="roomcfg">
+      {showRoles && (
       <div className="roomcfg-section">
         <div className="roomcfg-head">
           <span className="roomcfg-title">บทบาท</span>
@@ -44,12 +51,12 @@ export default function RoomConfigPanel({
           </span>
         </div>
 
-        {CONFIGURABLE_ROLES.map(role => {
+        {CONFIGURABLE_ROLES.map((role, i) => {
           const count = roleConfig[role.key] || 0;
           if (!editable && count === 0) return null;
 
           return (
-            <div key={role.key} className="roomcfg-role">
+            <div key={role.key} className="roomcfg-role" style={{ '--row-i': i }}>
               <span className="roomcfg-role-icon" aria-hidden="true">{role.icon}</span>
               <span className="roomcfg-role-meta">
                 <span className="roomcfg-role-name">{role.label}</span>
@@ -83,33 +90,40 @@ export default function RoomConfigPanel({
           </p>
         )}
       </div>
+      )}
 
+      {showTiming && (
       <div className="roomcfg-section">
-        <div className="roomcfg-head">
-          <span className="roomcfg-title">เวลาแต่ละช่วง (วินาที)</span>
-        </div>
-
         <div className="roomcfg-durations">
-          {Object.entries(DURATION_LIMITS).map(([phase, limit]) => (
-            <div key={phase} className="roomcfg-duration">
-              <label htmlFor={`dur-${phase}`} className="roomcfg-duration-label">
-                {limit.label}
-              </label>
-              {editable ? (
-                <>
-                  <input id={`dur-${phase}`} type="number" className="roomcfg-duration-input"
-                    min={limit.min} max={limit.max} value={phaseDurations[phase]}
+          {Object.entries(DURATION_LIMITS).map(([phase, limit], i) => {
+            const value = phaseDurations[phase];
+            // ตำแหน่ง % ของหัวสไลเดอร์ — ใช้ระบายรางฝั่งซ้ายให้เป็นสีอำพัน
+            const pct = ((value - limit.min) / (limit.max - limit.min)) * 100;
+            return (
+              <div key={phase} className="roomcfg-duration" style={{ '--row-i': i }}>
+                <label htmlFor={`dur-${phase}`} className="roomcfg-duration-label">
+                  {limit.label}
+                </label>
+                <span className="roomcfg-duration-value">
+                  {value}<span className="roomcfg-duration-unit"> วินาที</span>
+                </span>
+                {editable ? (
+                  <input id={`dur-${phase}`} type="range" className="roomcfg-slider"
+                    style={{ '--fill': `${Math.max(0, Math.min(100, pct))}%` }}
+                    min={limit.min} max={limit.max} step={5} value={value}
                     onChange={e => setDuration(phase, Number(e.target.value))} />
-                  <span className="roomcfg-duration-range">{limit.min}–{limit.max}</span>
-                </>
-              ) : (
-                <span className="roomcfg-duration-value">{phaseDurations[phase]} วิ</span>
-              )}
-            </div>
-          ))}
+                ) : (
+                  <span className="roomcfg-slider is-readonly"
+                        style={{ '--fill': `${Math.max(0, Math.min(100, pct))}%` }} />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
+      )}
 
+      {showTiming && (
       <div className="roomcfg-section">
         <div className="roomcfg-toggle">
           <span className="roomcfg-role-meta">
@@ -131,6 +145,7 @@ export default function RoomConfigPanel({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

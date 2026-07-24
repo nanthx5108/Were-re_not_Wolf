@@ -17,6 +17,16 @@
   overflow-x: hidden;
   font-family: var(--font-body);
   color: var(--text-primary);
+
+  /* สีเน้น → เขียวทะเล teal ให้ตรงกับหน้าแรก */
+  --accent-rgb:       79,209,197;
+  --gold-bright:      #4fd1c5;
+  --gold-mid:         #2a9d9e;
+  --gold-dim:         #1a5f60;
+  --on-accent:        #04231f;
+  --color-accent:     #4fd1c5;
+  --color-accent-dim: #1a5f60;
+  --text-gold:        #a7d8d2;   /* ข้อความน้ำเสียงเน้น → อมเขียวจาง แทนอมทอง */
 }
 
 .profile-overlay {
@@ -150,7 +160,7 @@
 }
 
 .profile-sub {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.78rem;
   color: var(--text-muted);
   text-align: center;
@@ -210,7 +220,7 @@
   bottom: 0; left: 0; right: 0;
   background: rgba(0,0,0,0.65);
   color: var(--text-primary);
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.62rem;
   text-align: center;
   padding: 3px 0;
@@ -222,12 +232,12 @@
 .profile-avatar-input { display: none; }
 
 .profile-avatar-hint {
-  font-family: var(--font-meta);
-  font-size: 0.72rem;
+  /* ข้อความไทย — Special Elite ไม่มี glyph ไทย ต้องใช้ Sriracha */
+  font-family: var(--font-body);
+  font-size: 0.76rem;
   color: var(--text-muted);
   text-align: center;
-  font-style: italic;
-  max-width: 300px;
+  max-width: 320px;
 }
 
 /* =====================================================
@@ -240,11 +250,11 @@
 }
 
 .profile-label {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
@@ -255,7 +265,7 @@
 }
 
 .profile-cooldown {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.68rem;
   color: var(--gold-dim);
   font-style: italic;
@@ -285,7 +295,7 @@
 }
 
 .profile-hint {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.68rem;
   color: var(--text-muted);
 }
@@ -382,6 +392,8 @@
    ===================================================== */
 .profile-btn-row { margin-top: var(--space-1); }
 
+/* CTA หลัก — ใช้ภาษาเดียวกับปุ่ม .btn-primary ที่หน้าแรก (เขียวทะเลเต็มสี + เรืองสีตัวเอง)
+   ขอบมาจาก .sketch-border ที่ติดมากับ class ใน JSX — ห้ามประกาศ border ที่นี่ ไม่งั้นจะทับกัน */
 .profile-btn-save {
   position: relative;
   width: 100%;
@@ -390,17 +402,23 @@
   font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--gold-bright);
-  background: linear-gradient(135deg, rgba(var(--accent-rgb),0.22) 0%, rgba(var(--accent-rgb),0.10) 100%);
-  border: 1px solid var(--gold-mid);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
+  letter-spacing: 0.04em;
+  color: var(--on-teal);
+  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 100%);
+  box-shadow:
+    0 3px 10px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 -2px 4px rgba(0,0,0,0.25);
   transition: transform var(--ease), box-shadow var(--ease), filter var(--ease);
 }
 .profile-btn-save:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-gold);
-  filter: brightness(1.06);
+  /* filter ต้องพ่วง url(#sketch-edge) ไปด้วย ไม่งั้นขอบมือวาดจะหายตอน hover */
+  filter: url(#sketch-edge) brightness(1.06);
+  box-shadow:
+    0 0 16px rgba(79,209,197,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 -2px 4px rgba(0,0,0,0.2);
 }
 .profile-btn-save:active:not(:disabled) { transform: translateY(0); }
 .profile-btn-save:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -543,4 +561,141 @@
 }
 .profile-modal-btn-confirm.is-danger:hover {
   box-shadow: 0 0 20px rgba(139,32,32,0.25);
+}
+/* =====================================================
+   โหมดอ่านอย่างเดียว — ช่องข้อมูลโชว์ค่าเฉย ๆ จนกว่าจะคลิก
+   ===================================================== */
+.profile-field {
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin: -8px -10px;   /* หักคืน ไม่ให้ระยะห่างระหว่างช่องเปลี่ยนไปจากเดิม */
+  cursor: pointer;
+  transition: background var(--ease), box-shadow var(--ease);
+}
+/* ช่องที่ถูกคลิกล่าสุด — เรืองขาวจาง ๆ บอกว่ากำลังโฟกัสอันนี้ */
+.profile-field.is-active {
+  background: rgba(255,255,255,0.03);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+
+.profile-readrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 42px;
+}
+.profile-readvalue {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+.profile-readvalue.is-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+/* ปุ่มดินสอโผล่มาแบบ fade สั้น ๆ ไม่ใช่กระตุกขึ้นมาเฉย ๆ */
+.profile-readrow .profile-icon-btn {
+  height: 38px;
+  animation: profileEditIn 160ms ease both;
+}
+@keyframes profileEditIn {
+  from { opacity: 0; transform: translateX(4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ลิงก์ "กดดูรูป" ที่อยู่ในบรรทัดคำอธิบายใต้รูป */
+.profile-view-link {
+  margin-left: 4px;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--teal-bright);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color var(--ease);
+}
+.profile-view-link:hover { color: #fff; }
+
+/* =====================================================
+   ดูรูปโปรไฟล์เต็ม
+   ===================================================== */
+.profile-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: rgba(3,6,10,0.82);
+  animation: fadeIn 160ms ease;
+}
+.profile-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+  animation: fadeUp 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  max-width: min(420px, 92vw);
+}
+.profile-viewer-img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: radial-gradient(circle at 35% 35%, var(--bg-overlay), var(--bg-void));
+  overflow: hidden;
+}
+.profile-viewer-img img {
+  width: 100%;
+  height: auto;
+  max-height: 60vh;
+  object-fit: contain;
+  display: block;
+}
+
+.profile-viewer-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+.profile-viewer-edit {
+  flex: 1;
+  padding: 11px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--on-teal);
+  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 100%);
+  border: 1px solid var(--teal-mid);
+  cursor: pointer;
+  transition: transform var(--ease), box-shadow var(--ease), filter var(--ease);
+}
+.profile-viewer-edit:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 0 16px rgba(79,209,197,0.4);
+}
+.profile-viewer-close {
+  padding: 11px 20px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  transition: color var(--ease), border-color var(--ease);
+}
+.profile-viewer-close:hover {
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.4);
 }

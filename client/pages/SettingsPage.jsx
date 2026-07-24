@@ -107,7 +107,7 @@ export default function SettingsPage() {
 
           <div className="settings-save-row">
             {showSaved && <span className="settings-saved-msg">บันทึกแล้ว</span>}
-            <button className="settings-save-btn" onClick={handleSave}>
+            <button className="settings-save-btn sketch-border" onClick={handleSave}>
               บันทึก
             </button>
           </div>

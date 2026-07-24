@@ -11,7 +11,7 @@
 }
 
 .my-role-card.is-werewolf { --faction-color: #e57373; }
-.my-role-card.is-fool     { --faction-color: #b98ee0; }
+.my-role-card.is-fool     { --faction-color: var(--faction-neutral); }
 
 .my-role-head {
   display: flex;

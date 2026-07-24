@@ -35,6 +35,30 @@
   --gold-glow-soft: rgba(var(--accent-rgb), 0.13);
   --on-accent:      #231603;   /* ตัวอักษร/ไอคอนบนพื้น accent — น้ำตาลเข้ม ไม่ใช่ดำสนิท */
 
+  /* ── Semantic palette (สีเสริม) ──
+     4 ตระกูลนี้ "ไม่ใช่" สีเน้นของแบรนด์ — ทองยังเป็นตัวเดียวที่ใช้กับ CTA/exp/level
+     สี่ตัวนี้มีไว้สื่อ "ความหมาย" ของสถานะ/หมวดหมู่ ไม่ใช่ไว้ตกแต่ง
+       teal      → เปิด/สาธารณะ/แพทช์      (น้ำทะเลอันดามัน)
+       rust      → ปิด/เข้าไม่ได้/ส่วนตัว   (สนิมอิฐ)
+       sage      → มีชีวิต/ปกติ/กิจกรรม     (ใบไม้)
+       dustypink → ชุมชน/คน                (ไม่ใช่ม่วง — ห้ามใช้ม่วงในเกมนี้) */
+  --teal-bright:      #4fd1c5;
+  --teal-mid:         #2a9d9e;
+  --teal-dim:         #1a5f60;
+  --on-teal:          #04231f;   /* ตัวอักษรบนพื้นเขียวทะเล — คู่กับ --on-accent ของฝั่งทอง */
+
+  --rust-bright:      #c76b45;
+  --rust-mid:         #a8543f;
+  --rust-dim:         #7a3d2c;
+
+  --sage-bright:      #8fae7a;
+  --sage-mid:         #6b8c5a;
+  --sage-dim:         #4a6640;
+
+  --dustypink-bright: #c98a8a;
+  --dustypink-mid:    #a8666a;
+  --dustypink-dim:    #6e4448;
+
   /* ── Secondary accent — moonlight silver (แสงจันทร์/หมอก ไม่ใช่ปุ่ม) ── */
   --silver:         #9fbcd0;
   --silver-dim:     #6c808d;
@@ -66,6 +90,12 @@
   --danger-soft:    rgba(139,32,32,0.15);
   --success:        #2a6644;
   --success-soft:   rgba(42,102,68,0.15);
+  --warning:        #d9a441;   /* เตือน (ไม่ใช่ error) — เช่นรหัสผ่านความแข็งแรงปานกลาง */
+
+  /* ── สีฝ่ายในเกม — ใช้ทั้งการ์ดบทบาท ป้ายผู้เล่น และหน้าวิธีเล่น ── */
+  --faction-village: #6ecf8a;   /* ฝ่ายหมู่บ้าน */
+  --faction-wolf:    #e57373;   /* ฝ่ายหมาป่า */
+  --faction-neutral: #c98a8a;   /* เป็นกลาง (คนโง่) — ห้ามใช้ม่วงในเกมนี้ */
 
   /* ── Typography — 3-tier system ── */
   --font-logo:      'Cinzel Decorative', 'Trirong', serif;   /* main title / big display text — Cinzel Decorative has no Thai glyphs, Trirong covers Thai characters in the same elegant-serif spirit */
@@ -114,6 +144,10 @@
   --color-disabled:  var(--text-muted);
   --color-danger:    var(--danger);
   --color-success:   #4CAF50;
+  /* สองตัวนี้เคยถูกใช้ใน Auth.css / PlayerCard.css แต่ไม่เคยมีนิยาม
+     → var() แก้ค่าไม่ได้ ทำให้ property นั้นตายทั้งบรรทัด (แถบรหัสผ่านหาย / ป้ายไม่มีขอบ) */
+  --color-warning:   var(--warning);
+  --color-village:   var(--faction-village);
   --font-mono:       'JetBrains Mono', monospace;
   --shadow-card:     var(--shadow-lg);
   --transition:      var(--ease);
@@ -197,6 +231,46 @@ input:focus, select:focus, textarea:focus {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--silver-dim);
+}
+
+/* ── Signature: เส้นกรอบมือวาด + เรืองขาว (ใช้ร่วมทุกหน้า) ──
+   filter #sketch-edge ประกาศครั้งเดียวใน App.jsx
+   .sketch-border      = มี filter ทำให้เส้นไม่เป๊ะตรง — แพงตอน repaint ใช้กับ element ที่ render ครั้งเดียว
+   .sketch-border-lite = ไม่มี filter ใช้เงาซ้อนแทน — สำหรับ list ที่ render ซ้ำ ๆ */
+.sketch-border {
+  position: relative;
+  border: 1.5px solid rgba(255,255,255,0.28);
+  filter: url(#sketch-edge);
+  transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
+}
+.sketch-border:hover {
+  border-color: rgba(255,255,255,0.6);
+  box-shadow: 0 0 14px rgba(255,255,255,0.35), 0 0 3px rgba(255,255,255,0.65);
+}
+.sketch-border-lite {
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.10), 1px 1px 0 0 rgba(255,255,255,0.12);
+  transition: box-shadow 200ms var(--ease), border-color 200ms var(--ease);
+}
+.sketch-border-lite:hover {
+  border-color: rgba(255,255,255,0.5);
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+/* ── Reveal on scroll: ซ่อนไว้ก่อน แล้ว pop ขึ้นตอนเลื่อนมาเจอ ──
+   ใช้ transition ไม่ใช่ animation เพื่อให้ prefers-reduced-motion ที่ตั้งไว้ท้ายไฟล์
+   บีบเวลาเหลือ ~0 แล้วเนื้อหายังโผล่ครบ ไม่ค้างซ่อน */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px) scale(0.985);
+  transition:
+    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+.reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 /* ── Utilities ── */

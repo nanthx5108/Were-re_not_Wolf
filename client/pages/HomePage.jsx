@@ -1,31 +1,46 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/Gamecontext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
 import { useAuth } from '../context/AuthContext.jsx';
 import AuthModal from '../src/components/AuthModal.jsx';
 import HowToPlayModal from '../src/components/HowToPlayModal.jsx';
+import Reveal from '../src/components/Reveal.jsx';
 import { expNeeded, levelProgress, STARTING_LEVEL } from '../../shared/leveling.js';
 import '../src/styles/HomePage.css';
 
 const BG_IMAGE = bgHome;
 const API = '/api/rooms';
 
+/* ── จังหวะ entrance ── ค่าทุกตัวยกมาจาก CSS keyframe เดิมให้ตรงเป๊ะ
+   (เดิม: logo delay 300ms · ปุ่ม 200ms + i×150ms · กระดานข่าว 950ms) */
+const EASE_OUT = [0.22, 1, 0.36, 1];      // = cubic-bezier ที่ entranceRiseIn ใช้
+const EASE_POP = [0.34, 1.4, 0.5, 1];     // = menuBtnPop — มี overshoot เล็กน้อย
+
+/* ลูกของ .menu-panel — from-state ตรงกับ @keyframes menuBtnPop เดิม */
+const menuItemVariants = {
+  hidden:  { opacity: 0, x: -18, y: 10, scale: 0.96 },
+  visible: { opacity: 1, x: 0, y: 0, scale: 1, transition: { duration: 0.46, ease: EASE_POP } },
+};
+
+/* แม่ของปุ่มเมนู — คุมเฉพาะจังหวะ ไม่มี visual ของตัวเอง */
+const menuPanelVariants = {
+  hidden:  {},
+  visible: { transition: { delayChildren: 0.2, staggerChildren: 0.15 } },
+};
+
+/* โลโก้ + กระดานข่าว — เทียบเท่า entranceRiseIn 700ms (เดิม delay 300ms / 950ms) */
+const logoVariants = {
+  hidden:  { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE_OUT, delay: 0.3 } },
+};
+const newsVariants = {
+  hidden:  { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE_OUT, delay: 0.95 } },
+};
+
 const NEWS = [
-  {
-    id: 3,
-    tag: 'อัปเดต',
-    title: 'อัปเดตเวอร์ชัน 1.2.2',
-    desc: 'คืนอนิเมชั่นปุ่มเข้าสู่ระบบแบบเดิม (เรืองเงินนวล) และเพิ่มหิ่งห้อยลอยเรือง ๆ ในหมู่บ้านกลางคืนเล็กน้อย',
-    date: '18/07/2026',
-  },
-  {
-    id: 2,
-    tag: 'อัปเดต',
-    title: 'อัปเดตเวอร์ชัน 1.2.1',
-    desc: 'ยกเครื่องอนิเมชั่นหน้าแรก — ปุ่มขวาบน/ปุ่มหลักเด้งและเรืองแสงตอนชี้, รูปบัญชีเด้งเมื่อชี้แถบผู้เล่น, กระดานประกาศเด้งทั้งกล่อง, ไฮไลต์ 3 อันดับแรกของทำเนียบนักล่า และเอาปุ่ม “เข้าเร็ว” ออก',
-    date: '18/07/2026',
-  },
   {
     id: 1,
     tag: 'อัปเดต',
@@ -53,17 +68,7 @@ function DerpyWolfAvatar({ size = 96 }) {
   );
 }
 
-// เงาคนไม่มีหน้า — ใช้ตอนยังไม่ล็อกอิน (ยังไม่รู้ว่าเป็นใคร)
-function AnonymousAvatar({ size = 48 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <circle cx="24" cy="17" r="8" fill="currentColor" />
-      <path d="M8 44v-3c0-6.6 7.2-11 16-11s16 4.4 16 11v3z" fill="currentColor" />
-    </svg>
-  );
-}
 
-/* ── SVG Icons ── */
 function IconCreate() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -87,7 +92,6 @@ function IconJoin() {
 
 
 
-/* คู่มือ — หนังสือเปิดพร้อมเครื่องหมายคำถาม */
 function IconBook() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -228,7 +232,6 @@ function IconBlock() {
 const BGM_SRC = null;
 const HOVER_SFX_SRC = null;
 
-/* ── ชั้นดาวระยิบ — ตำแหน่ง/จังหวะสุ่มครั้งเดียวตอน mount ── */
 function StarsLayer() {
   const stars = useMemo(() =>
     Array.from({ length: 20 }, (_, i) => ({
@@ -254,7 +257,6 @@ function StarsLayer() {
   );
 }
 
-/* ── หิ่งห้อยไม่กี่ตัว — จุดเรืองอำพันลอยช้า ๆ ในหมู่บ้านกลางคืน ── */
 function FirefliesLayer() {
   const flies = useMemo(() =>
     Array.from({ length: 7 }, (_, i) => ({
@@ -279,29 +281,61 @@ function FirefliesLayer() {
   );
 }
 
-/* ── โลโก้แบบตัวอักษรทยอยโผล่ — ชี้ WOLF ครบ 5 ครั้งมี easter egg เส้นใต้ ── */
+function WolfEasterEgg({ visible }) {
+  return (
+    <span className={`wolf-easter-egg ${visible ? 'is-visible' : ''}`} aria-hidden="true">
+      {/* TODO: แทนที่ด้วย wolf artwork จริงตาม art style ของเว็บ — ตอนนี้เป็นเส้นร่างชั่วคราว */}
+      <svg width="40" height="30" viewBox="0 0 40 30">
+        <path d="M4 26 L14 6 L20 14 L26 6 L36 26" stroke="currentColor" strokeWidth="2" fill="none"
+              strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  );
+}
+
+/* โลโก้เวอร์ชันจอโหลด — ตัวอักษรชุดเดียวกับ TitleLetters แต่ไม่มี state/easter egg
+   จอโหลดไม่ควรมี interaction ใด ๆ */
+function LoadingLogo() {
+  const head = "WE'RE NOT ";
+  return (
+    <h1 className="home-title loading-logo" aria-label="WE'RE NOT WOLF">
+      {head.split('').map((ch, i) => (
+        <span key={i} className="title-ch">{ch === ' ' ? ' ' : ch}</span>
+      ))}
+      <span className="title-wolf">
+        {'WOLF'.split('').map((ch, i) => (
+          <span key={i} className="title-ch">{ch}</span>
+        ))}
+      </span>
+    </h1>
+  );
+}
+
 function TitleLetters() {
   const head = "WE'RE NOT ";
 
-  // ชี้คำว่า WOLF ครบ 5 ครั้ง → เส้นใต้ลากจากซ้ายไปขวา
-  // ค้าง 20 วิ แล้วถอนกลับ (ปลายขวาหดกลับมาทางซ้าย)
-  const [underlineOn, setUnderlineOn] = useState(false);
-  const wolfHovers = useRef(0);
-  const underlineTimer = useRef(null);
-  useEffect(() => () => clearTimeout(underlineTimer.current), []);
+  const hoverTimestamps = useRef([]);
+  const [showWolfGraphic, setShowWolfGraphic] = useState(false);
+  const hideTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(hideTimer.current), []);
 
   function handleWolfEnter() {
-    if (underlineOn) return;
-    wolfHovers.current += 1;
-    if (wolfHovers.current >= 5) {
-      wolfHovers.current = 0;
-      setUnderlineOn(true);
-      underlineTimer.current = setTimeout(() => setUnderlineOn(false), 20000);
+    const now = Date.now();
+    // ทิ้งครั้งที่เก่ากว่า 2 วิก่อนนับ — หน้าต่างเวลาจึงเลื่อนตามจริง ไม่ใช่รีเซ็ตเป็นช่วง ๆ
+    hoverTimestamps.current = hoverTimestamps.current.filter(t => now - t < 2000);
+    hoverTimestamps.current.push(now);
+
+    if (hoverTimestamps.current.length >= 3) {
+      hoverTimestamps.current = [];
+      setShowWolfGraphic(true);
+      clearTimeout(hideTimer.current);
+      hideTimer.current = setTimeout(() => setShowWolfGraphic(false), 1500);
     }
   }
 
   return (
-    <h1 className={`home-title ${underlineOn ? 'has-underline' : ''}`}>
+    <h1 className="home-title">
       {head.split('').map((ch, i) => (
         <span key={i} className="title-ch" style={{ '--ch-i': i }}>
           {ch === ' ' ? ' ' : ch}
@@ -311,8 +345,8 @@ function TitleLetters() {
         {'WOLF'.split('').map((ch, i) => (
           <span key={i} className="title-ch" style={{ '--ch-i': head.length + i }}>{ch}</span>
         ))}
+        <WolfEasterEgg visible={showWolfGraphic} />
       </span>
-      <span className="title-underline" aria-hidden="true" />
     </h1>
   );
 }
@@ -326,26 +360,26 @@ function IconTrophy() {
   );
 }
 
-/* ── ทำเนียบนักล่า — top 5 เลเวลสูงสุดของหมู่บ้าน ── */
+/* ── กระดานคะแนน — top 5 เลเวลสูงสุด ── */
 function Leaderboard({ players, loading }) {
   const RANK_CLASS = ['is-gold', 'is-silver', 'is-bronze'];
   return (
-    <div className="panel-box leaderboard-box">
+    <div className="panel-box leaderboard-box sketch-border">
       <div className="home-news-head">
         <div>
-          <h2 className="home-news-heading">ทำเนียบนักล่าประจำหมู่บ้าน</h2>
+          <h2 className="home-news-heading">กระดานคะแนนการเล่น</h2>
         </div>
         <span className="leaderboard-trophy"><IconTrophy /></span>
       </div>
 
       {loading ? (
-        <div className="leaderboard-empty">กำลังเปิดบันทึกหมู่บ้าน…</div>
+        <div className="leaderboard-empty">กำลังโหลดคะแนน…</div>
       ) : players.length === 0 ? (
-        <div className="leaderboard-empty">ยังไม่มีใครสร้างชื่อ… ตำแหน่งแรกรอคุณอยู่</div>
+        <div className="leaderboard-empty">ยังไม่มีคะแนน — เล่นเกมแรกเพื่อขึ้นกระดาน</div>
       ) : (
         <div className="leaderboard-list">
           {players.map((p, i) => (
-            <div key={`${p.name}-${i}`} className={`leaderboard-row ${RANK_CLASS[i] || ''}`} style={{ '--lb-i': i }}>
+            <div key={`${p.name}-${i}`} className={`leaderboard-row sketch-border-lite ${RANK_CLASS[i] || ''}`} style={{ '--lb-i': i }}>
               <span className="leaderboard-rank">{i + 1}</span>
               <span className="leaderboard-ava">
                 {p.avatarUrl
@@ -396,6 +430,22 @@ export default function HomePage() {
     sfx.play().catch(() => {});
   }
 
+  // หน้าจอโหลดก่อนเข้าเกม — รอฟอนต์พร้อมค่อยเปิดม่าน ไม่งั้นตัวอักษรจะกระตุกตอน swap
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const MIN_DISPLAY = 600;   // โชว์อย่างน้อยเท่านี้ ไม่งั้นวาบผ่านจนดูเหมือนจอกระพริบ
+    const MAX_WAIT    = 3000;  // ฟอนต์ค้าง/เน็ตช้าก็ต้องเข้าเกมได้อยู่ดี
+    const start = Date.now();
+    const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
+    const timeoutFallback = new Promise(res => setTimeout(res, MAX_WAIT));
+
+    Promise.race([fontsReady, timeoutFallback]).then(() => {
+      const elapsed = Date.now() - start;
+      setTimeout(() => setIsLoading(false), Math.max(MIN_DISPLAY - elapsed, 0));
+    });
+  }, []);
+
   const [mode, setMode] = useState(null);
   const [nickname, setNickname] = useState('');
   const [roomName, setRoomName] = useState('');
@@ -406,7 +456,6 @@ export default function HomePage() {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
-  const [showDD, setShowDD] = useState(false);
   const [publicRooms, setPublicRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [joinStep, setJoinStep] = useState('browse'); // 'browse' | 'code' | 'name'
@@ -417,8 +466,37 @@ export default function HomePage() {
   const [onlineCount, setOnlineCount] = useState(null);
   const [topPlayers, setTopPlayers] = useState([]);
   const [loadingTop, setLoadingTop] = useState(true);
-  const ddRef = useRef(null);
   const pageRef = useRef(null);
+
+  // ── โลโก้หลบเมาส์ — เข้าใกล้กึ่งกลางกว่า 80px แล้วจางหาย ──
+  const logoRef = useRef(null);
+  const [logoHiddenByCursor, setLogoHiddenByCursor] = useState(false);
+  const rafId = useRef(null);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const PROXIMITY_PX = 80;
+
+    // throttle ด้วย rAF — mousemove ยิงถี่กว่าเฟรม การอ่าน rect ทุกครั้งคือ layout ซ้ำ ๆ ฟรี ๆ
+    function handleMove(e) {
+      if (rafId.current) return;
+      rafId.current = requestAnimationFrame(() => {
+        rafId.current = null;
+        const el = logoRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        setLogoHiddenByCursor(Math.hypot(e.clientX - cx, e.clientY - cy) < PROXIMITY_PX);
+      });
+    }
+
+    window.addEventListener('mousemove', handleMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, [isLoading]);
 
   // สถิติหมู่บ้าน — จำนวนห้องเปิด/คนในห้อง โชว์ใต้โลโก้
   // ทำเนียบนักล่า
@@ -449,14 +527,6 @@ export default function HomePage() {
     fetchOnline();
     const id = setInterval(fetchOnline, 8000);
     return () => { cancelled = true; clearInterval(id); };
-  }, []);
-
-  useEffect(() => {
-    function handleClick(e) {
-      if (ddRef.current && !ddRef.current.contains(e.target)) setShowDD(false);
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
   async function handleCreate(e) {
@@ -586,7 +656,37 @@ export default function HomePage() {
   const isJoinBrowse = mode === 'join' && joinStep === 'browse';
 
   return (
-    <div ref={pageRef} className="home-page" style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>
+    /* reducedMotion="user" ให้ motion เคารพการตั้งค่าลดการเคลื่อนไหวของ OS เอง
+       (@media prefers-reduced-motion ใน global.css คุมได้แค่ CSS ไม่ถึง animation ที่เป็น JS) */
+    <MotionConfig reducedMotion="user">
+    {/* mode="wait" — จอโหลดต้องเฟดออกให้จบก่อน หน้าแรกถึงเริ่มเข้า
+        เดิมเป็น early-return จึงตัดหายทันทีไม่มี exit */}
+    <AnimatePresence mode="wait">
+    {isLoading ? (
+      <motion.div
+        key="loading"
+        className="loading-screen"
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      >
+        <LoadingLogo />
+        <div className="loading-spinner" />
+      </motion.div>
+    ) : (
+    <motion.div
+      key="page"
+      ref={pageRef}
+      className="home-page"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.7, ease: 'easeOut' }}
+      style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}
+    >
+      {/* SVG filter #sketch-edge ย้ายไปประกาศครั้งเดียวใน App.jsx แล้ว */}
+
+      {/* ม่านทึบชั้นเดียว วางเหนือรูปพื้นหลังแต่ใต้ชั้นบรรยากาศ —
+          กดฉากเกาะให้จมลงเพื่อให้ panel/ปุ่มลอยเด่นขึ้นมา ปรับค่าเดียวจบ */}
+      <div className="home-darken-layer" aria-hidden="true" />
       <div className="home-overlay" />
       <StarsLayer />
       <div className="home-moonbeams" aria-hidden="true" />
@@ -603,43 +703,20 @@ export default function HomePage() {
           <div className="online-badge" title="ผู้เล่นที่ออนไลน์อยู่ตอนนี้">
             <span className="online-dot" />
             <span className="online-text">
-              ออนไลน์ · <span className="online-count">{onlineCount ?? '—'}</span> ชาวบ้าน
+              ออนไลน์ · <span className="online-count">{onlineCount ?? '—'}</span> คน
             </span>
           </div>
 
           <div className="home-auth-actions">
             {user ? (
-              <div className="user-dropdown-wrap" ref={ddRef}>
-                <button className="user-pill" onClick={() => setShowDD(v => !v)}>
-                  <span className="user-avatar-dot">
-                    {user.avatarUrl
-                      ? <img src={user.avatarUrl} alt="" className="user-avatar-img" />
-                      : <DerpyWolfAvatar size={22} />}
-                  </span>
-                  <span className="user-pill-name">{user.displayName || user.username}</span>
-                </button>
-                {showDD && (
-                  <div className="user-dropdown fade-in">
-                    <div className="user-dropdown-heading">บัญชีของคุณ</div>
-                    <button className="user-dropdown-btn" onClick={() => { navigate('/profile/view'); setShowDD(false); }}>
-                      ดูข้อมูล
-                    </button>
-                    <button className="user-dropdown-btn" onClick={() => { navigate('/profile'); setShowDD(false); }}>
-                      ตั้งค่าบัญชี
-                    </button>
-                    <button className="user-dropdown-btn is-danger" onClick={() => { logout(); setShowDD(false); }}>
-                      หนีแล้วหรอ?
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UserPill user={user} onLogout={logout} navigate={navigate} />
             ) : (
               <>
-                <button className="top-btn top-btn-ghost" onClick={() => navigate('/login')} onMouseEnter={playHoverSfx}>
+                <button className="top-btn top-btn-ghost sketch-border-lite" onClick={() => navigate('/login')} onMouseEnter={playHoverSfx}>
                   <IconLogin />
                   เข้าสู่ระบบ
                 </button>
-                <button className="top-btn top-btn-gold" onClick={() => navigate('/register')} onMouseEnter={playHoverSfx}>
+                <button className="top-btn top-btn-gold sketch-border-lite" onClick={() => navigate('/register')} onMouseEnter={playHoverSfx}>
                   <IconRegister />
                   สมัครสมาชิก
                 </button>
@@ -648,60 +725,67 @@ export default function HomePage() {
           </div>
         </div>
 
-        {!isJoinBrowse && (
-          <div className="home-header">
-            <TitleLetters />
-            <div className="title-ornament">
-              <span className="title-ornament-line" />
-              <span className="title-ornament-mark" />
-              <span className="title-ornament-line" />
-            </div>
-          </div>
-        )}
-
         <div className={`home-grid ${isJoinBrowse ? 'is-join-browse' : ''}`}>
 
-          {/* LEFT */}
-          <div className="home-left">
+          {/* จอแรก: โลโก้ + เมนู สูงเต็มจอพอดี กระดานด้านล่างจึงเริ่มพ้นขอบจอเสมอ */}
+          {/* container ของลำดับ entrance — ลูกทุกตัวรับ "visible" ต่อจากนี้ */}
+          <motion.div className="home-hero" initial="hidden" animate="visible">
+            {/* สองชั้น: motion คุม entrance (y+opacity) · div ชั้นในคง proximity fade เดิมไว้
+                ถ้ารวมเป็นชั้นเดียว inline style ของ motion จะทับ opacity ของคลาสจน fade ตาย */}
+            {!isJoinBrowse && (
+              <motion.div variants={logoVariants}>
+                <div
+                  ref={logoRef}
+                  className={`home-header ${logoHiddenByCursor ? 'is-hidden-by-cursor' : ''}`}
+                >
+                  <TitleLetters />
+                  <div className="title-ornament">
+                    <span className="title-ornament-line" />
+                    <span className="title-ornament-mark" />
+                    <span className="title-ornament-line" />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* แถวเดียวกัน: เมนูหลัก (ซ้าย) + กระดานข่าว (ขวา) */}
+            <div className="home-hero-row">
+            <div className="home-left">
+            {/* stagger อยู่ที่แม่ ปุ่มลูกไม่ต้องรู้ลำดับตัวเอง */}
             {!mode && (
-              <div className="menu-panel">
+              <motion.div className="menu-panel" variants={menuPanelVariants}>
                 <MenuBtn
                   primary
                   icon={<IconCreate />}
                   title="สร้างห้อง"
-                  emoji="🏠"
                   onClick={() => user ? setMode('create') : setShowModal(true)}
                   onHover={playHoverSfx}
                 />
-                <div className="menu-divider" />
                 <MenuBtn
                   icon={<IconJoin />}
                   title="เข้าร่วมห้อง"
-                  emoji="🚪"
                   onClick={() => user ? setMode('join') : setShowModal(true)}
                   onHover={playHoverSfx}
                 />
-                <div className="menu-divider" />
                 <MenuBtn
                   icon={<IconBook />}
                   title="วิธีการเล่น"
-                  emoji="📖"
+                  hint="อ่านกติกา บทบาทและวิธีการเล่นได้ที่นี่"
                   onClick={() => setShowHowTo(true)}
                   onHover={playHoverSfx}
                 />
-                <div className="menu-divider" />
                 <MenuBtn
                   icon={<IconSettings />}
                   title="การตั้งค่า"
-                  emoji="⚙️"
+                  hint="เสียงและการแสดงผล"
                   onClick={() => navigate('/settings')}
                   onHover={playHoverSfx}
                 />
-              </div>
+              </motion.div>
             )}
 
             {mode === 'create' && (
-              <form onSubmit={handleCreate} className="home-form fade-in">
+              <form onSubmit={handleCreate} className="home-form sketch-border fade-in">
                 <h2 className="form-title">สร้างห้องใหม่</h2>
                 {error && <ErrorBox msg={error} />}
                 <Field label="ชื่อของคุณ" id="nick" value={nickname}
@@ -725,18 +809,18 @@ export default function HomePage() {
                     <span>
                       ห้องส่วนตัว
                       <span className="privacy-hint">
-                        {isPrivate ? 'เฉพาะผู้ที่ได้รับเชิญเท่านั้น' : 'คนน่าสงสัยก็เข้าได้เหมือนกัน'}
+                        {isPrivate ? 'เข้าได้เฉพาะคนที่มีรหัสห้อง' : 'ใครก็เข้าได้ ห้องจะแสดงในรายการ'}
                       </span>
                     </span>
                   </label>
                 </div>
 
                 <p className="form-note">
-                  บทบาทและเวลาแต่ละช่วงตั้งได้ในห้องรอ ก่อนกดเริ่มเกม
+                  บทบาทและเวลาแต่ละช่วง
                 </p>
 
                 <div className="btn-row">
-                  <button type="submit" className="btn-primary"
+                  <button type="submit" className="btn-primary sketch-border"
                     disabled={loading || !nickname.trim() || !roomName.trim()}>
                     {loading ? 'กำลังสร้าง...' : 'สร้างห้อง'}
                   </button>
@@ -746,11 +830,7 @@ export default function HomePage() {
             )}
 
             {mode === 'join' && (
-              <form onSubmit={joinStep === 'code' ? confirmRoomCode : handleJoin} className="home-form fade-in">
-                {joinStep !== 'browse' && (
-                  <>
-                  </>
-                )}
+              <form onSubmit={joinStep === 'code' ? confirmRoomCode : handleJoin} className="home-form sketch-border fade-in">
 
                 {joinStep === 'browse' && (
                   <>
@@ -796,12 +876,12 @@ export default function HomePage() {
                         <div className="room-list-empty-rich">
                           <IconHouse />
                           <div className="room-list-empty-title">
-                            {publicRooms.length === 0 ? 'ตอนนี้ยังไม่มีห้องเปิดอยู่' : 'ไม่พบห้องที่ตรงกับตัวกรอง'}
+                            {publicRooms.length === 0 ? 'ตอนนี้ยังไม่มีห้องเปิดอยู่' : 'ไม่พบห้องที่ตรงกัน'}
                           </div>
                           <div className="room-list-empty-sub">
                             {publicRooms.length === 0
-                              ? 'หมู่บ้านเงียบสงัด… อาจถึงเวลาที่คุณจะเป็นคนแรกที่จุดตะเกียง'
-                              : 'ลองเปลี่ยนตัวกรองหรือคำค้นหาดูอีกครั้ง'}
+                              ? 'ไม่มีคนอยู่'
+                              : 'ลองค้นหาดูอีกครั้ง'}
                           </div>
                         </div>
                       ) : (
@@ -816,7 +896,7 @@ export default function HomePage() {
                             const hostInitial = (r.host || '?').trim().charAt(0).toUpperCase();
                             const hostColor = HOST_AVATAR_COLORS[i % HOST_AVATAR_COLORS.length];
                             return (
-                              <div key={r.id} className={`room-row-rich ${disabled ? 'is-disabled' : ''}`}>
+                              <div key={r.id} className={`room-row-rich sketch-border-lite ${disabled ? 'is-disabled' : ''}`}>
                                 <span className="room-row-index">{String(i + 1).padStart(2, '0')}</span>
 
                                 <span className="room-row-icon">
@@ -885,7 +965,7 @@ export default function HomePage() {
                       max={8} extraClassName="field-input-code" autoFocus />
 
                     <div className="btn-row">
-                      <button type="submit" className="btn-primary" disabled={!roomCode.trim()}>
+                      <button type="submit" className="btn-primary sketch-border" disabled={!roomCode.trim()}>
                         ถัดไป
                       </button>
                       <button type="button" className="btn-back" onClick={backJoinStep}>กลับ</button>
@@ -905,7 +985,7 @@ export default function HomePage() {
                       onChange={e => setNickname(e.target.value)} max={32} autoFocus />
 
                     <div className="btn-row">
-                      <button type="submit" className="btn-primary"
+                      <button type="submit" className="btn-primary sketch-border"
                         disabled={loading || !nickname.trim() || !roomCode.trim()}>
                         {loading ? 'กำลังเข้าร่วม...' : 'เข้าร่วม'}
                       </button>
@@ -916,60 +996,69 @@ export default function HomePage() {
               </form>
             )}
 
-            {/* Player bar */}
-            {!mode && <PlayerBar user={user} />}
-          </div>
-
-          {/* RIGHT — News */}
-          {!isJoinBrowse && (
-            <div className="home-right">
-              <div className="panel-box">
-                <div className="home-news-head">
-                  <div>
-                    <h2 className="home-news-heading">กระดานประกาศหมู่บ้าน</h2>
-                  </div>
-                  <span className="home-news-pin"><IconPin /></span>
-                </div>
-
-                <div className="home-news-list">
-                  {NEWS.map(n => <NewsRow key={n.id} news={n} />)}
-                </div>
-
-                <div className="home-dev-note">
-                  <div className="home-dev-note-label">Developer Note</div>
-                  <div className="home-dev-note-text">&ldquo;เพิ่มRole Slicerและในอนาคตจะมีการupdate roleอื่นมาเพิ่มเติม&hellip; Roleใหม่จะทำให้เกมเล่นสนุกกว่าเดิม&rdquo;</div>
-                </div>
-
-                <div className="home-news-footer">
-                  <span className="home-news-updated">อัปเดตล่าสุด &middot; {NEWS[0]?.date}</span>
-                  <button className="more-btn" onClick={() => navigate('/news')}>
-                    ดูทั้งหมด <span className="more-arrow"><IconArrow /></span>
-                  </button>
-                </div>
-              </div>
-
-              <Leaderboard players={topPlayers} loading={loadingTop} />
             </div>
+
+            {/* กระดานข่าว — อยู่ในจอแรก แถวเดียวกับปุ่มหลัก */}
+            {!isJoinBrowse && (
+              <motion.div
+                className="home-news"
+                variants={newsVariants}
+                whileHover={{ y: -4 }}
+              >
+                <div className="panel-box sketch-border">
+                  <div className="home-news-head">
+                    <div>
+                      <h2 className="home-news-heading">กระดานประกาศข่าวสาร</h2>
+                    </div>
+                    <span className="home-news-pin"><IconPin /></span>
+                  </div>
+
+                  <div className="home-news-list">
+                    {NEWS.map(n => <NewsRow key={n.id} news={n} />)}
+                  </div>
+                  <div className="home-news-footer">
+                    <span className="home-news-updated">อัปเดตล่าสุด &middot; {NEWS[0]?.date}</span>
+                    <button className="more-btn" onClick={() => navigate('/news')}>
+                      ดูทั้งหมด <span className="more-arrow"><IconArrow /></span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            </div>
+          </motion.div>
+
+          {/* กระดานคะแนน — อยู่ล่างจอแรก ซ่อนไว้จนกว่าผู้ใช้จะเลื่อนลงมาเจอ */}
+          {!isJoinBrowse && (
+            <Reveal className="home-below">
+              <Leaderboard players={topPlayers} loading={loadingTop} />
+            </Reveal>
           )}
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="home-footer">
-        <span className="version">v1.2.2</span>
+      {/* Footer — อยู่ท้ายสุด ซ่อนไว้จนเลื่อนถึง */}
+      <Reveal as="footer" className="home-footer">
+        <div className="home-footer-left">
+          <span className="version">v1.0.1</span>
+          <span className="footer-credit">© 2026 Nanthaphat Punyaphat &amp; Nam</span>
+        </div>
         <div className="socials">
-          <a className="soc-btn" title="Discord" href="https://discord.gg/gvDNBHQKT" target="_blank" rel="noopener noreferrer">
+          <a className="soc-btn sketch-border" title="Discord" href="https://discord.gg/gvDNBHQKT" target="_blank" rel="noopener noreferrer">
             <IconDiscord />
           </a>
-          <a className="soc-btn" title="Facebook" href="https://www.facebook.com/RayongTC?locale=th_TH" target="_blank" rel="noopener noreferrer">
+          <a className="soc-btn sketch-border" title="Facebook" href="https://www.facebook.com/RayongTC?locale=th_TH" target="_blank" rel="noopener noreferrer">
             <IconFacebook />
           </a>
         </div>
-      </footer>
+      </Reveal>
 
       {showModal && <AuthModal onClose={() => setShowModal(false)} />}
       {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}
-    </div>
+    </motion.div>
+    )}
+    </AnimatePresence>
+    </MotionConfig>
   );
 }
 
@@ -991,12 +1080,16 @@ function NewsRow({ news }) {
  * แถบข้อมูลผู้เล่น — รูป, ชื่อ, เลเวล, แถบ exp แบบ Minecraft
  * ตัวเลขทุกตัวมาจาก user object ที่ server ส่งมา ไม่มีการคำนวณเลเวลซ้ำฝั่งนี้
  */
-function PlayerBar({ user }) {
+/* ── ตัวตนผู้เล่นรวมไว้จุดเดียวที่ topbar — avatar + ชื่อ + Lv. + แถบ exp แบบย่อ ── */
+function UserPill({ user, onLogout, navigate }) {
+  const [flyoutOpen, setFlyoutOpen] = useState(false);
+  const pillRef = useRef(null);
+
   const level = user?.level ?? STARTING_LEVEL;
   const exp   = user?.exp ?? 0;
   const need  = user?.expNeeded ?? expNeeded(level);
 
-  // เลเวลอัปแล้วให้แถบสว่างวาบทีนึง
+  // เลเวลอัปแล้วให้แถบสว่างวาบทีนึง — ใช้ animation ชุดเดิมที่ย้ายมาจาก player bar
   const [leveledUp, setLeveledUp] = useState(false);
   const prevLevel = useRef(level);
 
@@ -1009,62 +1102,88 @@ function PlayerBar({ user }) {
     prevLevel.current = level;
   }, [level]);
 
+  useEffect(() => {
+    function onDocMouseDown(e) {
+      if (pillRef.current && !pillRef.current.contains(e.target)) setFlyoutOpen(false);
+    }
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, []);
+
   return (
-    <div className="player-bar fade-in">
+    <div className="user-pill-wrap" ref={pillRef}>
+      <button
+        className="user-pill sketch-border-lite"
+        onClick={() => setFlyoutOpen(o => !o)}
+        aria-expanded={flyoutOpen}
+        aria-haspopup="true"
+      >
+        <span className="user-pill-avatar">
+          {user.avatarUrl
+            ? <img src={user.avatarUrl} alt="" />
+            : <DerpyWolfAvatar size={26} />}
+        </span>
 
-      <div className={`player-ava ${!user ? 'is-anon' : ''}`}>
-        {!user
-          ? <AnonymousAvatar size={48} />
-          : user.avatarUrl
-            ? <img src={user.avatarUrl} alt="" className="player-ava-img" />
-            : <DerpyWolfAvatar size={48} />}
-      </div>
-
-      <div className="player-info">
-        <div className="player-name">
-          {user ? (user.displayName || user.username) : 'ยังไม่ได้เข้าสู่ระบบ'}
-        </div>
-
-        {user ? (
-          <>
-            <div className="player-level-row">
-              <span className={`player-level-badge ${leveledUp ? 'is-levelup' : ''}`}>
-                Lv. {level}
-              </span>
-              <span className="player-level-count">{exp} / {need} เกม</span>
-            </div>
-
-            <div className="player-exp">
-              <div
+        <span className="user-pill-info">
+          <span className="user-pill-name">{user.displayName || user.username}</span>
+          <span className="user-pill-exp-row">
+            <span className={`user-pill-level ${leveledUp ? 'is-levelup' : ''}`}>Lv.{level}</span>
+            <span className="user-pill-exp-track player-exp">
+              <span
                 className={`player-exp-fill ${leveledUp ? 'is-levelup' : ''}`}
                 style={{ width: `${levelProgress(level, exp) * 100}%` }}
               />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="player-level">เข้าสู่ระบบเพื่อบันทึกเลเวลและสถิติของนาย</div>
-          </>
+            </span>
+            <span className="user-pill-exp-count">{exp}/{need}</span>
+          </span>
+        </span>
+      </button>
+
+      {/* AnimatePresence ทำให้ตอนปิดมี exit จริง — conditional render เฉย ๆ จะหายวับทันที
+          (คลาส fade-in เดิมถูกถอดออก ไม่งั้นจะซ้อนกับ opacity ที่ motion คุม) */}
+      <AnimatePresence>
+        {flyoutOpen && (
+          <motion.div
+            className="user-pill-flyout sketch-border"
+            role="menu"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
+            <button role="menuitem" onClick={() => { navigate('/profile'); setFlyoutOpen(false); }}>
+              ดูโปรไฟล์
+            </button>
+            <button role="menuitem" onClick={() => { onLogout(); setFlyoutOpen(false); }}>
+              ออกจากระบบ
+            </button>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
 
-function MenuBtn({ title, sub, onClick, primary = false, icon, onHover }) {
+// index = ลำดับปุ่ม ใช้หน่วงให้ทยอยโผล่ทีละใบ · hint = คำอธิบายจาง ๆ ที่โผล่ตอนชี้
+// entrance รับ stagger มาจากแม่ (.menu-panel) — ปุ่มไม่ต้องรู้ลำดับตัวเองแล้ว
+// hover/tap คุมด้วย motion ไม่ใช่ CSS เพราะ CSS animation จะแย่ง transform
+// ทำให้ hover ไม่ขยับตลอดช่วงที่ปุ่มยังโผล่ไม่เสร็จ
+function MenuBtn({ title, sub, hint, onClick, primary = false, icon, onHover }) {
   return (
-    <button type="button" onClick={onClick} disabled={!onClick}
+    <motion.button type="button" onClick={onClick} disabled={!onClick}
       onMouseEnter={onHover}
-      className={`menu-btn ${primary ? 'is-primary' : ''}`}>
-      {primary && <span className="menu-btn-corner menu-btn-corner-tl" aria-hidden="true" />}
-      {primary && <span className="menu-btn-corner menu-btn-corner-br" aria-hidden="true" />}
+      variants={menuItemVariants}
+      whileHover={onClick ? { y: -2 } : undefined}
+      whileTap={onClick ? { scale: 0.98 } : undefined}
+      className={`menu-btn sketch-border ${primary ? 'is-primary' : ''}`}>
       <div className="menu-icon">{icon}</div>
       <div className="menu-text">
         <div className="menu-title">{title}</div>
         {sub && <div className="menu-sub">{sub}</div>}
+        {hint && <span className="menu-hint">{hint}</span>}
       </div>
       <span className="menu-arrow"><IconArrow /></span>
-    </button>
+    </motion.button>
   );
 }
 

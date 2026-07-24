@@ -11,6 +11,16 @@
   overflow-x: hidden;
   font-family: var(--font-body);
   color: var(--text-primary);
+
+  /* สีเน้น → เขียวทะเล teal ให้ตรงกับหน้าแรก */
+  --accent-rgb:       79,209,197;
+  --gold-bright:      #4fd1c5;
+  --gold-mid:         #2a9d9e;
+  --gold-dim:         #1a5f60;
+  --on-accent:        #04231f;
+  --color-accent:     #4fd1c5;
+  --color-accent-dim: #1a5f60;
+  --text-gold:        #a7d8d2;
 }
 
 .view-profile-overlay {
@@ -127,7 +137,7 @@
 }
 
 .view-profile-sub {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.78rem;
   color: var(--text-muted);
   text-align: center;
@@ -179,11 +189,11 @@
 }
 
 .view-profile-field-label {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 

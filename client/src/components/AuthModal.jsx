@@ -17,7 +17,7 @@ export default function AuthModal({ onClose, message }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={e => e.stopPropagation()}>
+      <div className="modal-card sketch-border" onClick={e => e.stopPropagation()}>
         <div className="modal-icon">W</div>
         <h3 className="modal-title">ต้องเข้าสู่ระบบก่อน</h3>
         <p className="modal-body">

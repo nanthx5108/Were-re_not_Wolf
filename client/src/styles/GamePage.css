@@ -133,9 +133,9 @@
 }
 .gp-clock.is-urgent .gp-clock-time { color: var(--phase-voting); }
 .gp-clock-label {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.72rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -212,7 +212,7 @@
 }
 .gp-roomcode {
   margin-top: 4px;
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   color: var(--text-muted);
@@ -369,9 +369,9 @@
   color: var(--gold-bright);
 }
 .gpc-headtag {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.66rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   color: var(--silver);
 }
 
@@ -447,7 +447,7 @@
   background: rgba(159,188,208,0.10);
   border: 1px solid rgba(159,188,208,0.28);
   color: var(--silver);
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   letter-spacing: 0.04em;
 }
 
@@ -561,9 +561,9 @@
 }
 .gps-hostdot { color: var(--gold-bright); font-size: 0.72rem; }
 .gps-tag {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.6rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   color: var(--phase-voting);
   text-transform: uppercase;
 }
@@ -651,9 +651,9 @@
 .gpch-note {
   position: absolute;
   bottom: 10px;
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   color: var(--text-muted);
   text-transform: uppercase;
 }
@@ -674,9 +674,9 @@
     var(--bg-elevated);
 }
 .gpz-kicker {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.66rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--gold-bright);
 }
@@ -702,9 +702,9 @@
   border-radius: inherit;
 }
 .gpr-kicker {
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.64rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -724,7 +724,7 @@
   color: var(--silver-dim);
   line-height: 1;
 }
-.gpr-hint { font-family: var(--font-meta); font-size: 0.66rem; color: var(--silver-dim); }
+.gpr-hint { font-family: var(--font-body); font-size: 0.66rem; color: var(--silver-dim); }
 
 /* open */
 /* ภาพการ์ดจริง (public/roles/*.png) — สัดส่วน 1:1 ตามไฟล์ต้นฉบับ */
@@ -760,9 +760,9 @@
 .gpr-toggle {
   align-self: center;
   margin-top: 2px;
-  font-family: var(--font-meta);
+  font-family: var(--font-body);
   font-size: 0.66rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   color: var(--gold-bright);
   border: 1px solid var(--gold-dim);
   border-radius: var(--radius-sm);

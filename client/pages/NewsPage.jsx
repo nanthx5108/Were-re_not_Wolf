@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bgHome from '../src/assets/bgHome.jpg';
-import '../src/styles/NewsPage.css';
+import Reveal from '../src/components/Reveal.jsx';
+import '../src/styles/Newspage.css';
 
 const ALL_NEWS = [
   {
@@ -77,9 +78,11 @@ export default function NewsPage() {
         </div>
 
         <div className="news-grid">
-          {filtered.map(news => (
-            <div
+          {filtered.map((news, i) => (
+            <Reveal
               key={news.id}
+              /* หน่วงไล่ทีละใบ แต่ตัดที่ใบที่ 6 — ถ้าปล่อยไปเรื่อย ๆ ใบท้าย ๆ จะรอนานเกิน */
+              delay={Math.min(i, 5) * 70}
               className={`news-card ${hovered === news.id ? 'is-hovered' : ''}`}
               onMouseEnter={() => setHovered(news.id)}
               onMouseLeave={() => setHovered(null)}
@@ -104,7 +107,7 @@ export default function NewsPage() {
               <div className="news-card-footer">
                 <span className="news-card-date">{news.date}</span>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
 

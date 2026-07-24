@@ -13,7 +13,8 @@ const CHANNEL_TAG = {
   dead:     '👻 ',
 };
 
-export default function ChatBox({ showWerewolfChannel = false }) {
+// showHead = false ใช้ตอนที่กล่องแม่มีหัวข้ออยู่แล้ว (เช่นแท็บ "ช่องแชท" ในหน้า Lobby)
+export default function ChatBox({ showWerewolfChannel = false, showHead = true }) {
   const {
     room, messages, sendMessage, sendTyping, sendStopTyping, myRole, silencedNote,
     isDead, loadDeadHistory, censorNote, clearCensorNote,
@@ -83,12 +84,14 @@ export default function ChatBox({ showWerewolfChannel = false }) {
 
   return (
     <div className="gpc gp-panel">
-      <div className="gpc-head">
-        <h3 className="gpc-title">{isDead ? 'ห้องวิญญาณ' : 'วงสนทนา'}</h3>
-        {isDead
-          ? <span className="gpc-headtag">👻 คุยได้เฉพาะกับคนตายด้วยกัน</span>
-          : isNightClosed && <span className="gpc-headtag">🌙 หมู่บ้านหลับใหล</span>}
-      </div>
+      {showHead && (
+        <div className="gpc-head">
+          <h3 className="gpc-title">{isDead ? 'ห้องวิญญาณ' : 'วงสนทนา'}</h3>
+          {isDead
+            ? <span className="gpc-headtag">👻 คุยได้เฉพาะกับคนตายด้วยกัน</span>
+            : isNightClosed && <span className="gpc-headtag">🌙 หมู่บ้านหลับใหล</span>}
+        </div>
+      )}
 
       <div className="gpc-messages custom-scrollbar">
         {messages.length === 0 && (

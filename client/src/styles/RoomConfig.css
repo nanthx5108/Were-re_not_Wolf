@@ -36,10 +36,38 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
+  padding: 9px 11px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 55%),
+    var(--bg-input);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--ease), background var(--ease), transform var(--ease);
+  animation: cfgRowIn 340ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--row-i, 0) * 45ms);
+}
+
+/* ขีดอำพันด้านซ้ายสว่างขึ้นตอน hover — บอกว่าแถวนี้แตะได้ */
+.roomcfg-role::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--gold-mid);
+  opacity: 0;
+  transition: opacity var(--ease);
+}
+.roomcfg-role:hover {
+  border-color: var(--border-default);
+  transform: translateX(2px);
+}
+.roomcfg-role:hover::before { opacity: 0.7; }
+
+@keyframes cfgRowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .roomcfg-role-icon { font-size: 1.1rem; flex-shrink: 0; }
@@ -105,51 +133,88 @@
   line-height: 1.5;
 }
 
+/* ── เวลาแต่ละช่วง: สไลเดอร์เรียงลงมา อ่านค่าได้จากตัวเลขใหญ่เหนือราง ── */
 .roomcfg-durations {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
 .roomcfg-duration {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 6px 8px;
   min-width: 0;
+  animation: cfgRowIn 340ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--row-i, 0) * 60ms);
 }
 
 .roomcfg-duration-label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-}
-
-.roomcfg-duration-input {
-  width: 100%;
-  padding: 8px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: 0.85rem;
-}
-.roomcfg-duration-input:focus {
-  outline: none;
-  border-color: var(--gold-dim);
-}
-
-.roomcfg-duration-range {
-  font-size: 0.65rem;
-  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--silver);
+  letter-spacing: 0.02em;
 }
 
 .roomcfg-duration-value {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-family: var(--font-meta);
+  font-size: 0.95rem;
+  color: var(--gold-bright);
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
+.roomcfg-duration-unit {
+  /* "วินาที" เป็นไทย — Special Elite ของแม่ไม่มีตัวไทย ต้องกลับเป็น Sriracha */
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+/* ราง: ฝั่งซ้ายของหัวเป็นอำพัน ฝั่งขวาเป็นรางเปล่า — คุมด้วยตัวแปร --fill */
+.roomcfg-slider {
+  grid-column: 1 / -1;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 99px;
+  background:
+    linear-gradient(90deg, var(--gold-dim) 0%, var(--gold-bright) var(--fill, 0%),
+                    rgba(255,255,255,0.08) var(--fill, 0%), rgba(255,255,255,0.08) 100%);
+  cursor: pointer;
+}
+.roomcfg-slider:focus { outline: none; box-shadow: none; }
+.roomcfg-slider.is-readonly { cursor: default; opacity: 0.75; }
+
+.roomcfg-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  border: 2px solid var(--bg-elevated);
+  box-shadow: 0 0 0 1px var(--gold-dim), 0 0 10px rgba(var(--accent-rgb), 0.5);
+  transition: transform var(--ease), box-shadow var(--ease);
+}
+.roomcfg-slider:hover::-webkit-slider-thumb,
+.roomcfg-slider:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 1px var(--gold-bright), 0 0 16px rgba(var(--accent-rgb), 0.75);
+}
+.roomcfg-slider::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  border: 2px solid var(--bg-elevated);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.5);
+}
+.roomcfg-slider::-moz-range-track { background: transparent; }
 
 /* ── toggle: เปิดเผย role เมื่อผู้เล่นตาย ── */
 .roomcfg-toggle {

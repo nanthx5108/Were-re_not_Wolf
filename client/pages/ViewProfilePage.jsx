@@ -59,7 +59,7 @@ export default function ViewProfilePage() {
           <span className="view-profile-card-corner br" />
 
           <h1 className="view-profile-title">ตัวตนของคุณ</h1>
-          <p className="view-profile-sub">ข้อมูลส่วนตัวในหมู่บ้าน</p>
+          <p className="view-profile-sub">ข้อมูลบัญชีของคุณ</p>
 
           <div className="view-profile-avatar-row">
             <div className="view-profile-avatar-wrap">

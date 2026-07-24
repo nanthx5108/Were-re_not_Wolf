@@ -6,21 +6,59 @@
   position: relative;
   font-family: var(--font-body);
   color: var(--text-primary);
+  letter-spacing: 0.02em;
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow-x: hidden;
 
-  --wood-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.15' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32 0 0 0 0 0.24 0 0 0 0 0.15 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
-
-  /* สีเน้นใช้อำพันของ global (--gold-*) ไม่ override ที่นี่
-     แถบสีกอและยังเก็บไว้เป็นลายเฉพาะของหน้านี้ */
   --kolae-stripe: linear-gradient(90deg,
-    var(--gold-bright) 0%,
-    var(--gold-bright) 30%,
-    #b0472e 30%, #b0472e 55%,
-    var(--teal-glow) 55%, var(--teal-glow) 78%,
-    var(--gold-mid) 78%, var(--gold-mid) 100%);
+    var(--teal-mid) 0 25%,
+    var(--rust-mid) 25% 50%,
+    var(--sage-mid) 50% 75%,
+    var(--teal-mid) 75% 100%);
+}
+
+.loading-screen {
+  position: fixed; inset: 0; z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-5);
+  background: var(--bg-void);
+}
+
+/* .home-title มี white-space: nowrap และขนาดอิงความกว้าง container ที่จอโหลดไม่มี
+   จึงต้องย่อลงไม่งั้นล้นขอบบนจอแคบ */
+.loading-logo {
+  font-size: clamp(1.6rem, 5.5vw, 3.6rem);
+  animation: fadeIn 500ms ease both;
+}
+/* จอโหลดไม่มีฉากหลัง ฮาโลกันตัวอักษรจมจึงไม่จำเป็น */
+.loading-logo::before { content: none; }
+.loading-spinner {
+  width: 48px; height: 48px;
+  border: 3px solid rgba(79,209,197,0.15);
+  border-top-color: var(--teal-bright);
+  border-radius: 50%;
+  animation: loadingSpin 1.2s linear infinite;
+}
+@keyframes loadingSpin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner { animation: loadingPulse 1.5s ease-in-out infinite; }
+  @keyframes loadingPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+}
+
+/* .sketch-border / .sketch-border-lite ย้ายไป global.css แล้ว (ใช้ร่วมทุกหน้า)
+   SVG filter #sketch-edge ประกาศครั้งเดียวใน App.jsx */
+.home-darken-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: rgba(3, 6, 10, 0.4);
 }
 
 .home-overlay {
@@ -38,9 +76,6 @@
     );
 }
 
-/* พื้นหลังมีพระจันทร์วาดอยู่แล้ว — ไม่ต้องเติมดวงใหม่ทับโลโก้ */
-
-/* ── หิ่งห้อย — จุดเรืองอำพันไม่กี่ตัว ลอยช้า ๆ (ใช้ transform+opacity เท่านั้น) ── */
 .home-fireflies {
   position: fixed;
   inset: 0;
@@ -92,7 +127,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1240px;
   padding: 0 var(--space-6);
   flex: 1;
   display: flex;
@@ -125,7 +160,8 @@
 .online-dot {
   width: 7px; height: 7px;
   border-radius: 50%;
-  background: #5FA36A;
+  background: var(--sage-bright);
+  box-shadow: 0 0 7px rgba(143, 174, 122, 0.6);
   flex-shrink: 0;
 }
 .online-text {
@@ -159,7 +195,6 @@
   gap: var(--space-3);
 }
 
-/* ── ปุ่ม topbar — ชื่อ class เฉพาะหน้านี้ ไม่ชนกับ .auth-btn ของ Auth.css ── */
 .top-btn {
   display: inline-flex;
   align-items: center;
@@ -180,7 +215,6 @@
 .top-btn:hover { transform: translateY(-2px) scale(1.05); }
 .top-btn:active { transform: translateY(0) scale(0.98); }
 
-/* เข้าสู่ระบบ — แบบเดิม: hover เด้งขึ้นแล้วเรืองแสงเงินนวล */
 .top-btn-ghost {
   border: 1px solid var(--border-strong);
   background: rgba(255,255,255,0.05);
@@ -193,156 +227,175 @@
   box-shadow: 0 4px 16px rgba(168,180,192,0.10);
 }
 
-/* สมัครสมาชิก — เหลืองตะเกียงชัด ๆ + ประกายวิ่งผ่านตอน hover */
 .top-btn-gold {
-  border: 1px solid #b5811d;
-  background: linear-gradient(180deg, #ffd95e 0%, #f2b83c 55%, #d9992a 100%);
-  color: #3a2604;
+  border: 1px solid var(--teal-mid);
+  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 55%, var(--teal-dim) 100%);
+  color: var(--on-teal);
   font-weight: 700;
   box-shadow:
-    0 3px 12px rgba(242,184,60,0.30),
-    inset 0 1px 0 rgba(255,255,255,0.45),
-    inset 0 -2px 4px rgba(120,74,10,0.35);
+    0 3px 12px rgba(79,209,197,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -2px 4px rgba(0,40,38,0.35);
 }
 .top-btn-gold:hover {
   filter: brightness(1.06);
   box-shadow:
-    0 6px 22px rgba(242,184,60,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.5),
-    inset 0 -2px 4px rgba(120,74,10,0.3);
+    0 0 16px rgba(79,209,197,0.4),
+    0 6px 22px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -2px 4px rgba(0,40,38,0.3);
 }
+
+.user-pill-wrap { position: relative; }
 
 .user-pill {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 16px 7px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--border-default);
-  background: rgba(255,255,255,0.04);
+  height: 44px;
+  padding: 0 14px 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-overlay);
   color: var(--text-primary);
   cursor: pointer;
-  transition: background var(--ease), border-color var(--ease), transform var(--ease);
+  transition: background var(--ease), transform var(--ease);
 }
 .user-pill:hover {
   background: rgba(255,255,255,0.08);
-  border-color: var(--gold-dim);
   transform: translateY(-1px);
 }
 
-.user-dropdown-wrap {
-  position: relative;
-}
-
-.user-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 190px;
-  padding: 8px;
-  border-radius: var(--radius-md);
-  background-image:
-    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)),
-    linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
-  background-color: var(--bg-elevated);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.03),
-    0 16px 40px rgba(0,0,0,0.6);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 110;
-}
-
-.user-dropdown-heading {
-  font-family: var(--font-meta);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 6px 10px 8px;
-}
-
-.user-dropdown-btn {
-  width: 100%;
-  text-align: left;
-  padding: 9px 10px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-family: var(--font-body);
-  font-size: 0.84rem;
-  transition: background var(--ease), color var(--ease);
-}
-.user-dropdown-btn:hover {
-  background: rgba(var(--accent-rgb),0.10);
-  color: var(--gold-bright);
-}
-.user-dropdown-btn.is-danger {
-  color: #c08078;
-}
-.user-dropdown-btn.is-danger:hover {
-  background: rgba(139,32,32,0.14);
-  color: #e0a098;
-}
-
-.user-avatar-dot {
-  width: 34px; height: 34px;
+.user-pill-avatar {
+  width: 28px; height: 28px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, var(--bg-overlay), var(--bg-void));
   border: 1px solid var(--border-default);
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  transition: border-color var(--ease);
 }
-.user-avatar-img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-}
+.user-pill-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-pill:hover .user-pill-avatar { border-color: var(--teal-mid); }
 
-.user-pill-text {
+.user-pill-info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
-  line-height: 1.2;
+  gap: 3px;
 }
 .user-pill-name {
-  font-size: 0.90rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
   color: var(--text-primary);
+  line-height: 1;
 }
 
-.user-level-badge {
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: rgba(var(--accent-rgb),0.12);
-  border: 1px solid var(--gold-dim);
-  color: var(--gold-mid);
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: var(--font-display);
+.user-pill-exp-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.user-pill-level {
+  font-family: var(--font-meta);   /* "Lv.5" เป็นละติน+ตัวเลขล้วน — ใช้ Special Elite ได้ */
+  font-size: 0.66rem;
   letter-spacing: 0.04em;
+  color: var(--teal-bright);
+  transition: color 200ms ease, text-shadow 200ms ease;
+}
+.user-pill-level.is-levelup {
+  color: #fff;
+  text-shadow: 0 0 10px var(--teal-bright);
+}
+
+.user-pill-exp-track {
+  width: 70px;
+  height: 4px;
+  margin-top: 0;
+  border-radius: 2px;
+}
+.user-pill-exp-count {
+  font-family: var(--font-meta);
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.user-pill-flyout {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-overlay);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 110;
+}
+.user-pill-flyout button {
+  text-align: left;
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border-radius: var(--radius-sm);
+  transition: background 150ms var(--ease), color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+.user-pill-flyout button:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25), 0 0 8px rgba(255,255,255,0.2);
 }
 
 .home-header {
   text-align: center;
-  padding: 120px 0 var(--space-7);
+  /* ระยะเผื่อ topbar ย้ายไปอยู่ที่ .home-hero แล้ว (มันคุมการจัดกลางทั้งจอ)
+     ที่นี่เหลือแค่ช่องว่างระหว่างโลโก้กับเมนู */
+  padding: 0 0 var(--space-7);
   position: relative;
+  opacity: 1;
+  /* entrance ย้ายไปที่ motion.div ชั้นนอกแล้ว — ที่นี่เหลือแค่ proximity fade
+     (แยกสองชั้นเพราะ inline style ของ motion จะทับ opacity ของคลาสนี้ถ้ารวมกัน) */
+  transition: opacity 200ms var(--ease);
+}
+
+.home-header.is-hidden-by-cursor {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .home-title {
   font-family: var(--font-logo) !important;
-  font-weight: 50;
-  font-size: clamp(3rem, 7.5vw, 5.8rem);
+  font-weight: 700;
+  font-size: clamp(1.9rem, 7.5vw, 6rem);
   color: var(--text-primary);
+  /* ตัวอักษรแต่ละตัวเป็น <span display:inline-block> แยกกัน เบราว์เซอร์จึงตัดบรรทัด
+     ตรงไหนก็ได้ระหว่างตัว — ต้อง nowrap ถึงจะการันตีว่าชื่อเกมอยู่แถวเดียว */
+  white-space: nowrap;
+  /* ช่องไฟพอให้เซริฟไม่เกยกัน แต่ไม่กว้างจนดันความยาวคำเกินความกว้างคอลัมน์ */
   letter-spacing: 0.06em;
+  margin-right: -0.06em;
   line-height: 1;
   text-shadow:
-    0 2px 4px rgba(0,0,0,0.8),
-    0 2px 24px rgba(0,0,0,0.5);
+    0 2px 3px rgba(0,0,0,0.95),
+    0 4px 16px rgba(0,0,0,0.85),
+    0 0 46px rgba(0,0,0,0.7);
+}
+
+.home-title::before {
+  content: '';
+  position: absolute;
+  inset: -12% -6%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 55% at 50% 50%,
+    rgba(3,6,10,0.55) 0%,
+    rgba(3,6,10,0.28) 45%,
+    transparent 72%);
 }
 
 .title-ornament {
@@ -364,21 +417,23 @@
 .title-ornament-mark {
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: var(--gold-mid);
-  box-shadow: 0 0 8px var(--gold-glow);
+  background: var(--silver);
+  box-shadow: 0 0 8px rgba(159,188,208,0.5);
 }
 
+/* ── โครงใหม่: เมนูอยู่กลางจอ แล้วกระดานข่าว/ทำเนียบเรียงคู่กันด้านล่าง ──
+   (เดิมเป็น 2 คอลัมน์ เมนูซ้าย-กระดานขวา) */
 .home-grid {
-  display: grid;
-  grid-template-columns: 1fr 0.85fr;
-  gap: var(--space-6);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-7);
   padding-bottom: var(--space-8);
 }
 
 @media (max-width: 820px) {
-  .home-grid { grid-template-columns: 1fr; }
-  .home-title { font-size: clamp(2.2rem, 10vw, 3.4rem); }
+  /* จอแคบ: 7.5vw ยังกว้างไป nowrap จะดันล้นขอบ — ลดลงตามความกว้างจริง */
+  .home-title { font-size: clamp(1.5rem, 6.6vw, 3.4rem); }
   .home-container { padding: 0 var(--space-4); }
 }
 
@@ -393,15 +448,72 @@
   padding-bottom: var(--space-5);
 }
 
+/* โหมดเบราว์ห้อง: ไม่มีข่าวข้าง ๆ แล้ว (news ถูกซ่อนด้วย !isJoinBrowse)
+   จึงยุบ hero-row เหลือคอลัมน์เดียวเต็มความกว้างให้ลิสต์ห้อง */
+.home-grid.is-join-browse .home-hero-row {
+  grid-template-columns: 1fr;
+  flex: 1;
+  min-height: 0;
+}
 .home-grid.is-join-browse .home-left {
   flex: 1;
   min-height: 0;
+  width: 100%;
+}
+
+/* ── จอแรก: โลโก้ + เมนู สูงเต็มจอพอดี ──
+   กระดานประกาศ/ทำเนียบจึงเริ่มพ้นขอบล่างเสมอ ไม่ว่าจอสูงเท่าไหร่
+   ผู้ใช้ที่เพิ่งเข้ามาจะเห็นแค่ชื่อเกมกับปุ่มหลัก ไม่มีอะไรมาแย่งสายตา */
+.home-hero {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* เผื่อที่ให้ topbar ที่เป็น position: fixed ไม่ทับเนื้อหาตอนจอเตี้ย */
+  padding: 84px 0 var(--space-6);
+}
+
+/* โหมดเบราว์ห้องไม่ต้องเต็มจอ — ลิสต์ห้องต้องยืดเต็มพื้นที่ที่เหลือแทน */
+.home-grid.is-join-browse .home-hero {
+  min-height: 0;
+  flex: 1;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+/* ── แถวในจอแรก: เมนูหลัก (ซ้าย) + กระดานข่าว (ขวา) ── */
+.home-hero-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+  justify-content: center;
 }
 
 .home-left {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  min-width: 0;
+}
+
+/* กระดานข่าวในจอแรก */
+.home-news { min-width: 0; display: flex; }
+.home-news .panel-box { width: 100%; }
+
+/* ── ล่างจอแรก: ทำเนียบนักล่า (ผู้ใช้เลื่อนลงมาดู) ── */
+.home-below {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  /* จอแคบ: ข่าวตกลงมาอยู่ใต้เมนู */
+  .home-hero-row { grid-template-columns: 1fr; max-width: 560px; }
 }
 
 .menu-panel,
@@ -409,12 +521,9 @@
 .panel-box {
   position: relative;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
   background:
     linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%),
     var(--bg-elevated);
-  /* เส้นบางเป็นตัวกำหนดขอบ — ใช้เงา contact แคบๆ พอให้ยกตัว ไม่ใช่เงาฟุ้งกว้างซ้อนขอบ */
-  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
   overflow: hidden;
 }
 
@@ -428,137 +537,83 @@
   background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
 }
 
-.panel-corner {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  pointer-events: none;
-  opacity: 0.5;
+.menu-panel {
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
-.panel-corner-tl {
-  top: -1px; left: -1px;
-  border-top: 2px solid var(--gold-mid);
-  border-left: 2px solid var(--gold-mid);
-  border-top-left-radius: 14px;
-}
-.panel-corner-br {
-  bottom: -1px; right: -1px;
-  border-bottom: 2px solid var(--gold-mid);
-  border-right: 2px solid var(--gold-mid);
-  border-bottom-right-radius: 14px;
-}
+.menu-panel::before { content: none; }
 
-.menu-panel { padding: var(--space-4); }
-
-.menu-panel,
-.player-bar {
-  width: 100%;
-  max-width: 600px;
-}
+.menu-panel { width: 100%; }
 
 .menu-btn {
   display: grid;
-  grid-template-columns: 52px 1fr auto;
+  grid-template-columns: 58px 1fr auto;
   gap: var(--space-4);
   align-items: center;
-  padding: 16px 18px;
+  padding: 18px 20px;
   width: 100%;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  background: transparent;
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%),
+    var(--bg-elevated);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
   position: relative;
+  /* entrance (ทยอยโผล่ทีละใบ) และ hover lift ย้ายไปคุมด้วย motion ใน HomePage.jsx แล้ว —
+     CSS animation แย่ง transform กับ :hover ทำให้ hover ไม่ขยับตลอดช่วงที่ปุ่มยังโผล่ไม่เสร็จ
+     ที่นี่เหลือแค่ transition ของสี/เงา ซึ่ง motion ไม่ได้แตะ */
   transition:
     background var(--ease),
     border-color var(--ease),
     box-shadow var(--ease);
 }
 
-.menu-btn::before,
-.menu-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  transition: opacity var(--ease);
-}
-
-.menu-btn::before {
-  background-image:
-    radial-gradient(circle 2.5px at 10px 10px, rgba(94,76,50,0.70) 0%, rgba(94,76,50,0.18) 70%, transparent 80%),
-    radial-gradient(circle 2.5px at calc(100% - 10px) 10px, rgba(94,76,50,0.70) 0%, rgba(94,76,50,0.18) 70%, transparent 80%),
-    radial-gradient(circle 2.5px at 10px calc(100% - 10px), rgba(94,76,50,0.70) 0%, rgba(94,76,50,0.18) 70%, transparent 80%),
-    radial-gradient(circle 2.5px at calc(100% - 10px) calc(100% - 10px), rgba(94,76,50,0.70) 0%, rgba(94,76,50,0.18) 70%, transparent 80%);
-  opacity: 0.65;
-}
-
-.menu-btn::after {
-  background-image:
-    radial-gradient(circle 6px at 10px 10px, rgba(var(--accent-rgb),0.95) 0%, rgba(var(--accent-rgb),0.35) 55%, transparent 78%),
-    radial-gradient(circle 6px at calc(100% - 10px) 10px, rgba(var(--accent-rgb),0.95) 0%, rgba(var(--accent-rgb),0.35) 55%, transparent 78%),
-    radial-gradient(circle 6px at 10px calc(100% - 10px), rgba(var(--accent-rgb),0.95) 0%, rgba(var(--accent-rgb),0.35) 55%, transparent 78%),
-    radial-gradient(circle 6px at calc(100% - 10px) calc(100% - 10px), rgba(var(--accent-rgb),0.95) 0%, rgba(var(--accent-rgb),0.35) 55%, transparent 78%);
-  opacity: 0;
-}
-.menu-btn:hover:not(:disabled)::before {
-  opacity: 0.25;
-}
-.menu-btn:hover:not(:disabled)::after {
-  opacity: 1;
-}
-
-.menu-btn:hover:not(:disabled) {
-  background: rgba(255,255,255,0.04);
-  border-color: var(--border-default);
-}
-
 .menu-btn:active:not(:disabled) {
   filter: brightness(0.92);
 }
 
+/* ── ปุ่มหลัก: ต้องอ่านออกว่า "กดอันนี้" ตั้งแต่ยังไม่ชี้ ──
+   ต่างจากอีก 3 อันด้วย 4 อย่างพร้อมกัน: ตัวใหญ่กว่า · ขอบเขียว · เงาลึกกว่า · ขีดเขียวด้านซ้าย */
 .menu-btn.is-primary {
-  border-color: var(--border-default);
-  background: linear-gradient(90deg, rgba(var(--accent-rgb),0.07) 0%, transparent 60%);
+  padding: 24px 20px;
+  border-color: rgba(79,209,197,0.4);
+  background:
+    linear-gradient(90deg, rgba(79,209,197,0.13) 0%, transparent 62%),
+    linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%),
+    var(--bg-elevated);
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.5),
+    0 0 22px rgba(79,209,197,0.12);
 }
+/* ขีดเขียวด้านซ้าย — ตัวบอกลำดับความสำคัญที่ไม่ต้องพึ่งขนาดอย่างเดียว */
 .menu-btn.is-primary::before {
-  opacity: 0.85;
+  content: '';
+  position: absolute;
+  left: 0; top: 12%; bottom: 12%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--teal-bright), var(--teal-mid));
+  box-shadow: 0 0 10px rgba(79,209,197,0.6);
 }
+.menu-btn.is-primary .menu-title { font-size: 1.24rem; }
+.menu-btn.is-primary .menu-icon { width: 58px; height: 58px; }
 .menu-btn.is-primary:hover:not(:disabled) {
-  background: linear-gradient(90deg, rgba(var(--accent-rgb),0.12) 0%, transparent 60%);
-  border-color: var(--gold-dim);
-  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb),0.08);
-}
-.menu-btn.is-primary:hover:not(:disabled)::before {
-  opacity: 0.2;
-}
-.menu-btn.is-primary:hover:not(:disabled)::after {
-  opacity: 1;
+  background:
+    linear-gradient(90deg, rgba(79,209,197,0.22) 0%, transparent 62%),
+    linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%),
+    var(--bg-elevated);
+  border-color: rgba(79,209,197,0.75);
+  box-shadow:
+    0 6px 20px rgba(0,0,0,0.55),
+    0 0 26px rgba(79,209,197,0.3);
 }
 
-.menu-btn-corner {
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  pointer-events: none;
-  opacity: 0.55;
-  transition: opacity var(--ease);
-}
-.menu-btn-corner-tl {
-  top: 4px; left: 4px;
-  border-top: 2px solid var(--gold-mid);
-  border-left: 2px solid var(--gold-mid);
-  border-top-left-radius: 6px;
-}
-.menu-btn-corner-br {
-  bottom: 4px; right: 4px;
-  border-bottom: 2px solid var(--gold-mid);
-  border-right: 2px solid var(--gold-mid);
-  border-bottom-right-radius: 6px;
-}
-.menu-btn.is-primary:hover:not(:disabled) .menu-btn-corner {
-  opacity: 1;
-  border-color: var(--gold-bright);
-}
+/* hover lift ย้ายไป whileHover ของ motion แล้ว (ดู MenuBtn ใน HomePage.jsx) */
 
 .menu-btn:disabled {
   opacity: 0.35;
@@ -567,8 +622,8 @@
 }
 
 .menu-icon {
-  width: 46px; height: 46px;
-  border-radius: 13px;
+  width: 52px; height: 52px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   background: rgba(255,255,255,0.06);
@@ -583,13 +638,13 @@
   color: var(--text-primary);
 }
 .menu-btn.is-primary .menu-icon {
-  background: rgba(var(--accent-rgb),0.08);
-  border-color: rgba(var(--accent-rgb),0.20);
-  color: var(--gold-mid);
+  background: rgba(79,209,197,0.10);
+  border-color: rgba(79,209,197,0.25);
+  color: var(--teal-mid);
 }
 .menu-btn.is-primary:hover:not(:disabled) .menu-icon {
-  background: rgba(var(--accent-rgb),0.14);
-  color: var(--gold-bright);
+  background: rgba(79,209,197,0.18);
+  color: var(--teal-bright);
 }
 
 .menu-text {
@@ -601,19 +656,48 @@
 }
 .menu-title {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.12rem;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 0.02em;
 }
+/* "สร้างห้อง" เป็นสีขาวเหมือนปุ่มอื่นตอนปกติ แล้วค่อยติดเขียวตอนชี้ */
 .menu-btn.is-primary .menu-title {
-  color: var(--gold-bright);
+  color: var(--text-primary);
 }
+/* คำอธิบายใต้ชื่อปุ่ม — ยังไม่มี MenuBtn ตัวไหนส่ง prop sub มา แต่เตรียมไว้เป็นไทย
+   จึงต้องเป็น Sriracha ไม่ใช่ Special Elite */
 .menu-sub {
   font-size: 0.8rem;
   color: var(--text-muted);
-  font-family: var(--font-meta);
-  letter-spacing: 0.01em;
+  font-family: var(--font-body);
+  letter-spacing: 0.02em;
+}
+
+/* คำอธิบายจาง ๆ ที่โผล่ตอนชี้ — อยู่ใต้ชื่อปุ่มในคอลัมน์เดียวกัน จึงชิดซ้ายตรงกันเอง
+   ไม่ต้องคำนวณตำแหน่ง absolute และไม่ทำให้การ์ดสูงไม่เท่ากัน
+   เพราะความสูงแถวถูกกำหนดโดยไอคอน (52px) ซึ่งสูงกว่าบล็อกข้อความอยู่แล้ว */
+.menu-hint {
+  font-family: var(--font-body);   /* ข้อความไทย — Special Elite ไม่มี glyph ไทย */
+  font-size: 0.7rem;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-3px);
+  transition: opacity var(--ease), transform var(--ease);
+}
+.menu-btn:hover:not(:disabled) .menu-hint,
+.menu-btn:focus-visible .menu-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-hint { transform: none; }
+  .menu-btn:hover:not(:disabled) .menu-hint,
+  .menu-btn:focus-visible .menu-hint { transform: none; }
 }
 
 .menu-arrow {
@@ -627,11 +711,6 @@
   opacity: 1;
 }
 
-.menu-divider {
-  height: 1px;
-  background: var(--border-subtle);
-  margin: 0 4px;
-}
 
 .home-form {
   padding: var(--space-5);
@@ -646,7 +725,7 @@
 }
 
 .form-title {
-  font-family: var(--font-logo);
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -673,8 +752,8 @@
   font-size: 0.9rem;
 }
 .field-input:focus {
-  border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.10);
+  border-color: var(--teal-dim);
+  box-shadow: 0 0 0 3px rgba(79,209,197,0.14);
 }
 .field-input-code {
   text-transform: uppercase;
@@ -696,7 +775,7 @@
   flex: 1;
   cursor: pointer;
 }
-.privacy-toggle input { accent-color: var(--gold-mid); }
+.privacy-toggle input { accent-color: var(--teal-mid); }
 .privacy-hint {
   display: block;
   font-size: 0.8rem;
@@ -706,18 +785,18 @@
 
 .btn-row { display: flex; gap: var(--space-3); margin-top: var(--space-1); }
 
-/* ── btn-primary: Kolae plank — ฟิล์มสีเขียวทับลายไม้ ── */
+/* ── btn-primary: CTA หลัก — เขียวทะเลอันดามัน (ย้ายออกจากทองแล้ว) ──
+   ไล่ bright→mid ไม่ใช่ mid→dim ตามที่บรีฟระบุ เพราะปลาย dim (#1a5f60)
+   กับตัวอักษรเข้มได้ contrast แค่ ~3:1 ตกเกณฑ์ตัวอักษรขนาดเล็ก
+   คู่ bright→mid + --on-teal ได้ 10.9:1 และ 6.3:1 ผ่านทั้งสองปลาย */
 .btn-primary {
   position: relative;
   flex: 1;
   padding: 13px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--gold-dim);
-  background:
-    linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-dim) 100%),
-    var(--wood-grain);
-  background-blend-mode: normal, overlay;
-  color: var(--on-accent);
+  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 100%);
+  border-color: var(--teal-bright);
+  color: var(--on-teal);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.82rem;
@@ -736,15 +815,25 @@
   bottom: 5px;
   height: 3px;
   border-radius: 2px;
-  background: var(--kolae-stripe);
+  /* แถบกอและเวอร์ชันบนพื้นเขียว — เก็บจังหวะ 4 ช่วงเดิมไว้ แต่เปลี่ยนเป็นหมึกที่อ่านออกบน teal
+     (ทองบนเขียวตีกันจนอ่านไม่ออก) */
+  background: linear-gradient(90deg,
+    var(--teal-dim) 0 25%,
+    var(--rust-dim) 25% 50%,
+    rgba(255,255,255,0.75) 50% 75%,
+    var(--teal-dim) 75% 100%);
   opacity: 0.55;
   transition: opacity var(--ease), transform var(--ease);
 }
+/* filter ต้องพ่วง url(#sketch-edge) ไปด้วยทุกครั้ง — ประกาศ filter ใหม่จะทับของเดิมทั้งก้อน
+   ถ้าใส่แค่ brightness() ขอบมือวาดจะหายวับตอน hover */
 .btn-primary:not(:disabled):hover {
   transform: translateY(-2px);
-  filter: brightness(1.08);
+  filter: url(#sketch-edge) brightness(1.08);
+  /* CTA เป็นที่เดียวที่ hover เรืองเป็นสีของตัวเอง ไม่ใช่ขาว — ให้มันดึงสายตาชนะปุ่มอื่น */
   box-shadow:
-    var(--shadow-gold),
+    0 0 16px rgba(79,209,197,0.4),
+    0 0 4px rgba(79,209,197,0.7),
     inset 0 1px 0 rgba(255,255,255,0.25),
     inset 0 -2px 4px rgba(0,0,0,0.2);
 }
@@ -755,7 +844,7 @@
 }
 .btn-primary:not(:disabled):active {
   transform: translateY(0);
-  filter: brightness(0.92);
+  filter: url(#sketch-edge) brightness(0.92);
 }
 
 @keyframes brushDraw {
@@ -772,9 +861,7 @@
   border: 1px solid var(--border-default);
   background:
     linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.10) 100%),
-    var(--wood-grain),
     var(--bg-elevated);
-  background-blend-mode: normal, soft-light, normal;
   color: var(--text-muted);
   font-size: 0.84rem;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
@@ -807,10 +894,7 @@
   padding: 10px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-default);
-  background:
-    var(--wood-grain),
-    transparent;
-  background-blend-mode: soft-light, normal;
+  background: transparent;
   color: var(--text-muted);
   font-family: var(--font-display);
   font-weight: 600;
@@ -818,7 +902,11 @@
   white-space: nowrap;
   transition: color var(--ease), border-color var(--ease);
 }
-.refresh-btn:hover { color: var(--gold-mid); border-color: var(--gold-dim); }
+.refresh-btn:hover {
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.5);
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
 .refresh-icon { display: inline-block; transition: transform 500ms ease; }
 
 .room-list {
@@ -848,9 +936,10 @@
   transition: color var(--ease), border-color var(--ease), background var(--ease), transform var(--ease);
 }
 .join-back-btn:hover {
-  border-color: var(--gold-dim);
+  border-color: rgba(255,255,255,0.5);
   color: var(--text-primary);
-  background: var(--gold-glow-soft);
+  background: rgba(255,255,255,0.07);
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
   transform: translateY(-1px);
 }
 
@@ -900,13 +989,14 @@
   color: var(--text-secondary);
   transition: all var(--ease);
 }
+/* แท็บที่เลือกอยู่ = สถานะปัจจุบันของผู้ใช้ → เขียวทะเลชุดเดียวกับ CTA */
 .join-filter-tab.is-active {
-  background: var(--gold-glow-soft);
-  border-color: var(--gold-mid);
-  color: var(--gold-bright);
+  background: rgba(79,209,197,0.12);
+  border-color: var(--teal-mid);
+  color: var(--teal-bright);
 }
 .join-filter-tab:not(.is-active):hover {
-  border-color: var(--gold-dim);
+  border-color: rgba(255,255,255,0.4);
   color: var(--text-primary);
 }
 
@@ -937,7 +1027,7 @@
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.92rem;
-  color: var(--gold-mid);
+  color: var(--text-secondary);
 }
 .room-list-empty-sub {
   font-size: 0.8rem;
@@ -953,12 +1043,11 @@
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   background: rgba(255,255,255,0.035);
-  border: 1px solid var(--border-default);
-  transition: border-color var(--ease), background var(--ease), transform var(--ease);
+  /* ขอบ/เรืองมาจาก .sketch-border-lite — แถวนี้ render ซ้ำเป็น list จึงห้ามใช้ตัวเต็มที่มี SVG filter */
+  transition: border-color var(--ease), background var(--ease), box-shadow var(--ease), transform var(--ease);
 }
 .room-row-rich:not(.is-disabled):hover {
-  border-color: var(--gold-dim);
-  background: var(--gold-glow-soft);
+  background: rgba(255,255,255,0.07);
   transform: translateY(-1px);
 }
 .room-row-rich.is-disabled { opacity: 0.45; }
@@ -967,7 +1056,7 @@
   flex-shrink: 0;
   width: 18px;
   text-align: center;
-  font-family: var(--font-logo);
+  font-family: var(--font-meta);
   font-size: 0.78rem;
   color: var(--text-muted);
 }
@@ -981,9 +1070,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(var(--accent-rgb),0.14), rgba(var(--accent-rgb),0.03));
+  /* ไอคอนบ้าน = ห้องที่เข้าได้ → teal ชุดเดียวกับ tag "สาธารณะ" */
+  background: linear-gradient(180deg, rgba(79,209,197,0.16), rgba(79,209,197,0.04));
   border: 1px solid var(--border-default);
-  color: var(--gold-mid);
+  color: var(--teal-mid);
 }
 .room-row-icon-badge {
   position: absolute;
@@ -993,8 +1083,8 @@
   height: 15px;
   border-radius: 50%;
   background: var(--bg-elevated);
-  border: 1px solid rgba(139,32,32,0.5);
-  color: #e17b6b;
+  border: 1px solid rgba(199,107,69,0.5);
+  color: var(--rust-bright);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1028,23 +1118,32 @@
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
-.room-tag.is-private {
-  background: var(--gold-glow-soft);
-  color: var(--gold-mid);
-  border: 1px solid var(--gold-glow);
-}
+/* สาธารณะ = teal (เปิด/น้ำทะเล) · ส่วนตัว = rust (ปิด/สนิม) — ทองสงวนไว้ให้ CTA */
 .room-tag.is-public {
-  background: var(--success-soft);
-  color: #6ecf8a;
-  border: 1px solid rgba(42,102,68,0.4);
+  background: rgba(42, 157, 158, 0.12);
+  color: var(--teal-mid);
+  border: 1px solid rgba(42, 157, 158, 0.3);
 }
+.room-tag.is-private {
+  background: rgba(168, 84, 63, 0.12);
+  color: var(--rust-mid);
+  border: 1px solid rgba(168, 84, 63, 0.3);
+}
+
+/* "เกือบเต็มแล้ว" ยังเป็นทอง — เป็นคำเตือนให้รีบ ไม่ใช่สถานะเข้าไม่ได้ */
 .room-row-nearfull {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--gold-bright);
+  color: var(--dustypink-bright);
   white-space: nowrap;
 }
-.room-row-nearfull.is-playing { color: #f08080; }
+/* "กำลังเล่น" = เข้าไม่ได้ → rust */
+.room-row-nearfull.is-playing {
+  color: var(--rust-mid);
+  background: rgba(168, 84, 63, 0.14);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
 
 .room-row-info-bottom {
   margin-top: 4px;
@@ -1087,10 +1186,10 @@
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.86rem;
-  color: #6ecf8a;
+  color: var(--sage-bright);
 }
-.room-row-count.is-near .room-row-count-num { color: var(--gold-bright); }
-.room-row-count.is-full .room-row-count-num { color: #e17b6b; }
+.room-row-count.is-near .room-row-count-num { color: var(--dustypink-bright); }
+.room-row-count.is-full .room-row-count-num { color: var(--rust-bright); }
 .room-row-count-max { color: var(--text-muted); font-weight: 400; }
 .room-row-count-bar {
   display: block;
@@ -1100,15 +1199,16 @@
   background: rgba(255,255,255,0.08);
   overflow: hidden;
 }
+/* แถบความเต็ม: sage (ยังว่าง) → ทอง (เกือบเต็ม) → rust (เต็มแล้ว) */
 .room-row-count-fill {
   display: block;
   height: 100%;
   border-radius: 99px;
-  background: #6ecf8a;
-  transition: width var(--ease);
+  background: var(--sage-mid);
+  transition: width var(--ease), background var(--ease);
 }
-.room-row-count.is-near .room-row-count-fill { background: var(--gold-bright); }
-.room-row-count.is-full .room-row-count-fill { background: #e17b6b; }
+.room-row-count.is-near .room-row-count-fill { background: var(--dustypink-mid); }
+.room-row-count.is-full .room-row-count-fill { background: var(--rust-mid); }
 
 .room-row-join-btn {
   flex-shrink: 0;
@@ -1118,9 +1218,10 @@
   font-weight: 700;
   font-size: 0.8rem;
   white-space: nowrap;
-  background: linear-gradient(180deg, var(--gold-bright), var(--gold-dim));
-  border: 1px solid var(--gold-dim);
-  color: var(--on-accent);
+  /* "เข้าร่วม" คือ CTA เหมือนกับ "สร้างห้อง" — ต้องเป็นเขียวทะเลชุดเดียวกัน */
+  background: linear-gradient(180deg, var(--teal-bright), var(--teal-mid));
+  border: 1px solid var(--teal-mid);
+  color: var(--on-teal);
   box-shadow: 0 3px 10px rgba(0,0,0,0.35);
   transition: transform var(--ease), box-shadow var(--ease), filter var(--ease);
 }
@@ -1136,6 +1237,7 @@
   cursor: not-allowed;
 }
 
+/* ห้องที่เลือกไว้ = สถานะปัจจุบันของผู้ใช้ → เขียวทะเลชุดเดียวกับ CTA */
 .join-selected-room {
   display: flex;
   align-items: baseline;
@@ -1143,160 +1245,38 @@
   gap: var(--space-2);
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  background: rgba(var(--accent-rgb),0.06);
-  border: 1px solid rgba(var(--accent-rgb),0.18);
+  background: rgba(79,209,197,0.07);
+  border: 1px solid rgba(79,209,197,0.22);
 }
 .join-selected-label {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--font-meta);
+  /* ข้อความไทย ("ห้องส่วนตัว") — Special Elite ไม่มี glyph ไทย ต้องใช้ Sriracha */
+  font-family: var(--font-body);
   font-size: 0.78rem;
   color: var(--text-muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   flex-shrink: 0;
 }
 .join-selected-name {
   font-family: var(--font-display);
   font-size: 0.88rem;
-  color: var(--gold-bright);
+  color: var(--teal-bright);
   font-weight: 600;
   text-align: right;
 }
 
 .field-hint {
-  font-family: var(--font-meta);
+  /* ข้อความไทยยาว — ต้องเป็น Sriracha ไม่ใช่ Special Elite ที่ไม่มีตัวไทย */
+  font-family: var(--font-body);
   font-size: 0.8rem;
   color: var(--text-muted);
   margin: -4px 0 2px;
   line-height: 1.5;
 }
 
-.player-bar {
-  position: relative;
-  padding: 14px 18px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.025) 0%, transparent 50%),
-    rgba(15,20,26,0.88);
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.03);
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-.player-bar::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border-default), transparent);
-}
-
-.player-ava {
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, var(--bg-overlay), var(--bg-void));
-  border: 1px solid var(--border-default);
-  box-shadow: inset 0 0 12px rgba(0,0,0,0.7);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display);
-  font-size: 1rem;
-  color: var(--silver);
-  flex-shrink: 0;
-  overflow: hidden;
-  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow var(--ease), border-color var(--ease);
-}
-/* hover แถบผู้เล่น → รูปบัญชีเด้งขึ้น (เฉพาะตอนล็อกอินแล้ว ไม่ทำกับเงาคนไร้หน้า) */
-.player-bar:hover .player-ava:not(.is-anon) {
-  transform: scale(1.1);
-  border-color: var(--gold-dim);
-  box-shadow: inset 0 0 12px rgba(0,0,0,0.7), 0 0 14px rgba(var(--accent-rgb),0.3);
-}
-
-/* รูปโปรไฟล์จริงของบัญชี */
-.player-ava-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* DerpyWolfAvatar เป็น default — ย่อให้พอดีวงกลม */
-.player-ava svg {
-  width: 44px;
-  height: 44px;
-  transform: translateY(1px);
-}
-
-/* ยังไม่ล็อกอิน — เงาคนไร้หน้า เงียบและไม่เรียกร้องความสนใจ */
-.player-ava.is-anon {
-  color: var(--text-muted);
-  opacity: 0.55;
-}
-
-.player-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.player-name {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: 0.02em;
-}
-
-.player-level {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-}
-
-.player-hint {
-  margin-top: 4px;
-  font-size: 0.8rem;
-  font-style: italic;
-  color: var(--text-gold);
-  opacity: 0.75;
-}
-
-/* เลเวล + จำนวนเกม อยู่บรรทัดเดียวกัน คนละฝั่ง */
-.player-level-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: 1px;
-}
-
-.player-level-badge {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--gold-bright);
-  letter-spacing: 0.06em;
-  transition: color 200ms ease, text-shadow 200ms ease;
-}
-.player-level-badge.is-levelup {
-  color: #fff;
-  text-shadow: 0 0 10px var(--gold-bright);
-}
-
-.player-level-count {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* แถบ EXP แบบ Minecraft — รางเข้มฝังลงไป, fill สีเขียวเรืองแสง */
+/* แถบ EXP — ย้ายจาก player bar เดิมมาใช้ซ้ำใน .user-pill ที่ topbar */
 .player-exp {
   position: relative;
   height: 8px;
@@ -1311,8 +1291,8 @@
 .player-exp-fill {
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-mid) 55%, var(--gold-dim) 100%);
-  box-shadow: 0 0 8px 1px var(--gold-glow), inset 0 1px 0 rgba(255,255,255,0.35);
+  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 55%, var(--teal-dim) 100%);
+  box-shadow: 0 0 8px 1px rgba(79,209,197,0.36), inset 0 1px 0 rgba(255,255,255,0.35);
   /* ค่อยๆ เลื่อนตอนได้ exp — ยาวพอให้ทันเห็นว่ามันขยับ */
   transition: width 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -1322,9 +1302,9 @@
   animation: expLevelUp 1.2s ease-out;
 }
 @keyframes expLevelUp {
-  0%   { box-shadow: 0 0 0 0 var(--gold-glow); filter: brightness(1); }
-  25%  { box-shadow: 0 0 16px 4px var(--gold-bright); filter: brightness(2.2); }
-  100% { box-shadow: 0 0 8px 1px var(--gold-glow); filter: brightness(1); }
+  0%   { box-shadow: 0 0 0 0 rgba(79,209,197,0.36); filter: brightness(1); }
+  25%  { box-shadow: 0 0 16px 4px var(--teal-bright); filter: brightness(2.2); }
+  100% { box-shadow: 0 0 8px 1px rgba(79,209,197,0.36); filter: brightness(1); }
 }
 /* วาบทั้งราง ไม่ใช่แค่ fill (fill กว้าง 0% ตอนเพิ่งเลเวลอัป จะมองไม่เห็น) */
 .player-exp:has(.is-levelup) {
@@ -1332,17 +1312,17 @@
 }
 @keyframes expTrackFlash {
   0%   { background: var(--bg-void); }
-  20%  { background: rgba(var(--accent-rgb),0.45); }
+  20%  { background: rgba(79,209,197,0.45); }
   100% { background: var(--bg-void); }
 }
 
-.home-right { display: flex; flex-direction: column; gap: var(--space-5); }
+/* (โครง .home-right ย้ายไปเป็น grid 2 คอลัมน์ด้านบนแล้ว — กฎ flex เดิมถูกถอดออก
+   ไม่งั้นมันประกาศทีหลังแล้วทับ grid ทิ้ง) */
 
 .panel-box {
   padding: var(--space-5);
   display: flex;
   flex-direction: column;
-  flex: 1;
 }
 
 .home-news-head {
@@ -1395,9 +1375,10 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: var(--gold-glow-soft);
-  color: var(--text-gold);
-  border: 1px solid var(--gold-glow);
+  /* หมวด "อัปเดต" ย้ายจากทองมาเป็นสนิม — ต้องแก้ .news-card-tag ใน Newspage.css ให้ตรงกันด้วย */
+  background: rgba(168,84,63,0.12);
+  color: var(--rust-bright);
+  border: 1px solid rgba(168,84,63,0.3);
 }
 .home-news-item-date {
   display: inline-flex;
@@ -1426,25 +1407,26 @@
   line-height: 1.5;
 }
 
+/* Developer Note = เสียงจากคนทำเกม → dustypink (หมวด "ชุมชน/คน" ของพาเลตต์) */
 .home-dev-note {
   margin-top: var(--space-2);
   padding: 11px 13px;
   border-radius: var(--radius-sm);
-  background: var(--gold-glow-soft);
-  border: 1px solid var(--gold-glow);
+  background: rgba(168,102,106,0.12);
+  border: 1px solid rgba(168,102,106,0.3);
 }
 .home-dev-note-label {
   font-family: var(--font-display);
   font-size: 0.8rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--gold-mid);
+  color: var(--dustypink-mid);
   margin-bottom: 3px;
 }
 .home-dev-note-text {
   font-size: 0.8rem;
   font-style: italic;
-  color: var(--text-gold);
+  color: var(--dustypink-bright);
   line-height: 1.5;
 }
 
@@ -1479,64 +1461,46 @@
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 4px 14px rgba(0,0,0,0.5);
   transition: color var(--ease), transform var(--ease), box-shadow var(--ease);
 }
-.more-btn::before,
-.more-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  transition: opacity var(--ease);
-}
-.more-btn::before {
-  background-image:
-    radial-gradient(circle 2px at 9px 9px, rgba(94,76,50,0.65) 0%, transparent 75%),
-    radial-gradient(circle 2px at calc(100% - 9px) 9px, rgba(94,76,50,0.65) 0%, transparent 75%),
-    radial-gradient(circle 2px at 9px calc(100% - 9px), rgba(94,76,50,0.65) 0%, transparent 75%),
-    radial-gradient(circle 2px at calc(100% - 9px) calc(100% - 9px), rgba(94,76,50,0.65) 0%, transparent 75%);
-  opacity: 0.6;
-}
-.more-btn::after {
-  background-image:
-    radial-gradient(circle 5px at 9px 9px, rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at calc(100% - 9px) 9px, rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at 9px calc(100% - 9px), rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at calc(100% - 9px) calc(100% - 9px), rgba(var(--accent-rgb),0.9) 0%, transparent 75%);
-  opacity: 0;
-}
+/* หมุดไม้ 4 มุมของปุ่มนี้ถูกถอดออกแล้ว — ใช้เรืองขาวตอน hover แทน */
 .more-btn:hover {
-  color: var(--gold-bright);
+  color: var(--text-primary);
   transform: translateY(-2px);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 10px 24px rgba(0,0,0,0.6);
+  border-color: rgba(255,255,255,0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 0 12px rgba(255,255,255,0.3),
+    0 10px 24px rgba(0,0,0,0.6);
 }
-.more-btn:hover::before { opacity: 0.2; }
-.more-btn:hover::after  { opacity: 1; }
 .more-arrow { transition: transform var(--ease); }
 .more-btn:hover .more-arrow { transform: translateX(3px); }
-.more-btn { transition: color var(--ease), box-shadow var(--ease-md), transform var(--ease); }
+.more-btn { transition: color var(--ease), box-shadow var(--ease-md), border-color var(--ease), transform var(--ease); }
 
-/* ── กระดานประกาศ: hover ทั้ง box แล้วเด้งขึ้น + ปุ่ม "ดูทั้งหมด" เรืองแสงชวนกด ── */
-.home-right .panel-box:not(.leaderboard-box) {
-  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 280ms ease, border-color var(--ease);
+/* ── กระดานประกาศ: hover ทั้ง box แล้วเด้งขึ้น + ปุ่ม "ดูทั้งหมด" เรืองแสงชวนกด ──
+   selector เดิมเป็น .home-right .panel-box ซึ่งตายไปตอนย้ายกระดานข่าวออกจาก .home-right
+   ตอนนี้อิง .home-news แทน · ส่วน translateY(-4px) ย้ายไป whileHover ของ motion
+   (ถ้าปล่อยไว้ที่ CSS จะถูก inline transform ของ motion ทับ) */
+.home-news .panel-box {
+  transition: box-shadow 280ms ease, border-color var(--ease);
 }
-.home-right .panel-box:not(.leaderboard-box):hover {
-  transform: translateY(-4px);
-  border-color: var(--border-default);
-  box-shadow: 0 14px 34px rgba(0,0,0,0.5);
+.home-news:hover .panel-box {
+  border-color: rgba(255,255,255,0.6);
+  box-shadow:
+    0 0 14px rgba(255,255,255,0.35),
+    0 0 3px rgba(255,255,255,0.65),
+    0 14px 34px rgba(0,0,0,0.5);
 }
-.home-right .panel-box:not(.leaderboard-box):hover .more-btn {
-  color: var(--gold-bright);
-  box-shadow: 0 0 16px rgba(var(--accent-rgb),0.4),
-              inset 0 1px 0 rgba(255,255,255,0.04);
+.home-news:hover .more-btn {
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.45);
+  box-shadow: 0 0 14px rgba(255,255,255,0.3),
+              inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.home-right .panel-box:not(.leaderboard-box):hover .more-btn::after { opacity: 1; }
 
 .home-footer {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1240px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1551,12 +1515,26 @@
   letter-spacing: 0.08em;
 }
 
+/* ฝั่งซ้ายของ footer: ชิปเวอร์ชัน + ชื่อผู้จัดทำ */
+.home-footer-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.footer-credit {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
 .socials { display: flex; gap: var(--space-3); }
 
+/* ขอบมาจาก .sketch-border (เส้นมือวาด) — ห้ามประกาศ border ที่นี่ ไม่งั้นจะทับ */
 .soc-btn {
-  width: 36px; height: 36px;
+  width: 38px; height: 38px;
   border-radius: 50%;
-  border: 1px solid var(--border-default);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1565,15 +1543,15 @@
   transition: color var(--ease), border-color var(--ease), background var(--ease), transform var(--ease);
   text-decoration: none;
 }
-/* footer ใช้ลูกเล่นเดียวกับปุ่ม topbar — เด้งขึ้น + เรืองแสงสีเหลืองทอง */
+/* footer ใช้ลูกเล่นเดียวกับปุ่ม topbar — เด้งขึ้น + เรืองขาว */
 .soc-btn:hover {
-  color: var(--gold-bright);
-  border-color: var(--gold-mid);
-  background: rgba(var(--accent-rgb),0.12);
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.08);
   transform: translateY(-2px) scale(1.05);
   box-shadow:
-    0 4px 18px rgba(var(--accent-rgb),0.35),
-    0 0 14px rgba(var(--accent-rgb),0.28);
+    0 0 14px rgba(255,255,255,0.35),
+    0 0 3px rgba(255,255,255,0.65);
 }
 
 /* บอกว่าบทบาท/เวลาไปตั้งที่ Lobby แทน */
@@ -1633,19 +1611,32 @@
   white-space: pre;
 }
 
-/* WOLF: คำสีทอง (ไม่มีการเด้งตอนชี้แล้ว) */
+/* WOLF: กลับมาเป็นเหลืองทอง — เป็นข้อยกเว้นเดียวของหน้านี้ที่ยังใช้ทอง
+   เพราะเป็นชื่อเกม ไม่ใช่ UI element จึงไม่ไปแย่งความหมายกับ CTA เขียวทะเล
+   ไล่เฉด bright→mid ในตัวอักษร (background-clip: text ต้องคู่กับ color: transparent) */
 .title-wolf {
   display: inline-block;
+  /* เรืองอำพันวงกว้างรอบคำ — ทำที่กล่อง ส่วนเงาคมกับเรืองใกล้ตัวอยู่ที่ text-shadow ของตัวอักษร
+     เบลอกว้าง 30px ทำให้แสงล้นเข้ามาถมช่องไฟระหว่างตัว จนดูเหมือนตัวอักษรติดกัน
+     ลดรัศมีลงและใช้เรืองใกล้ตัวที่ text-shadow แทน ช่องไฟจะกลับมาเห็นชัด */
+  filter: drop-shadow(0 0 18px rgba(232,169,75,0.3));
 }
+/* เติมสีทองทึบทั้งตัว ไม่ใช้ background-clip: text อีกแล้ว —
+   วิธีนั้นบังคับให้ color เป็น transparent ซึ่งทำให้เงาดำ 3 ชั้นที่สืบทอดมาจาก
+   .home-title ทะลุขึ้นมาเห็นตรงกลางตัวอักษร เหลือทองแค่ขอบจนอ่านยาก */
 .title-wolf .title-ch {
-  color: var(--gold-mid);
+  color: var(--gold-bright);
+  /* เขียนทับเงาที่สืบทอดมา: เหลือเงาคมบาง ๆ ให้ลอยจากฉากหลัง + เรืองทองรอบตัว */
+  text-shadow:
+    0 2px 3px rgba(0,0,0,0.9),
+    0 0 14px rgba(232,169,75,0.45);
 }
 
 /* ── ทำเนียบนักล่า ── */
 .leaderboard-box { flex: 0 0 auto; }
 .leaderboard-trophy {
   display: inline-flex;
-  color: var(--gold-mid);
+  color: var(--silver);
   opacity: 0.85;
   flex-shrink: 0;
 }
@@ -1658,41 +1649,82 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 11px;
+  padding: 11px 12px;
   border-radius: var(--radius-sm);
   background: rgba(255,255,255,0.02);
-  border: 1px solid var(--border-subtle);
+  /* ขอบมาจาก .sketch-border-lite (list ที่ render ซ้ำ ห้ามใช้ตัวเต็ม) */
 }
 .leaderboard-rank {
   width: 20px;
   text-align: center;
-  font-family: var(--font-logo);
+  font-family: var(--font-meta);
   font-size: 0.82rem;
   color: var(--text-muted);
   flex-shrink: 0;
 }
-/* 3 อันดับบนเรืองแสงตามสีเหรียญ ทอง/เงิน/ทองแดง */
-.leaderboard-row.is-gold {
-  border-color: rgba(var(--accent-rgb), 0.35);
-  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.10), transparent 65%);
-  box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.22);
-}
-.leaderboard-row.is-silver {
-  border-color: rgba(204,216,228,0.30);
-  background: linear-gradient(90deg, rgba(204,216,228,0.08), transparent 65%);
-  box-shadow: 0 0 12px rgba(204,216,228,0.16);
-}
+/* ── 3 อันดับบน: เหรียญทอง / เงิน / ทองแดง ──
+   ไล่น้ำหนักลงตามลำดับ ที่ 1 สว่างและเรืองสุด แล้วจางลงเรื่อย ๆ
+   แต่ละแถวมีขีดโลหะด้านซ้ายเป็นตัวบอกอันดับซ้ำอีกชั้น (ไม่ได้พึ่งสีอย่างเดียว) */
+.leaderboard-row.is-gold,
+.leaderboard-row.is-silver,
 .leaderboard-row.is-bronze {
-  border-color: rgba(201,138,91,0.32);
-  background: linear-gradient(90deg, rgba(201,138,91,0.09), transparent 65%);
-  box-shadow: 0 0 12px rgba(201,138,91,0.18);
+  position: relative;
+  overflow: hidden;
+}
+.leaderboard-row.is-gold::before,
+.leaderboard-row.is-silver::before,
+.leaderboard-row.is-bronze::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+
+/* ที่ 1 — ทอง: เรืองแรงสุด + ฟิล์มไล่เฉดกว้างสุด */
+.leaderboard-row.is-gold {
+  border-color: rgba(232,169,75,0.45);
+  background:
+    linear-gradient(90deg, rgba(240,186,96,0.16) 0%, rgba(232,169,75,0.06) 40%, transparent 72%);
+  box-shadow:
+    0 0 18px rgba(232,169,75,0.26),
+    inset 0 1px 0 rgba(255,235,190,0.14);
+}
+.leaderboard-row.is-gold::before {
+  background: linear-gradient(180deg, #ffe6a6 0%, var(--gold-bright) 45%, var(--gold-dim) 100%);
+  box-shadow: 0 0 10px rgba(232,169,75,0.7);
+}
+
+/* ที่ 2 — เงิน */
+.leaderboard-row.is-silver {
+  border-color: rgba(214,226,238,0.34);
+  background: linear-gradient(90deg, rgba(214,226,238,0.10) 0%, transparent 62%);
+  box-shadow:
+    0 0 13px rgba(204,216,228,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.leaderboard-row.is-silver::before {
+  background: linear-gradient(180deg, #f2f7fc 0%, #ccd8e4 45%, #7d8d9c 100%);
+  box-shadow: 0 0 8px rgba(204,216,228,0.45);
+}
+
+/* ที่ 3 — ทองแดง */
+.leaderboard-row.is-bronze {
+  border-color: rgba(199,107,69,0.34);
+  background: linear-gradient(90deg, rgba(199,107,69,0.09) 0%, transparent 58%);
+  box-shadow:
+    0 0 11px rgba(199,107,69,0.16),
+    inset 0 1px 0 rgba(255,210,190,0.07);
+}
+.leaderboard-row.is-bronze::before {
+  background: linear-gradient(180deg, #e6a17c 0%, var(--rust-bright) 45%, var(--rust-dim) 100%);
+  box-shadow: 0 0 8px rgba(199,107,69,0.45);
 }
 .leaderboard-row.is-gold .leaderboard-rank {
   color: var(--gold-bright);
-  text-shadow: 0 0 9px var(--gold-glow);
+  text-shadow: 0 0 10px rgba(232,169,75,0.65);
 }
 .leaderboard-row.is-silver .leaderboard-rank { color: #ccd8e4; text-shadow: 0 0 8px rgba(204,216,228,0.5); }
-.leaderboard-row.is-bronze .leaderboard-rank { color: #c98a5b; text-shadow: 0 0 8px rgba(201,138,91,0.5); }
+.leaderboard-row.is-bronze .leaderboard-rank { color: var(--rust-bright); text-shadow: 0 0 8px rgba(199,107,69,0.5); }
 .leaderboard-ava {
   width: 30px;
   height: 30px;
@@ -1726,15 +1758,16 @@
   color: var(--text-muted);
   white-space: nowrap;
 }
+/* Lv. ในทำเนียบ = ระบบเลเวลเดียวกับ user pill → teal ไม่ใช่สีเหรียญ */
 .leaderboard-level {
   font-family: var(--font-display);
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--gold-mid);
+  color: var(--teal-mid);
   padding: 2px 9px;
   border-radius: 999px;
-  background: var(--gold-glow-soft);
-  border: 1px solid var(--gold-glow);
+  background: rgba(79,209,197,0.12);
+  border: 1px solid rgba(79,209,197,0.28);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -1775,9 +1808,15 @@
   transition: color var(--ease), transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: left center;
 }
+/* ปุ่มรองทุกอันใช้ signature ขาว — เขียวสงวนไว้ให้ปุ่มหลัก
+   (.menu-btn.is-primary .menu-title ประกาศ teal ไว้แล้ว specificity สูงกว่า จึงไม่โดนทับ) */
 .menu-btn:hover:not(:disabled) .menu-title {
-  color: var(--gold-bright);
+  color: var(--text-primary);
   transform: scale(1.06) translateY(-1px);
+}
+/* ปุ่มหลักเท่านั้นที่ติดเขียวทะเลตอนชี้ — ต้องระบุ .is-primary ให้ specificity ชนะกฎด้านบน */
+.menu-btn.is-primary:hover:not(:disabled) .menu-title {
+  color: var(--teal-bright);
 }
 
 .room-row-join-btn {
@@ -1802,31 +1841,24 @@
 
 /* ช่องกรอก: label ติดสีทองเมื่อ focus */
 .field-label { transition: color var(--ease); }
-.field-col:focus-within .field-label { color: var(--gold-mid); }
+.field-col:focus-within .field-label { color: var(--text-primary); }
 .field-input { transition: border-color var(--ease), box-shadow var(--ease); }
 
 /* ค้นหาห้อง: ไอคอนแว่นติดสีทองเมื่อ focus */
 .join-search-wrap svg { transition: color var(--ease); }
-.join-search-wrap:focus-within svg { color: var(--gold-mid); }
+.join-search-wrap:focus-within svg { color: var(--text-primary); }
 .join-search-input { transition: border-color var(--ease), box-shadow var(--ease); }
 .join-search-input:focus {
-  border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.10);
+  border-color: var(--teal-dim);
+  box-shadow: 0 0 0 3px rgba(79,209,197,0.14);
 }
 
-/* user pill: วงแหวนรอบรูปโปรไฟล์เรืองทองตอน hover */
-.user-avatar-dot { transition: border-color var(--ease); }
-.user-pill:hover .user-avatar-dot {
-  border-color: var(--gold-mid);
-}
-
-/* เมนูดรอปดาวน์: รายการขยับเข้าตอน hover */
-.user-dropdown-btn { transition: background var(--ease), color var(--ease), padding-left var(--ease); }
-.user-dropdown-btn:hover { padding-left: 15px; }
+/* flyout: รายการขยับเข้าตอน hover */
+.user-pill-flyout button:hover { padding-left: 14px; }
 
 /* ป้ายออนไลน์ / ชิปสถิติ: ตอบสนองเมาส์เบา ๆ */
 .online-badge { transition: border-color var(--ease); }
-.online-badge:hover { border-color: var(--gold-dim); }
+.online-badge:hover { border-color: rgba(255,255,255,0.4); }
 /* toggle ห้องส่วนตัว: ข้อความสว่างขึ้นตอน hover */
 .privacy-toggle { transition: color var(--ease); }
 .privacy-toggle:hover { color: var(--text-primary); }
@@ -1836,7 +1868,7 @@
 
 /* ห้องในลิสต์: เลขลำดับติดทองตอน hover */
 .room-row-index { transition: color var(--ease); }
-.room-row-rich:not(.is-disabled):hover .room-row-index { color: var(--gold-mid); }
+.room-row-rich:not(.is-disabled):hover .room-row-index { color: var(--text-primary); }
 
 /* ═══════════════════════════════════════════════════════════
    Atmosphere polish — ลำแสงจันทร์, ประกายผิวน้ำ, แสงตะเกียง,
@@ -1865,7 +1897,7 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 42% 34% at 22% 88%, rgba(var(--accent-rgb),0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 42% 34% at 22% 88%, rgba(79,209,197,0.08) 0%, transparent 70%),
     radial-gradient(ellipse 30% 26% at 46% 96%, rgba(190,215,235,0.05) 0%, transparent 70%),
     radial-gradient(ellipse 36% 30% at 12% 99%, var(--teal-glow-soft) 0%, transparent 72%);
   opacity: 0.4;
@@ -1880,9 +1912,11 @@
   height: 46vh;
   z-index: 0;
   pointer-events: none;
+  /* ตะเกียงในภาพเป็นไฟจริง จึงยังต้องอุ่น — แต่ย้ายจากอำพันมาเป็นสนิม
+     ให้อยู่ในพาเลตต์ 4 สีใหม่ ไม่ใช่สีทองที่ถอดออกไปแล้ว */
   background: radial-gradient(ellipse 55% 55% at 72% 78%,
-    rgba(var(--accent-rgb),0.09) 0%,
-    rgba(var(--accent-rgb),0.04) 42%,
+    rgba(199,107,69,0.10) 0%,
+    rgba(199,107,69,0.045) 42%,
     transparent 72%);
   opacity: 0.6;
 }
@@ -1892,47 +1926,32 @@
 /* ── scrollbar ของลิสต์ห้อง (class ถูกใช้ใน JSX แต่ยังไม่เคยมีสไตล์) ── */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(var(--accent-rgb),0.35) transparent;
+  scrollbar-color: rgba(79,209,197,0.35) transparent;
 }
 .custom-scrollbar::-webkit-scrollbar { width: 8px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(var(--accent-rgb),0.35), rgba(var(--accent-rgb),0.18));
+  background: linear-gradient(180deg, rgba(79,209,197,0.35), rgba(79,209,197,0.18));
   border-radius: 99px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(var(--accent-rgb),0.55), rgba(var(--accent-rgb),0.3));
+  background: linear-gradient(180deg, rgba(79,209,197,0.55), rgba(79,209,197,0.3));
   background-clip: padding-box;
 }
 
 /* ── มุมทองของ panel สว่างรับตอน hover ── */
-.panel-corner { transition: opacity var(--ease-md), border-color var(--ease-md); }
-.menu-panel:hover .panel-corner,
-.panel-box:hover .panel-corner,
-.home-form:hover .panel-corner,
-.player-bar:hover .panel-corner {
-  opacity: 1;
-  border-color: var(--gold-bright);
-}
-
 /* ── หมุดกระดานข่าวโยกตอน hover ── */
 .home-news-pin { transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1), color var(--ease); }
 .panel-box:hover .home-news-pin {
   transform: rotate(-4deg) scale(1.15);
-  color: var(--gold-mid);
+  color: var(--silver);
 }
 
 /* ── ถ้วยรางวัล leaderboard เด้งตอน hover panel ── */
 .leaderboard-trophy { transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1); }
 .leaderboard-box:hover .leaderboard-trophy { transform: rotate(8deg) scale(1.2); }
-
-/* ── รูปโปรไฟล์ใน player bar: วงแหวนทองตอน hover ── */
-.player-ava { transition: border-color var(--ease-md); }
-.player-bar:hover .player-ava:not(.is-anon) {
-  border-color: var(--gold-dim);
-}
 
 /* ── footer: version เป็นชิป + เส้นคั่นไล่เฉด ── */
 .home-footer {
@@ -1949,7 +1968,7 @@
 
 /* ── สีตอนลากเลือกข้อความ ให้เข้าธีม ── */
 .home-page ::selection {
-  background: rgba(var(--accent-rgb),0.30);
+  background: rgba(79,209,197,0.30);
   color: #fff;
 }
 
@@ -1961,39 +1980,40 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Easter eggs — คำวิ่งหนีบนปุ่มเมนู + เส้นใต้โลโก้ลับ
+   Easter egg — วนเมาส์บนคำว่า WOLF 3 ครั้งใน 2 วิ แล้วหมาป่าโผล่
    ═══════════════════════════════════════════════════════════ */
 
-/* ── โลโก้: ชี้ WOLF ครบ 5 ครั้ง → เส้นใต้ลากซ้าย→ขวา ค้าง 20 วิ
-   แล้วถอนกลับ (origin ซ้ายเหมือนเดิม ปลายขวาจึงหดกลับมาทางซ้าย) ── */
-/* inline-block ให้กล่องหดเท่าความกว้างข้อความ — เส้นใต้จะยาวพอดีคำ
+/* inline-block ให้กล่องหดเท่าความกว้างข้อความ
    (แม่ .home-header จัด text-align: center ให้อยู่กลางเหมือนเดิม) */
 .home-title {
   position: relative;
   display: inline-block;
 }
 
-.title-underline {
+/* หมาป่าเกาะกับคำว่า WOLF ไม่ใช่กับทั้งบรรทัด — จึงต้องมี position: relative ที่นี่ */
+.title-wolf { position: relative; }
+
+.wolf-easter-egg {
   position: absolute;
-  left: 4%;
-  right: 4%;
-  bottom: -14px;
-  height: 3px;
-  border-radius: 99px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    var(--gold-dim) 12%,
-    var(--gold-bright) 50%,
-    var(--gold-dim) 88%,
-    transparent 100%);
-  box-shadow: 0 0 14px var(--gold-glow);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  opacity: 0;
   pointer-events: none;
+  z-index: 5;
+  /* หมาป่าโผล่เหนือคำว่า WOLF — ใช้ทองตามคำที่มันเกาะอยู่ */
+  color: var(--gold-bright);
+  filter: drop-shadow(0 0 10px rgba(232,169,75,0.55));
+  transition: opacity 250ms var(--ease), transform 250ms var(--ease);
 }
-.home-title.has-underline .title-underline {
-  transform: scaleX(1);
+.wolf-easter-egg.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wolf-easter-egg { transition: opacity 250ms var(--ease); transform: translateX(-50%); }
+  .wolf-easter-egg.is-visible { transform: translateX(-50%); }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2004,7 +2024,7 @@
 .home-page a:focus-visible,
 .home-page input:focus-visible,
 .home-page [tabindex]:focus-visible {
-  outline: 2px solid var(--gold-mid);
+  outline: 2px solid var(--teal-bright);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }

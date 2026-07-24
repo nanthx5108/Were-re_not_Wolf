@@ -9,6 +9,14 @@
   z-index: 1000;
   padding: var(--space-5);
   animation: fadeIn 0.15s ease;
+
+  /* สีเน้น → เขียวทะเล teal ให้ตรงกับหน้าแรกที่เปิด modal นี้ขึ้นมา */
+  --accent-rgb:       79,209,197;
+  --gold-bright:      #4fd1c5;
+  --gold-mid:         #2a9d9e;
+  --gold-dim:         #1a5f60;
+  --on-accent:        #04231f;
+  --color-accent:     #4fd1c5;
 }
 
 @keyframes fadeIn {
@@ -19,7 +27,6 @@
 .modal-card {
   position: relative;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-7) var(--space-6);
   max-width: 380px;
