@@ -53,7 +53,7 @@ export default function NightAction() {
 
   if (!isNight) return seerReport;
 
-  // เหตุการณ์ "เรือกลับเข้าฝั่ง" — คืนนี้ผู้พิทักษ์เลือกป้องกันได้ 2 คน
+  // เหตุการณ์ "คืนที่ปลอดภัย" — คืนนี้ผู้พิทักษ์เลือกป้องกันได้ 2 คน
   const doubleGuard = myRole === 'bodyguard' && morningEvent?.id === 'boat_return';
   const maxTargets = doubleGuard ? 2 : 1;
 

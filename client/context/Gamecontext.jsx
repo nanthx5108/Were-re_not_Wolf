@@ -40,6 +40,7 @@ export const SOCKET_EVENTS = Object.freeze({
   MORNING_EVENT_PRIVATE:'morning:event:private',
   GAME_ENDED:           'game:ended',
   GAME_RESUMED:         'game:resumed',
+  ROOM_CLOSED:          'room:closed',
 });
 
 // เก็บ identity ไว้ใน sessionStorage เพื่อให้รีเฟรชแล้วกลับเข้าเกมได้
@@ -85,6 +86,7 @@ const initialState = {
   actionLog:      [],   // narrator เสียดสีของ action log bar — สังเคราะห์จาก event ที่มีอยู่
   nightZero:      { readyCount: 0, total: 0 },   // ความคืบหน้า "ดูแล้ว" ในคืนที่ 0
   typingIds:      [],   // ผู้เล่นที่กำลังพิมพ์ — ใช้จัดลำดับ sidebar
+  roomClosed:     false, // เจ้าของห้องปิดห้อง — ใช้เด้งผู้เล่นที่เหลือกลับหน้าแรก
 };
 
 let _logSeq = 0;
@@ -100,6 +102,10 @@ function gameReducer(state, action) {
     case 'SET_IDENTITY':
       return { ...state, playerId: action.playerId, nickname: action.nickname };
 
+    case 'ROOM_CLOSED':
+      // เจ้าของห้องปิดห้อง — ล้าง room state แล้วตั้ง flag ให้ component เด้งกลับหน้าแรก
+      return { ...state, room: null, gameResult: null, roomClosed: true };
+
     case 'SOCKET_CONNECTED':
       return { ...state, connected: true, error: null };
 
@@ -111,6 +117,7 @@ function gameReducer(state, action) {
         ...state,
         room:   action.room,
         myRole: action.room.myRole ?? state.myRole,
+        roomClosed: false,   // เข้าห้องใหม่แล้ว — เคลียร์ flag ปิดห้องรอบก่อน
       };
 
     case 'PLAYERS_UPDATED':
@@ -199,7 +206,7 @@ function gameReducer(state, action) {
         privateNote:   action.phase === 'night' ? null : state.privateNote,
         // การปิดปากมีผลแค่วันเดียว — พอขึ้นคืนใหม่ก็พูดได้ (ตรงกับที่ server เคลียร์)
         silencedNote:  action.phase === 'night' ? null : state.silencedNote,
-        // morningEvent คงไว้ข้ามคืน — NightAction ใช้เช็ค effect เช่น เรือกลับเข้าฝั่ง (เลือกป้องกัน 2 คน)
+        // morningEvent คงไว้ข้ามคืน — NightAction ใช้เช็ค effect เช่น คืนที่ปลอดภัย (เลือกป้องกัน 2 คน)
       };
 
     case 'VOTE_UPDATE':
@@ -355,6 +362,8 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.GAME_ENDED]:           ({ winner, message, reveal }) => dispatch({ type: 'GAME_ENDED', winner, message, reveal }),
       [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
       [SOCKET_EVENTS.VOTE_RESULT]: (data) => dispatch({ type: 'VOTE_RESULT', ...data }),
+      // เจ้าของห้องปิดห้อง → ล้าง session แล้วตั้ง flag ให้ Lobby เด้งกลับหน้าแรก
+      [SOCKET_EVENTS.ROOM_CLOSED]: () => { clearSession(); dispatch({ type: 'ROOM_CLOSED' }); },
     };
 
     for (const [event, handler] of Object.entries(handlers)) socket.on(event, handler);

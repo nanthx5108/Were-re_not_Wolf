@@ -4,6 +4,21 @@ import { ROLE_DISTRIBUTION, PLAYER_LIMITS, ROLE_FACTION } from './constants.js';
 // เพิ่ม role ใหม่ (เช่น silencer) = เพิ่มชื่อในนี้ + ROLE_FACTION แล้ว validation ตามมาเอง
 export const CONFIGURABLE_ROLES = Object.freeze(['werewolf', 'seer', 'bodyguard', 'silencer', 'fool']);
 
+// 2 โหมดเกม
+export const GAME_MODES = Object.freeze({ CLASSIC: 'classic', CHAOS: 'chaos' });
+export function isValidGameMode(mode) {
+  return mode === GAME_MODES.CLASSIC || mode === GAME_MODES.CHAOS;
+}
+
+// โหมดโกลาหล: เวลาแต่ละ phase คงที่ (host ตั้งไม่ได้) — night 25 / day 90 / voting 25
+// floor 15 วิ กันไว้เผื่ออนาคตปรับค่าพวกนี้แล้วเผลอตั้งต่ำจนเล่นไม่ได้
+export const CHAOS_MIN_DURATION = 15;
+export const CHAOS_PHASE_DURATIONS = Object.freeze({
+  night:  Math.max(CHAOS_MIN_DURATION, 25),
+  day:    Math.max(CHAOS_MIN_DURATION, 90),
+  voting: Math.max(CHAOS_MIN_DURATION, 25),
+});
+
 export const DEFAULT_PHASE_DURATIONS = Object.freeze({
   night:  30,
   day:    60,
@@ -138,4 +153,43 @@ function checkFactionBalance(roleConfig, playerCount) {
 
 function fillerVillagerCount(roleConfig, playerCount) {
   return Math.max(0, playerCount - sumRoles(roleConfig));
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffled(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/**
+ * สุ่ม roleConfig สำหรับโหมดโกลาหล — คำนวณตอนกดเริ่มเกมด้วยจำนวนผู้เล่นจริง
+ * กติกาบังคับ: หมาป่า ≥ 1 และ ≤ ⌊playerCount / 4⌋ (แต่อย่างน้อย 1 เสมอ)
+ * ที่เหลือสุ่มบทบาทพิเศษของฝ่ายบ้าน/fool โดยคงให้ฝ่ายบ้านมากกว่าหมาป่าเสมอ (ผ่าน validate เดิม)
+ */
+export function buildChaosRoleConfig(playerCount) {
+  const config = { werewolf: 0, seer: 0, bodyguard: 0, silencer: 0, fool: 0 };
+
+  const maxWolves = Math.max(1, Math.floor(playerCount / 4));
+  config.werewolf = randInt(1, maxWolves);
+
+  // สุ่มเพิ่มบทบาทพิเศษทีละใบ (แต่ละใบมีได้ 0–1) ตราบใดที่ยังไม่ทำให้ config ใช้ไม่ได้
+  for (const role of shuffled(['seer', 'bodyguard', 'silencer', 'fool'])) {
+    if (Math.random() < 0.6) {
+      const trial = { ...config, [role]: 1 };
+      if (!validateConfigForPlayerCount(trial, playerCount)) config[role] = 1;
+    }
+  }
+
+  // กันเหนียว: ถ้าด้วยความบังเอิญยังใช้ไม่ได้ ให้ถอยไปใช้ preset มาตรฐานของขนาดห้องนั้น
+  if (validateConfigForPlayerCount(config, playerCount)) {
+    return buildDefaultRoleConfig(playerCount);
+  }
+  return config;
 }

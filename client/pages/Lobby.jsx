@@ -11,14 +11,28 @@ import '../src/styles/Lobby.css';
 
 const MIN_PLAYERS = 4;
 
-const GAME_RULES = [
-  'แต่ละคืนหมาป่าจะร่วมกันเลือกฆ่าผู้เล่น 1 คนอย่างลับๆ และเห็นทีมกันเอง',
-  'Seer ตรวจผู้เล่น 1 คนได้ทุกคืน แต่รู้แค่ว่าเขาอยู่ฝ่ายไหน',
-  'Bodyguard ปกป้องผู้เล่น 1 คนจากการถูกฆ่าได้ทุกคืน ห้ามเฝ้าคนเดิม 2 คืนติด',
-  'Silencer ปิดปากผู้เล่น 1 คน ทำให้เขาพิมพ์อะไรไม่ได้เลยตลอดวันถัดไป',
-  'กลางวันทุกคนโหวตขับผู้เล่นที่สงสัยว่าเป็นหมาป่าออกจากเกาะ คะแนนเสมอ = ไม่มีใครถูกขับ',
-  'Fool ชนะเกมทันทีถ้าโดนโหวตออก (แต่ถ้าถูกฆ่ากลางคืนไม่นับ)',
-  'ชาวบ้านชนะถ้ากำจัดหมาป่าหมด หมาป่าชนะถ้าฆ่าชาวบ้านจนเหลือน้อยกว่าหรือเท่ากับจำนวนหมาป่า',
+// กติกาโดยย่อ แยกเป็น 2 เรื่อง: เล่นยังไง / ชนะยังไง — รายละเอียดความสามารถของ role
+// ย้ายไปหัวข้อ "บทบาทภายในเกม" (GAME_ROLES) ด้านล่างแทน ไม่ปนกันเหมือนเดิม
+const HOW_TO_PLAY = [
+  'เกมแบ่งเป็นรอบกลางคืนกับกลางวันสลับกัน',
+  'กลางคืน: ผู้เล่นที่มีความสามารถพิเศษใช้ความสามารถของตัวเองอย่างลับ ๆ พร้อมกัน',
+  'กลางวัน: ทุกคนพูดคุยหาข้อสงสัย แล้วโหวตขับผู้เล่นที่สงสัยว่าเป็นหมาป่าออกจากเกาะ คะแนนเสมอ = ไม่มีใครถูกขับ',
+];
+
+const WIN_CONDITIONS = [
+  'ชาวบ้านชนะ ถ้ากำจัดหมาป่าได้หมดทุกตัว',
+  'หมาป่าชนะ ถ้าฆ่าชาวบ้านจนเหลือน้อยกว่าหรือเท่ากับจำนวนหมาป่า',
+  'Fool ชนะทันที ถ้าโดนโหวตออกจากเกาะ (แต่ถ้าถูกหมาป่าฆ่าตอนกลางคืนไม่นับ)',
+];
+
+// บทบาททั้ง 6 ตัว (ครบจริง ไม่ใช่แค่ 4 ตัวที่มีความสามารถ) — ไอคอนชุดเดียวกับ ROLE_INFO
+const GAME_ROLES = [
+  { icon: '🐺',   name: 'หมาป่า',    text: 'แต่ละคืนร่วมกันเลือกฆ่าผู้เล่น 1 คนอย่างลับ ๆ และเห็นทีมกันเอง' },
+  { icon: '🔮',   name: 'Seer',      text: 'ตรวจผู้เล่น 1 คนได้ทุกคืน รู้แค่ว่าเขาอยู่ฝ่ายไหน' },
+  { icon: '🛡️',   name: 'Bodyguard', text: 'ปกป้องผู้เล่น 1 คนจากการถูกฆ่าได้ทุกคืน ห้ามเฝ้าคนเดิม 2 คืนติด' },
+  { icon: '🤐',   name: 'Silencer',  text: 'ปิดปากผู้เล่น 1 คน ทำให้เขาพิมพ์อะไรไม่ได้เลยตลอดวันถัดไป' },
+  { icon: '🃏',   name: 'Fool',      text: 'ไม่มีความสามารถพิเศษ (เงื่อนไขชนะดูในหัวข้อกติกาโดยย่อด้านบน)' },
+  { icon: '🧑‍🌾', name: 'ชาวบ้าน',   text: 'ไม่มีความสามารถพิเศษ ใช้การสังเกตและพูดคุยเท่านั้น' },
 ];
 
 /* ── หิ่งห้อยลอยเหนือฉากหลัง — ชุดเดียวกับหน้าแรก ให้สองหน้าเป็นเกาะเดียวกัน ── */
@@ -51,16 +65,7 @@ function initialOf(name = '') {
 }
 
 /* หมุดไม้สี่มุม — signature ของทั้งเว็บ ตอกป้ายไม้ไว้กับผนัง */
-function Pegs() {
-  return (
-    <span className="pegs" aria-hidden="true">
-      <span className="peg peg-tl" /><span className="peg peg-tr" />
-      <span className="peg peg-bl" /><span className="peg peg-br" />
-    </span>
-  );
-}
-
-/* หัวข้อป้ายไม้ — เส้นคั่นสองข้างเป็นของจริง ไม่ใช่ขีดที่พิมพ์ในข้อความ */
+/* หัวข้อป้าย — เส้นคั่นสองข้างเป็นของจริง ไม่ใช่ขีดที่พิมพ์ในข้อความ */
 function PlaqueTitle({ children }) {
   return (
     <h2 className="panel-title">
@@ -76,7 +81,7 @@ function IslanderRow({ player, isMe, isHost, index }) {
   const offline = player.isConnected === false;
   return (
     <li
-      className={`islander${isMe ? ' is-me' : ''}${offline ? ' is-offline' : ''}`}
+      className={`islander cv-auto${isMe ? ' is-me' : ''}${offline ? ' is-offline' : ''}`}
       style={{ '--row-i': index }}
     >
       <span className="islander-ava" aria-hidden="true">{initialOf(player.nickname)}</span>
@@ -97,7 +102,7 @@ export default function Lobby() {
   const { roomId } = useParams();
   const navigate   = useNavigate();
   const {
-    room, playerId, nickname, connected, error,
+    room, playerId, nickname, connected, error, roomClosed,
     leaveRoom, startGame, clearError, updateRoomConfig,
   } = useGame();
 
@@ -110,6 +115,11 @@ export default function Lobby() {
   useEffect(() => {
     if (!playerId || !nickname) navigate('/', { replace: true });
   }, [playerId, nickname, navigate]);
+
+  // เจ้าของห้องปิดห้อง — เด้งผู้เล่นที่เหลือกลับหน้าแรก
+  useEffect(() => {
+    if (roomClosed) navigate('/', { replace: true });
+  }, [roomClosed, navigate]);
 
   useEffect(() => {
     if (room?.status === 'in_progress') {
@@ -151,6 +161,7 @@ export default function Lobby() {
   }
 
   const isHost       = room.hostId === playerId;
+  const isChaos      = room.gameMode === 'chaos';
   const playerCount  = room.players?.length ?? 0;
   const roomCapacity = Number.isInteger(room.maxPlayers) ? room.maxPlayers : 8;
   const canStart     = isHost && playerCount >= MIN_PLAYERS && playerCount <= roomCapacity;
@@ -192,42 +203,54 @@ export default function Lobby() {
       <main className="lobby-grid">
 
         {/* ── ซ้าย: ตั้งค่าห้อง ── */}
-        <section className="lobby-panel lobby-config">
-          <Pegs />
-
+        <section className="lobby-panel lobby-config sketch-border-lite">
           <div className="panel-head">
-            <PlaqueTitle>ตั้งค่าห้อง</PlaqueTitle>
-            {!isHost && <span className="panel-note">โฮสต์เป็นคนตั้ง</span>}
+            <PlaqueTitle>{isChaos ? 'โหมดโกลาหล' : 'ตั้งค่าห้อง'}</PlaqueTitle>
+            {!isChaos && !isHost && <span className="panel-note">โฮสต์เป็นคนตั้ง</span>}
           </div>
 
-          <div className="lobby-tabs" role="tablist" aria-label="หมวดการตั้งค่า">
-            {[['roles', 'บทบาท'], ['timing', 'เวลา']].map(([key, label]) => (
-              <button key={key} role="tab" aria-selected={cfgTab === key}
-                      className={`lobby-tab${cfgTab === key ? ' is-active' : ''}`}
-                      onClick={() => setCfgTab(key)}>
-                {label}
-              </button>
-            ))}
-          </div>
+          {isChaos ? (
+            /* โหมดโกลาหล: ไม่มีการตั้งค่า role/เวลา — ระบบสุ่ม + fix ให้ ปิดหน้าตั้งค่าไปเลย */
+            <div className="lobby-panel-body custom-scrollbar lobby-chaos-note">
+              <p className="chaos-lead">บทบาทถูกสุ่มอัตโนมัติตอนกดเริ่มเกม ไม่มีใครตั้งเองได้</p>
+              <ul className="chaos-facts">
+                <li><span className="chaos-facts-k">บทบาท</span><span className="chaos-facts-v">สุ่มทุกเกม · หมาป่าไม่เกิน ¼ ของผู้เล่น</span></li>
+                <li><span className="chaos-facts-k">กลางคืน</span><span className="chaos-facts-v">25 วินาที</span></li>
+                <li><span className="chaos-facts-k">พูดคุย</span><span className="chaos-facts-v">90 วินาที</span></li>
+                <li><span className="chaos-facts-k">โหวต</span><span className="chaos-facts-v">25 วินาที</span></li>
+              </ul>
+              <p className="chaos-hint">อยากตั้งบทบาท/เวลาเอง ให้สร้างห้องใหม่แล้วเลือกโหมด Classic</p>
+            </div>
+          ) : (
+            <>
+              <div className="lobby-tabs" role="tablist" aria-label="หมวดการตั้งค่า">
+                {[['roles', 'บทบาท'], ['timing', 'เวลา']].map(([key, label]) => (
+                  <button key={key} role="tab" aria-selected={cfgTab === key}
+                          className={`lobby-tab${cfgTab === key ? ' is-active' : ''}`}
+                          onClick={() => setCfgTab(key)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
 
-          <div className="lobby-panel-body custom-scrollbar" key={cfgTab}>
-            <RoomConfigPanel
-              section={cfgTab}
-              roleConfig={room.roleConfig}
-              phaseDurations={room.phaseDurations}
-              revealRoleOnDeath={room.revealRoleOnDeath}
-              maxPlayers={roomCapacity}
-              playerCount={playerCount}
-              editable={isHost}
-              onChange={updateRoomConfig}
-            />
-          </div>
+              <div className="lobby-panel-body custom-scrollbar" key={cfgTab}>
+                <RoomConfigPanel
+                  section={cfgTab}
+                  roleConfig={room.roleConfig}
+                  phaseDurations={room.phaseDurations}
+                  revealRoleOnDeath={room.revealRoleOnDeath}
+                  maxPlayers={roomCapacity}
+                  playerCount={playerCount}
+                  editable={isHost}
+                  onChange={updateRoomConfig}
+                />
+              </div>
+            </>
+          )}
         </section>
 
         {/* ── กลาง: แชท / กติกา ── */}
-        <section className="lobby-panel lobby-center">
-          <Pegs />
-
+        <section className="lobby-panel lobby-center sketch-border-lite">
           <div className="panel-head is-split">
             <div className="lobby-tabs" role="tablist" aria-label="ช่องกลาง">
               {[['chat', 'ช่องแชท'], ['rules', 'กติกา']].map(([key, label]) => (
@@ -260,9 +283,31 @@ export default function Lobby() {
           ) : (
             <div className="lobby-panel-body custom-scrollbar lobby-rules">
               <h3 className="lobby-subhead">กติกาโดยย่อ</h3>
+
+              <h4 className="rules-subhead">เล่นยังไง</h4>
               <ul className="rules-list">
-                {GAME_RULES.map((rule, i) => (
-                  <li key={i} className="rules-item" style={{ '--row-i': i }}>{rule}</li>
+                {HOW_TO_PLAY.map((rule, i) => (
+                  <li key={i} className="rules-item cv-auto" style={{ '--row-i': i }}>{rule}</li>
+                ))}
+              </ul>
+
+              <h4 className="rules-subhead">ชนะยังไง</h4>
+              <ul className="rules-list">
+                {WIN_CONDITIONS.map((rule, i) => (
+                  <li key={i} className="rules-item cv-auto" style={{ '--row-i': i }}>{rule}</li>
+                ))}
+              </ul>
+
+              <h3 className="lobby-subhead">บทบาทภายในเกม</h3>
+              <ul className="events-list">
+                {GAME_ROLES.map((role, i) => (
+                  <li key={role.name} className="events-item cv-auto" style={{ '--row-i': i }}>
+                    <span className="events-icon" aria-hidden="true">{role.icon}</span>
+                    <span className="events-text">
+                      <strong className="events-title">{role.name}</strong>
+                      <span className="events-effect">{role.text}</span>
+                    </span>
+                  </li>
                 ))}
               </ul>
 
@@ -277,7 +322,7 @@ export default function Lobby() {
               </p>
               <ul className="events-list">
                 {MORNING_EVENT_INFO.map((ev, i) => (
-                  <li key={ev.title} className="events-item" style={{ '--row-i': i }}>
+                  <li key={ev.id} className="events-item cv-auto" style={{ '--row-i': i }}>
                     <span className="events-icon" aria-hidden="true">{ev.icon}</span>
                     <span className="events-text">
                       <strong className="events-title">{ev.title}</strong>
@@ -291,9 +336,7 @@ export default function Lobby() {
         </section>
 
         {/* ── ขวา: รายชื่อผู้เล่น ── */}
-        <aside className="lobby-panel lobby-players">
-          <Pegs />
-
+        <aside className="lobby-panel lobby-players sketch-border-lite">
           <div className="panel-head">
             <PlaqueTitle>ผู้เล่น</PlaqueTitle>
             <span className="player-badge">{playerCount}/{roomCapacity}</span>

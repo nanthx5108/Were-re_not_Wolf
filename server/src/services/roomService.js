@@ -4,6 +4,7 @@ import pool from '../../db/connection.js';
 import {
   createRoom,
   addPlayerToRoom,
+  updatePlayer,
   getRoom,
   serializeRoom,
 } from '../game/gameStore.js';
@@ -11,20 +12,21 @@ import { PLAYER_LIMITS } from '../game/constants.js';
 import { getRoomPlayerLimit } from '../game/roomCapacity.js';
 import { buildDefaultRoomConfig } from '../game/roomConfig.js';
 
-export async function createRoomService({ hostNickname, roomName, userId, maxPlayers, isPrivate, config }) {
+export async function createRoomService({ hostNickname, roomName, userId, maxPlayers, isPrivate, gameMode, config }) {
   const roomId = generateRoomCode();
   const hostId = userId || uuidv4();
 
   const safeMaxPlayers = clampMaxPlayers(maxPlayers);
   const safeIsPrivate  = !!isPrivate;
+  const safeGameMode   = gameMode === 'chaos' ? 'chaos' : 'classic';
   const safeConfig     = config || buildDefaultRoomConfig(safeMaxPlayers);
 
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     await conn.query(
-      `INSERT INTO rooms (id, name, host_id, max_players, is_private, config) VALUES (?, ?, ?, ?, ?, ?)`,
-      [roomId, roomName.trim(), hostId, safeMaxPlayers, safeIsPrivate, JSON.stringify(safeConfig)]
+      `INSERT INTO rooms (id, name, host_id, game_mode, max_players, is_private, config) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [roomId, roomName.trim(), hostId, safeGameMode, safeMaxPlayers, safeIsPrivate, JSON.stringify(safeConfig)]
     );
     // logged-in user ใช้ userId เป็น player id (คงที่ทั่วระบบเพื่อผูก exp/level)
     // ถ้าเคยมี player row ค้างจากห้องก่อน → ย้ายตัวตนมาห้องใหม่แทนที่จะชน PK แล้ว 500
@@ -44,9 +46,13 @@ export async function createRoomService({ hostNickname, roomName, userId, maxPla
 
   createRoom({
     id: roomId, name: roomName.trim(), hostId,
-    maxPlayers: safeMaxPlayers, isPrivate: safeIsPrivate, config: safeConfig,
+    maxPlayers: safeMaxPlayers, isPrivate: safeIsPrivate, gameMode: safeGameMode, config: safeConfig,
   });
   addPlayerToRoom(roomId, { id: hostId, nickname: hostNickname.trim() });
+  // ห้องเพิ่งสร้างผ่าน REST — host ยังไม่ได้ต่อ socket จริง จึงถือว่ายัง "ไม่ connect"
+  // จนกว่า socket room:join จะเข้ามา (handleRejoin จะเซ็ต isConnected:true ให้เอง)
+  // ไม่งั้น sweep จะเห็น host เป็นคน connect ค้างแล้วไม่ยอมลบห้องที่ถูกทิ้งตั้งแต่ยังไม่เข้า
+  updatePlayer(roomId, hostId, { isConnected: false });
 
   return { roomId, playerId: hostId };
 }

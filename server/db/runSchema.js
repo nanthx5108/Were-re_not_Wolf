@@ -17,6 +17,22 @@ const ALREADY_APPLIED = new Set([
   1061, // ER_DUP_KEYNAME      — CREATE INDEX ที่มีอยู่แล้ว
 ]);
 
+const ENGINE_TABLE_ERROR = 'doesn\'t exist in engine';
+
+function extractTableName(statement) {
+  const normalized = statement.trim().replace(/\s+/g, ' ');
+  const createTableMatch = normalized.match(/CREATE TABLE(?: IF NOT EXISTS)? [`"]?(?:[^`".]+\.)?`?([^`"\s(]+)`?/i);
+  if (createTableMatch) return createTableMatch[1];
+
+  const alterTableMatch = normalized.match(/ALTER TABLE [`"]?(?:[^`".]+\.)?`?([^`"\s(]+)`?/i);
+  if (alterTableMatch) return alterTableMatch[1];
+
+  const createIndexMatch = normalized.match(/CREATE INDEX .* ON [`"]?(?:[^`".]+\.)?`?([^`"\s(]+)`?/i);
+  if (createIndexMatch) return createIndexMatch[1];
+
+  return null;
+}
+
 /**
  * แยก schema.sql เป็น statement ทีละอัน (mysql2 ส่งทีละ statement ได้แม่นกว่ายัดก้อนเดียว
  * เพราะเราต้องดู error code ของแต่ละ statement)
@@ -79,7 +95,7 @@ function splitStatements(sql) {
  * รัน schema.sql กับ connection/pool ที่เลือก database ไว้แล้ว
  * ใช้ร่วมกันระหว่างตอน server boot (connection.js) และ `npm run db:migrate`
  */
-export async function runSchema(connection) {
+export async function runSchema(connection, recoveredTables = new Set()) {
   const sql = fs.readFileSync(schemaPath, 'utf8');
   const statements = splitStatements(sql);
 
@@ -95,6 +111,20 @@ export async function runSchema(connection) {
         skipped++;
         continue;
       }
+
+      const tableName = extractTableName(statement);
+      if (tableName && err.message?.includes(ENGINE_TABLE_ERROR)) {
+        if (recoveredTables.has(tableName)) {
+          const firstLine = statement.split('\n')[0];
+          throw new Error(`schema statement failed after recovery [${err.code}]: ${firstLine} …\n   ${err.message}`);
+        }
+
+        console.warn(`⚠️  Found orphaned metadata for table ${tableName}; attempting recovery.`);
+        await connection.query('DROP TABLE IF EXISTS `' + tableName + '`');
+        recoveredTables.add(tableName);
+        return runSchema(connection, recoveredTables);
+      }
+
       const firstLine = statement.split('\n')[0];
       throw new Error(`schema statement failed [${err.code}]: ${firstLine} …\n   ${err.message}`);
     }

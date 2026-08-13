@@ -61,52 +61,27 @@
   to   { transform: translateX(2%) translateY(-1%); }
 }
 
-/* === Card — weathered wood notice board === */
+/* === Card — เดียวกับ .panel-box/.home-form ที่หน้าแรก ===
+   ขอบมาจาก .sketch-border ที่ติดมากับ class ใน JSX (เส้นมือวาด + เรืองขาวตอน hover)
+   ห้ามประกาศ border ที่นี่ ไม่งั้นจะทับ shorthand ของ sketch-border */
 .auth-card {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 420px;
   background:
-    linear-gradient(160deg, rgba(var(--accent-rgb),0.03) 0%, transparent 40%),
-    linear-gradient(180deg, var(--color-surface-2) 0%, var(--color-surface) 60%, var(--color-bg-2) 100%);
-  border: 1px solid rgba(var(--accent-rgb),0.20);
-  border-radius: var(--radius-sm);
+    linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%),
+    var(--bg-elevated);
+  border-radius: var(--radius-md);
   padding: var(--space-7) var(--space-6);
   box-shadow:
-    var(--shadow-card),
-    0 0 0 1px rgba(0,0,0,0.5),
-    /* lantern glow from below */
-    0 8px 32px rgba(139,94,60,0.12),
-    /* top edge highlight */
-    inset 0 1px 0 rgba(var(--accent-rgb),0.08);
+    0 20px 50px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.02),
+    inset 0 -10px 24px rgba(0,0,0,0.4);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   overflow: hidden;
-}
-
-/* Corner ornaments — like a wooden notice board */
-.auth-card::before,
-.auth-card::after {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  border-color: rgba(var(--accent-rgb),0.30);
-  border-style: solid;
-}
-.auth-card::before {
-  top: -1px; left: -1px;
-  border-width: 2px 0 0 2px;
-}
-.auth-card::after {
-  bottom: -1px; right: -1px;
-  border-width: 0 2px 2px 0;
-}
-
-/* Fade-in animation */
-.auth-card {
   animation: authCardIn 400ms ease both;
 }
 @keyframes authCardIn {
@@ -162,13 +137,13 @@
   margin: var(--space-1) 0;
 }
 
-/* === Error box === */
+/* === Error box — เดียวกับ .error-box ที่หน้าแรก === */
 .auth-error {
-  background: rgba(229,57,53,0.14);
-  border: 1px solid rgba(229,57,53,0.40);
-  border-radius: 4px;
+  background: var(--danger-soft);
+  border: 1px solid rgba(139,32,32,0.4);
+  border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-4);
-  color: var(--color-danger);
+  color: #ffaaaa;
   font-family: var(--font-body);
   font-size: 0.84rem;
   text-align: center;
@@ -204,9 +179,9 @@
 }
 
 .auth-input {
-  background: rgba(0,0,0,0.30);
+  background: var(--bg-input);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: 0.92rem;
@@ -221,10 +196,10 @@
   font-style: italic;
 }
 
+/* focus ring เดียวกับ .field-input ที่หน้าแรก */
 .auth-input:focus {
-  border-color: var(--color-accent);
-  background: rgba(0,0,0,0.38);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.08);
+  border-color: var(--teal-dim);
+  box-shadow: 0 0 0 3px rgba(79,209,197,0.14);
 }
 
 /* === Hint & validation === */
@@ -234,8 +209,8 @@
   color: var(--color-text-muted);
   padding-left: 2px;
 }
-.auth-hint.is-ok  { color: #6ecf8a; }
-.auth-hint.is-bad { color: #e57373; }
+.auth-hint.is-ok  { color: var(--sage-bright); }
+.auth-hint.is-bad { color: var(--rust-bright); }
 
 /* === Password strength === */
 .auth-strength {
@@ -258,7 +233,7 @@
 
 .auth-btn {
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-display);
   font-size: 0.88rem;
   font-weight: 700;
@@ -281,11 +256,13 @@
   filter: none !important;
 }
 
-/* ปุ่มหลัก = CTA เขียวทะเลชุดเดียวกับปุ่ม "เปิดห้องใหม่" ที่หน้าแรก */
+/* ปุ่มหลัก = CTA เขียวทะเลชุดเดียวกับ .btn-primary ที่หน้าแรก
+   ขอบมาจาก .sketch-border ที่ติดมากับ class ใน JSX — ที่นี่ override แค่สีขอบ
+   ไม่ประกาศ border shorthand ไม่งั้นจะทับ width/style ของ sketch-border ทิ้ง */
 .auth-btn-primary {
   background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 100%);
   color: var(--on-teal);
-  border: 1px solid var(--teal-mid);
+  border-color: var(--teal-bright);
   box-shadow:
     0 4px 16px rgba(79,209,197,0.25),
     inset 0 1px 0 rgba(255,255,255,0.25);
@@ -293,11 +270,13 @@
 
 .auth-btn-primary:not(:disabled):hover {
   transform: translateY(-2px);
+  /* filter ต้องพ่วง url(#sketch-edge) ไปด้วยเสมอ — ประกาศ filter ใหม่จะทับของเดิมทั้งก้อน
+     ถ้าใส่แค่ brightness() ขอบมือวาดจะหายวับตอน hover */
+  filter: url(#sketch-edge) brightness(1.06);
   box-shadow:
     0 0 16px rgba(79,209,197,0.4),
     0 8px 24px rgba(0,0,0,0.4),
     inset 0 1px 0 rgba(255,255,255,0.3);
-  filter: brightness(1.06);
 }
 
 .auth-btn-primary:not(:disabled):active {
@@ -371,9 +350,9 @@
   font-size: 0.76rem;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 4px;
-  transition: color 200ms ease;
+  border-radius: var(--radius-sm);
+  transition: color 200ms ease, transform 200ms ease;
   letter-spacing: 0.04em;
 }
 
-.auth-back-btn:hover { color: var(--color-text-muted); }
+.auth-back-btn:hover { color: var(--color-text-muted); transform: translateY(-1px); }

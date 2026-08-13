@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Special+Elite&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Sriracha&family=Trirong:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Jolly+Lodger&family=Special+Elite&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Sriracha&family=Trirong:wght@400;600;700&display=swap');
 
 /* =========================================================
    WE'RE NOT WOLF — Global Design System
@@ -98,7 +98,7 @@
   --faction-neutral: #c98a8a;   /* เป็นกลาง (คนโง่) — ห้ามใช้ม่วงในเกมนี้ */
 
   /* ── Typography — 3-tier system ── */
-  --font-logo:      'Cinzel Decorative', 'Trirong', serif;   /* main title / big display text — Cinzel Decorative has no Thai glyphs, Trirong covers Thai characters in the same elegant-serif spirit */
+  --font-logo:      'Jolly Lodger', 'Trirong', serif;   /* main title / big display text — Jolly Lodger has no Thai glyphs, Trirong covers Thai characters that also use this token (e.g. how-to-play modal title) */
   --font-display:   'Sriracha', 'Noto Sans Thai', 'Inter', sans-serif; /* main font — buttons, panel/section titles */
   --font-meta:      'Special Elite', 'Courier Prime', monospace; /* labels, meta, dev notes */
   --font-handwritten: 'Special Elite', 'Courier Prime', monospace; /* button titles — rough hand-inked feel */
@@ -259,8 +259,15 @@ input:focus, select:focus, textarea:focus {
 
 /* ── Reveal on scroll: ซ่อนไว้ก่อน แล้ว pop ขึ้นตอนเลื่อนมาเจอ ──
    ใช้ transition ไม่ใช่ animation เพื่อให้ prefers-reduced-motion ที่ตั้งไว้ท้ายไฟล์
-   บีบเวลาเหลือ ~0 แล้วเนื้อหายังโผล่ครบ ไม่ค้างซ่อน */
+   บีบเวลาเหลือ ~0 แล้วเนื้อหายังโผล่ครบ ไม่ค้างซ่อน
+
+   content-visibility: auto คือของจริงที่ลดการกินสเปค — เบราว์เซอร์ข้ามงาน
+   layout/paint/render ของเนื้อหาข้างในทั้งก้อนทันทีที่กล่องนี้พ้นจอ (ไม่ว่าจะยังไม่เคย
+   เลื่อนมาเจอ หรือเคยโผล่แล้วแต่เลื่อนผ่านไปแล้วก็ตาม) แยกกันคนละกลไกกับ opacity/transform
+   ด้านบนที่คุมแค่การ "โผล่ให้เห็น" — ทำงานคู่กันได้เพราะเช็คจากตำแหน่งจริงบนจอ ไม่ใช่ state เดียวกัน
+   contain-intrinsic-size กันเลย์เอาต์กระโดดตอนสลับสถานะ (auto = จำขนาดจริงหลัง reflow แรก) */
 .reveal {
+  content-visibility: auto;
   opacity: 0;
   transform: translateY(26px) scale(0.985);
   transition:
@@ -271,6 +278,21 @@ input:focus, select:focus, textarea:focus {
 .reveal.is-revealed {
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+
+/* ── ลดการกินสเปคของแถวใน list ที่ยาว ๆ (ห้อง, ทำเนียบคะแนน, รายชื่อผู้เล่น, กติกา) ──
+   ต่างจาก .reveal ตรงที่ไม่มี opacity/transform ของตัวเอง — ใช้กับแถวที่มี
+   hover/interaction เป็นของตัวเองอยู่แล้ว ไม่อยากให้ opacity เริ่มที่ 0 ไปชนกัน
+   content-visibility: auto ให้เบราว์เซอร์ข้าม layout/paint ตอนแถวนั้นเลื่อนพ้นจอ
+   (ไม่ว่าจะอยู่ในหน้าปกติหรือในกล่อง overflow-y: auto ก็ได้ผลเหมือนกัน) */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 48px;
+}
+/* การ์ดที่มีข้อความหลายบรรทัด (บทบาท/เหตุการณ์ใน "วิธีการเล่น") สูงกว่าแถวลิสต์ทั่วไปมาก */
+.cv-auto-lg {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 160px;
 }
 
 /* ── Utilities ── */

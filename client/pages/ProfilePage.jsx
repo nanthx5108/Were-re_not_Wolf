@@ -18,11 +18,6 @@ function daysInMonth(month, year) {
   return new Date(year, month, 0).getDate();
 }
 
-/**
- * รับได้ทั้ง "2000-05-15" และ ISO เต็ม "2000-05-15T00:00:00.000Z"
- * (server แปลงให้เป็น date-only แล้ว แต่กันไว้เผื่อ response เก่าที่ยัง cache อยู่ —
- * ถ้าไม่ตัดส่วนเวลาออก Number("15T00:00:00.000Z") จะเป็น NaN แล้ววันหายไปทั้งช่อง)
- */
 function parseBirthdate(str) {
   if (!str) return { day: '', month: '', year: '' };
   const [y, m, d] = String(str).slice(0, 10).split('-');
@@ -69,7 +64,7 @@ function ConfirmModal({ open, title, message, confirmLabel = 'ยืนยัน
   if (!open) return null;
   return (
     <div className="profile-modal-overlay" onClick={onCancel}>
-      <div className="profile-modal" onClick={e => e.stopPropagation()}>
+      <div className="profile-modal sketch-border" onClick={e => e.stopPropagation()}>
         <h3 className="profile-modal-title">{title}</h3>
         <p className="profile-modal-message">{message}</p>
         <div className="profile-modal-actions">
@@ -290,7 +285,7 @@ export default function ProfilePage() {
 
       <div className="profile-container">
         <div className="profile-topbar">
-          <button className="profile-back-btn" onClick={() => navigate('/')}>
+          <button className="profile-back-btn sketch-border-lite" onClick={() => navigate('/')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
@@ -298,10 +293,7 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <div className="profile-card">
-          <span className="profile-card-corner tl" />
-          <span className="profile-card-corner br" />
-
+        <div className="profile-card sketch-border">
           <h1 className="profile-title">บัญชีของคุณ</h1>
 
           {error && <div className="profile-error">{error}</div>}

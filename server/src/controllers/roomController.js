@@ -6,7 +6,7 @@ import {
 } from '../services/roomService.js';
 import { serializeRoom } from '../game/gameStore.js';
 import { PLAYER_LIMITS } from '../game/constants.js';
-import { normalizeRoomConfig } from '../game/roomConfig.js';
+import { normalizeRoomConfig, isValidGameMode, GAME_MODES } from '../game/roomConfig.js';
 
 export async function createRoomHandler(req, res, next) {
   try {
@@ -14,6 +14,8 @@ export async function createRoomHandler(req, res, next) {
     const rawRoomName = req.body?.roomName;
     const rawMaxPlayers = req.body?.maxPlayers;
     const isPrivate = req.body?.isPrivate;
+    // โหมดเกม — ไม่ส่งมาถือว่า classic (เข้ากันได้กับ client เดิม)
+    const gameMode = req.body?.gameMode ?? GAME_MODES.CLASSIC;
 
     const hostNickname = typeof rawHostNickname === 'string' ? rawHostNickname.trim() : rawHostNickname;
     const roomName = typeof rawRoomName === 'string' ? rawRoomName.trim() : rawRoomName;
@@ -21,6 +23,9 @@ export async function createRoomHandler(req, res, next) {
 
     if (!hostNickname || !roomName) {
       return res.status(400).json({ error: 'hostNickname and roomName are required.' });
+    }
+    if (!isValidGameMode(gameMode)) {
+      return res.status(400).json({ error: 'gameMode must be "classic" or "chaos".' });
     }
     if (hostNickname.length > 32) {
       return res.status(400).json({ error: 'Nickname must be 32 characters or fewer.' });
@@ -47,6 +52,7 @@ export async function createRoomHandler(req, res, next) {
       userId: req.session?.userId || null,
       maxPlayers: parsedMaxPlayers,
       isPrivate: !!isPrivate,
+      gameMode,
       config,
     });
 

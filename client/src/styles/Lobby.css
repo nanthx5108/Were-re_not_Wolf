@@ -13,16 +13,26 @@
 
 .lobby-shell,
 .lobby-loading {
-  /* ลายไม้เดียวกับ HomePage/GamePage — ป้ายทุกใบในเกมนี้เป็นไม้แผ่นเดียวกัน */
-  --wood-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.15' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32 0 0 0 0 0.24 0 0 0 0 0.15 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+  /* สีเน้น → เขียวทะเล teal ให้ตรงกับหน้าแรก (ทุก var(--gold-*)/accent ในไฟล์นี้จะกลายเป็น teal) */
+  --accent-rgb:       79,209,197;
+  --gold-bright:      #4fd1c5;
+  --gold-mid:         #2a9d9e;
+  --gold-dim:         #1a5f60;
+  --on-accent:        #04231f;
+  --color-accent:     #4fd1c5;
+  --color-accent-dim: #1a5f60;
+  --text-gold:        #a7d8d2;   /* ข้อความน้ำเสียงเน้น → อมเขียวจาง แทนอมทอง */
 
-  /* แถบสีกอและ — ลายเรือประมงใต้ ใช้เป็นขีดสีบนปุ่มหลักเหมือนหน้าแรก */
+  /* เลิกใช้ลายไม้ — หน้านี้ย้ายมาใช้ panel โปร่งสีเข้ม + ขอบลายเส้นวาดแบบ HomePage แล้ว
+     คงชื่อตัวแปรไว้เป็น none เพื่อไม่ต้องรื้อทุก background list ที่เคยอ้างถึง */
+  --wood-grain: none;
+
+  /* แถบสีขีดใต้ปุ่มหลัก — ชุดสีเดียวกับ .kolae-stripe ของ HomePage (teal/rust/sage) */
   --kolae-stripe: linear-gradient(90deg,
-    var(--gold-bright) 0%,
-    var(--gold-bright) 30%,
-    #b0472e 30%, #b0472e 55%,
-    var(--teal-glow) 55%, var(--teal-glow) 78%,
-    var(--gold-mid) 78%, var(--gold-mid) 100%);
+    var(--teal-mid) 0 25%,
+    var(--rust-mid) 25% 50%,
+    var(--sage-mid) 50% 75%,
+    var(--teal-mid) 75% 100%);
 
   position: relative;
   min-height: 100dvh;
@@ -154,6 +164,9 @@
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5) var(--space-3);
   animation: entranceRiseIn 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  background: rgba(7, 12, 17, 0.78);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(14px);
 }
 
 /* ป้ายไม้เล็กสองใบแขวนคนละมุม เอียงคนละทาง — ไม่ได้แปะด้วยกริด */
@@ -311,19 +324,20 @@
   flex-direction: column;
   min-height: 0;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, transparent 52%),
-    var(--wood-grain),
-    rgba(10, 15, 21, 0.93);
-  background-blend-mode: normal, soft-light, normal;
-  /* ขอบไม้: เงาตกด้านนอก + ขอบในมืดเหมือนแผ่นไม้ถูกเซาะร่อง */
-  box-shadow:
-    var(--shadow-lg),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 0 30px rgba(0, 0, 0, 0.4);
-  transition: border-color var(--ease-md), box-shadow var(--ease-md);
+  overflow: hidden;
+  background: rgba(13, 19, 26, 0.86);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(16px);
   animation: entranceRiseIn 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* เส้นไฮไลต์บาง ๆ พาดหัวแผง เหมือน .panel-box::before ของ HomePage */
+.lobby-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+  z-index: 1;
 }
 .lobby-config  { animation-delay: 120ms; }
 .lobby-center  { animation-delay: 60ms; }
@@ -343,39 +357,8 @@
   to   { opacity: 1; transform: translateY(0)    rotate(0.28deg); }
 }
 
-.lobby-panel:hover {
-  border-color: var(--border-default);
-  box-shadow:
-    var(--shadow-lg),
-    0 0 34px rgba(var(--accent-rgb), 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 0 30px rgba(0, 0, 0, 0.38);
-}
-
-/* ── หมุดไม้สี่มุม — signature ของเว็บ เรืองอำพันตอน hover ── */
-.peg {
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle at 35% 33%, #7a5a34, #3a2a16 70%);
-  box-shadow:
-    inset 0 -1px 2px rgba(0, 0, 0, 0.6),
-    0 1px 3px rgba(0, 0, 0, 0.6);
-  transition: box-shadow var(--ease-md), transform var(--ease-md);
-}
-.peg-tl { top: 9px;    left: 9px; }
-.peg-tr { top: 9px;    right: 9px; }
-.peg-bl { bottom: 9px; left: 9px; }
-.peg-br { bottom: 9px; right: 9px; }
-
-.lobby-panel:hover .peg {
-  transform: scale(1.1);
-  box-shadow:
-    inset 0 -1px 2px rgba(0, 0, 0, 0.6),
-    0 0 9px 2px rgba(var(--accent-rgb), 0.55);
-}
+/* hover ของแผง: ปล่อยให้ .sketch-border-lite (global.css) เรืองขาวให้เอง — ไม่ทับ box-shadow ที่นี่
+   ไม่งั้นจะไปลบเอฟเฟกต์ขอบลายเส้นวาดตอน hover */
 
 /* ── หัวแผง ── */
 .panel-head {
@@ -385,6 +368,8 @@
   gap: var(--space-3);
   padding: var(--space-4) var(--space-4) var(--space-3);
   flex-shrink: 0;
+  background: rgba(7, 12, 17, 0.32);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .panel-head.is-split {
   border-bottom: 1px solid var(--border-subtle);
@@ -475,16 +460,11 @@
 
 .lobby-tab.is-active {
   color: var(--gold-bright);
-  border-color: var(--gold-dim);
-  background:
-    linear-gradient(180deg, rgba(var(--accent-rgb), 0.16) 0%, rgba(var(--accent-rgb), 0.05) 100%),
-    var(--wood-grain),
-    transparent;
-  background-blend-mode: normal, soft-light, normal;
+  border-color: rgba(79,209,197,0.3);
+  background: rgba(79,209,197,0.12);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 0 16px rgba(var(--accent-rgb), 0.14),
-    0 0 14px rgba(var(--accent-rgb), 0.12);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 16px rgba(79,209,197,0.12);
 }
 /* ขีดอำพันใต้แท็บที่เลือก ยืดออกจากกลาง */
 .lobby-tab.is-active::after {
@@ -509,6 +489,8 @@
   overflow-y: auto;
   padding: 0 var(--space-4) var(--space-4);
   animation: fadeIn 260ms ease both;
+  background: rgba(255,255,255,0.015);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 /* ── กลาง: แชท ── */
@@ -543,6 +525,19 @@
   margin-bottom: var(--space-3);
 }
 .lobby-rules .lobby-subhead:first-child { padding-top: var(--space-2); }
+
+/* หัวข้อย่อยใต้ "กติกาโดยย่อ" (เล่นยังไง / ชนะยังไง) — เล็กและจางกว่า subhead หลัก */
+.rules-subhead {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  padding: var(--space-2) 0 6px;
+  margin: 0;
+}
+.rules-list + .rules-subhead { padding-top: var(--space-3); }
+.rules-list { margin-bottom: var(--space-2); }
 
 .rules-list,
 .events-list {
@@ -622,6 +617,42 @@
   color: var(--text-muted);
 }
 
+/* ── โหมดโกลาหล: การ์ดอธิบายแทนหน้าตั้งค่า role/เวลา ── */
+.lobby-chaos-note { padding-top: var(--space-4); }
+.chaos-lead {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--gold-bright);
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+}
+.chaos-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin-bottom: var(--space-4);
+}
+.chaos-facts li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+}
+.chaos-facts-k { font-size: 0.8rem; color: var(--text-muted); flex-shrink: 0; }
+.chaos-facts-v { font-size: 0.82rem; color: var(--text-secondary); text-align: right; }
+.chaos-hint {
+  font-size: 0.76rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border-subtle);
+}
+
 /* ── ปุ่มเริ่มเกม / ป้ายรอ ── */
 .lobby-waiting {
   font-family: var(--font-body);
@@ -657,17 +688,13 @@
 
 .btn-start-game.ready {
   overflow: hidden;
-  background:
-    linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-dim) 100%),
-    var(--wood-grain);
-  background-blend-mode: normal, overlay;
+  background: linear-gradient(180deg, rgba(79,209,197,0.95) 0%, rgba(42,157,158,0.88) 100%);
   color: var(--on-accent);
-  border-color: var(--gold-dim);
+  border-color: rgba(79,209,197,0.36);
   cursor: pointer;
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+    0 8px 22px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow var(--ease), filter var(--ease);
 }
 /* แถบสีกอและใต้ปุ่ม — ลายเดียวกับปุ่มหลักหน้าแรก */
@@ -716,14 +743,15 @@
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.03);
   transition: border-color var(--ease), background var(--ease), transform var(--ease);
   animation: entranceRiseIn 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
   animation-delay: calc(var(--row-i, 0) * 55ms);
 }
 .islander:hover {
-  border-color: var(--border-default);
+  border-color: rgba(79,209,197,0.24);
+  background: rgba(79,209,197,0.08);
   transform: translateX(-2px);
 }
 .islander.is-me {
@@ -847,17 +875,17 @@
   z-index: 30;
   right: var(--space-5);
   bottom: var(--space-5);
-  width: 46px;
-  height: 46px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  border: 1px solid var(--gold-dim);
-  background: rgba(10, 15, 21, 0.92);
+  border: 1px solid rgba(79,209,197,0.35);
+  background: rgba(10, 15, 21, 0.90);
   color: var(--gold-bright);
   font-family: var(--font-display);
   font-size: 1.2rem;
-  box-shadow: var(--shadow-md), 0 0 18px rgba(var(--accent-rgb), 0.18);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 22px rgba(79,209,197,0.18);
   transition: transform var(--ease), box-shadow var(--ease), background var(--ease);
   animation: entranceRiseIn 700ms cubic-bezier(0.22, 1, 0.36, 1) 400ms backwards;
 }

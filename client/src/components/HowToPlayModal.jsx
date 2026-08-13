@@ -131,7 +131,7 @@ function RolesSection() {
           const r = ROLE_INFO[key];
           if (!r) return null;
           return (
-            <article key={key} className={`htp-role is-${key}`}>
+            <article key={key} className={`htp-role cv-auto-lg is-${key}`}>
               <div className="htp-role-head">
                 <span className="htp-role-icon" aria-hidden="true">{r.icon}</span>
                 <div>
@@ -166,7 +166,7 @@ function EventsSection() {
         {MORNING_EVENT_INFO.map(ev => {
           const chance = morningEventChance(ev);
           return (
-            <article key={ev.title} className={`htp-event ${ev.conditional ? 'is-conditional' : ''}`}>
+            <article key={ev.id} className={`htp-event cv-auto-lg ${ev.conditional ? 'is-conditional' : ''}`}>
               <div className="htp-event-head">
                 <span className="htp-event-icon" aria-hidden="true">{ev.icon}</span>
                 <h4 className="htp-event-name">{ev.title}</h4>

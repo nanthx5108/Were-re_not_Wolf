@@ -4,6 +4,7 @@ import {
   normalizeRoomConfig,
   validateConfigForPlayerCount,
   buildDefaultRoleConfig,
+  buildChaosRoleConfig,
   DEFAULT_PHASE_DURATIONS,
 } from './roomConfig.js';
 import { buildRoleList } from './Roledistributor.js';
@@ -100,4 +101,21 @@ test('buildRoleList fills the remaining seats with villagers', () => {
   assert.equal(roles.length, 8);
   assert.equal(roles.filter(r => r === 'werewolf').length, 2);
   assert.equal(roles.filter(r => r === 'villager').length, 3);
+});
+
+test('chaos role config always validates and obeys the wolf cap', () => {
+  // สุ่มหลายรอบต่อจำนวนผู้เล่นแต่ละค่า — ทุกครั้งต้องผ่าน validate และหมาป่าไม่เกิน 1/4
+  for (let playerCount = 4; playerCount <= 8; playerCount++) {
+    const maxWolves = Math.max(1, Math.floor(playerCount / 4));
+    for (let i = 0; i < 200; i++) {
+      const cfg = buildChaosRoleConfig(playerCount);
+      assert.equal(
+        validateConfigForPlayerCount(cfg, playerCount),
+        null,
+        `chaos config ใช้ไม่ได้กับ ${playerCount} คน: ${JSON.stringify(cfg)}`
+      );
+      assert.ok(cfg.werewolf >= 1, 'ต้องมีหมาป่าอย่างน้อย 1');
+      assert.ok(cfg.werewolf <= maxWolves, `หมาป่า ${cfg.werewolf} เกินเพดาน ${maxWolves} ที่ ${playerCount} คน`);
+    }
+  }
 });

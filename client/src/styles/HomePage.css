@@ -143,7 +143,9 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-6);
-  background: transparent;
+  background: rgba(7, 12, 17, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
 }
 
 .online-badge {
@@ -321,7 +323,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-.user-pill-flyout {
+.user-pill-flyout.sketch-border {
+  /* .sketch-border (global.css) ก็ตั้ง position:relative ไว้เหมือนกัน — ทั้งคู่ specificity เท่ากัน
+     (คลาสเดียว) ถ้าไม่ผูก 2 คลาสให้ specificity สูงกว่า อันไหนมาทีหลังใน cascade จะชนะแบบสุ่ม
+     พอ relative ชนะ .user-pill-flyout เลยกลับไปมีพื้นที่ในโฟลว์ปกติ ดัน .user-pill-wrap ให้สูงขึ้น
+     แล้ว .home-topbar (align-items:center) ก็เลื่อน .online-badge ลงมาตามกึ่งกลางใหม่ */
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
@@ -353,14 +359,49 @@
 
 .home-header {
   text-align: center;
-  /* ระยะเผื่อ topbar ย้ายไปอยู่ที่ .home-hero แล้ว (มันคุมการจัดกลางทั้งจอ)
-     ที่นี่เหลือแค่ช่องว่างระหว่างโลโก้กับเมนู */
   padding: 0 0 var(--space-7);
   position: relative;
   opacity: 1;
-  /* entrance ย้ายไปที่ motion.div ชั้นนอกแล้ว — ที่นี่เหลือแค่ proximity fade
-     (แยกสองชั้นเพราะ inline style ของ motion จะทับ opacity ของคลาสนี้ถ้ารวมกัน) */
   transition: opacity 200ms var(--ease);
+}
+
+.home-hero-copy {
+  margin: var(--space-4) auto 0;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.home-hero-subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(0.92rem, 1.1vw, 1.05rem);
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 680px;
+  letter-spacing: 0.01em;
+}
+
+.home-hero-pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(79, 209, 197, 0.12);
+  color: var(--teal-bright);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 0 0 1px rgba(79, 209, 197, 0.12);
 }
 
 .home-header.is-hidden-by-cursor {
@@ -370,15 +411,20 @@
 
 .home-title {
   font-family: var(--font-logo) !important;
-  font-weight: 700;
-  font-size: clamp(1.9rem, 7.5vw, 6rem);
+  /* Jolly Lodger มีมาแค่ weight เดียว (400) ตัวหนังสือหนาอยู่แล้วโดยธรรมชาติของฟอนต์ —
+     ถ้าตั้ง 700 เบราว์เซอร์จะ synthesize bold เอง ทำให้เส้นเบลอ/ล้นแทนที่จะคมแบบตั้งใจ */
+  font-weight: 400;
+  /* เพิ่มความหนาด้วยเส้นขอบแทนการ synthesize bold ของเบราว์เซอร์ (เหตุผลเดิมด้านบน) —
+     currentColor ทำให้ตัวขาวปกติกับตัว WOLF สีทอง (ที่ override สีทีหลัง) ได้เส้นขอบสีเดียวกับตัวมันเอง */
+  -webkit-text-stroke: 0.018em currentColor;
+  font-size: clamp(2.1rem, 8.4vw, 6.75rem);
   color: var(--text-primary);
   /* ตัวอักษรแต่ละตัวเป็น <span display:inline-block> แยกกัน เบราว์เซอร์จึงตัดบรรทัด
      ตรงไหนก็ได้ระหว่างตัว — ต้อง nowrap ถึงจะการันตีว่าชื่อเกมอยู่แถวเดียว */
   white-space: nowrap;
   /* ช่องไฟพอให้เซริฟไม่เกยกัน แต่ไม่กว้างจนดันความยาวคำเกินความกว้างคอลัมน์ */
-  letter-spacing: 0.06em;
-  margin-right: -0.06em;
+  letter-spacing: 0.09em;
+  margin-right: -0.09em;
   line-height: 1;
   text-shadow:
     0 2px 3px rgba(0,0,0,0.95),
@@ -521,9 +567,9 @@
 .panel-box {
   position: relative;
   border-radius: var(--radius-md);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%),
-    var(--bg-elevated);
+  background: rgba(10, 15, 21, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
   overflow: hidden;
 }
 
@@ -540,7 +586,7 @@
 .menu-panel {
   padding: 0;
   border: none;
-  background: none;
+  background: transparent;
   box-shadow: none;
   overflow: visible;
   display: flex;
@@ -577,40 +623,51 @@
   filter: brightness(0.92);
 }
 
+/* Ink & Ash: ปุ่มเมนูทุกใบ "แสงขึ้นเฉพาะตอน hover" และเป็นเขียวเย็น (แทนเรืองขาวของ .sketch-border)
+   คุมแค่ box-shadow — ไม่แตะ filter: url(#sketch-edge) ที่ทำให้ขอบเป็นลายเส้นวาด
+   ปุ่มหลัก (.is-primary:hover) specificity สูงกว่า จะเขียนทับ box-shadow ก้อนนี้เองด้วยแสงของมัน */
+.menu-btn.sketch-border:hover:not(:disabled) {
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.5),
+    0 0 16px rgba(79,209,197,0.16);
+}
+
 /* ── ปุ่มหลัก: ต้องอ่านออกว่า "กดอันนี้" ตั้งแต่ยังไม่ชี้ ──
    ต่างจากอีก 3 อันด้วย 4 อย่างพร้อมกัน: ตัวใหญ่กว่า · ขอบเขียว · เงาลึกกว่า · ขีดเขียวด้านซ้าย */
 .menu-btn.is-primary {
   padding: 24px 20px;
-  border-color: rgba(79,209,197,0.4);
+  /* Ink & Ash: พักตัวมืดเรียบ ไม่มี tint เขียว/ไม่มีแสงเรือง — ต่างจากปุ่มอื่นด้วยขนาด +
+     ขีดซ้าย + เงาลึกกว่า ; ขอบใช้ลายเส้นหมึกจาก .sketch-border เหมือนปุ่มอื่น (ไม่ย้อมเขียว) */
   background:
-    linear-gradient(90deg, rgba(79,209,197,0.13) 0%, transparent 62%),
     linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%),
     var(--bg-elevated);
-  box-shadow:
-    0 4px 16px rgba(0,0,0,0.5),
-    0 0 22px rgba(79,209,197,0.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.55);
 }
-/* ขีดเขียวด้านซ้าย — ตัวบอกลำดับความสำคัญที่ไม่ต้องพึ่งขนาดอย่างเดียว */
+/* ขีดด้านซ้าย — ตัวบอกลำดับความสำคัญ ; พักตัวทึบมืด (teal-dim) ไม่เรือง แล้วค่อย "ติดไฟ" ตอน hover */
 .menu-btn.is-primary::before {
   content: '';
   position: absolute;
   left: 0; top: 12%; bottom: 12%;
   width: 3px;
   border-radius: 0 3px 3px 0;
+  background: var(--teal-dim);
+  transition: background var(--ease), box-shadow var(--ease);
+}
+.menu-btn.is-primary:hover:not(:disabled)::before {
   background: linear-gradient(180deg, var(--teal-bright), var(--teal-mid));
-  box-shadow: 0 0 10px rgba(79,209,197,0.6);
+  box-shadow: 0 0 10px rgba(79,209,197,0.5);
 }
 .menu-btn.is-primary .menu-title { font-size: 1.24rem; }
 .menu-btn.is-primary .menu-icon { width: 58px; height: 58px; }
 .menu-btn.is-primary:hover:not(:disabled) {
+  /* สีเขียว + แสงเย็นโผล่เฉพาะตอน hover — จาง เหมือนตะเกียงเพิ่งติดในความมืด */
   background:
-    linear-gradient(90deg, rgba(79,209,197,0.22) 0%, transparent 62%),
+    linear-gradient(90deg, rgba(79,209,197,0.12) 0%, transparent 62%),
     linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%),
     var(--bg-elevated);
-  border-color: rgba(79,209,197,0.75);
   box-shadow:
     0 6px 20px rgba(0,0,0,0.55),
-    0 0 26px rgba(79,209,197,0.3);
+    0 0 22px rgba(79,209,197,0.20);
 }
 
 /* hover lift ย้ายไป whileHover ของ motion แล้ว (ดู MenuBtn ใน HomePage.jsx) */
@@ -764,6 +821,33 @@
 
 .settings-row { display: flex; gap: var(--space-4); align-items: flex-start; flex-wrap: wrap; }
 .settings-row .field-col { flex: 1; }
+
+/* ── เลือกโหมดเกม (Classic / โกลาหล) ในหน้าสร้างห้อง ── */
+.mode-select { display: flex; flex-direction: column; gap: 8px; }
+.mode-options { display: flex; gap: var(--space-3); }
+.mode-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--ease), box-shadow var(--ease), border-color var(--ease), color var(--ease);
+}
+.mode-card:hover { color: var(--text-primary); }
+.mode-card.is-active {
+  color: var(--text-primary);
+  border-color: var(--teal-bright);
+  background: rgba(79,209,197,0.10);
+  box-shadow: inset 0 0 0 1px rgba(79,209,197,0.3), 0 0 10px rgba(79,209,197,0.18);
+}
+.mode-card-title { font-size: 0.92rem; font-weight: 600; }
+.mode-card-desc  { font-size: 0.76rem; color: var(--text-muted); line-height: 1.4; }
+.mode-card.is-active .mode-card-desc { color: var(--text-secondary); }
 
 .privacy-toggle {
   display: flex;
@@ -1323,6 +1407,7 @@
   padding: var(--space-5);
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .home-news-head {
@@ -1505,8 +1590,10 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-5) var(--space-6);
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(255,255,255,0.06);
   margin-top: auto;
+  background: rgba(7, 12, 17, 0.75);
+  backdrop-filter: blur(14px);
 }
 
 .version {

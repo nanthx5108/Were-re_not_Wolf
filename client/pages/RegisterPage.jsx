@@ -66,7 +66,7 @@ export default function RegisterPage() {
       <div className="auth-overlay" />
       <div className="auth-fog" />
 
-      <div className="auth-card">
+      <div className="auth-card sketch-border">
         {/* Logo */}
         <div className="auth-logo">
           <span className="auth-logo-wolf">WE'RE</span>
@@ -142,7 +142,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="auth-btn auth-btn-primary"
+            className="auth-btn auth-btn-primary sketch-border"
             disabled={loading || username.trim().length < 3 || password.length < 6}
           >
             {loading ? 'กำลังสมัคร...' : 'สมัครสมาชิก'}

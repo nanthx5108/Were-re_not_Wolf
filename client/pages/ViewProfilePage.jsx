@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { STARTING_LEVEL } from '../../shared/leveling.js';
 import bgHome from '../src/assets/bgHome.jpg';
+import Reveal from '../src/components/Reveal.jsx';
 import '../src/styles/ViewProfilePage.css';
 
 function DerpyWolfAvatar({ size = 120 }) {
@@ -70,43 +71,39 @@ export default function ViewProfilePage() {
           </div>
 
           <div className="view-profile-content">
-            {/* ชื่อบัญชี */}
-            <div className="view-profile-field">
+            {/* แต่ละแถวซ่อนไว้ก่อนแล้วค่อยไล่โผล่ทีละแถว — หน้านี้เป็นข้อมูลอ่านอย่างเดียว
+                (ไม่ใช่ฟอร์มที่ต้องกรอก) จึงซ่อนแล้วค่อยแสดงได้โดยไม่กระทบการใช้งาน */}
+            <Reveal as="div" className="view-profile-field" delay={0}>
               <div className="view-profile-field-label">ชื่อบัญชี</div>
               <div className="view-profile-field-value">{user?.username || 'ยังไม่ได้ระบุ'}</div>
-            </div>
+            </Reveal>
 
-            {/* ชื่อที่แสดงในเกม */}
-            <div className="view-profile-field">
+            <Reveal as="div" className="view-profile-field" delay={60}>
               <div className="view-profile-field-label">ชื่อที่แสดงในเกม</div>
               <div className="view-profile-field-value">{getDisplayValue(user?.displayName)}</div>
-            </div>
+            </Reveal>
 
-            {/* วันเดือนปีเกิด */}
-            <div className="view-profile-field">
+            <Reveal as="div" className="view-profile-field" delay={120}>
               <div className="view-profile-field-label">วันเดือนปีเกิด</div>
               <div className="view-profile-field-value">{formatBirthdate(user?.birthdate)}</div>
-            </div>
+            </Reveal>
 
-            {/* อีเมล */}
-            <div className="view-profile-field">
+            <Reveal as="div" className="view-profile-field" delay={180}>
               <div className="view-profile-field-label">อีเมล</div>
               <div className={`view-profile-field-value ${user?.email ? 'is-linked' : 'is-empty'}`}>
                 {user?.email || 'ยังไม่ได้ผูกอีเมล'}
               </div>
-            </div>
+            </Reveal>
 
-            {/* สถิติเกม */}
-            <div className="view-profile-field">
+            <Reveal as="div" className="view-profile-field" delay={240}>
               <div className="view-profile-field-label">จำนวนเกมที่เล่น</div>
               <div className="view-profile-field-value">{user?.gamesPlayed || 0} เกม</div>
-            </div>
+            </Reveal>
 
-            {/* ระดับ */}
-            <div className="view-profile-field">
+            <Reveal as="div" className="view-profile-field" delay={300}>
               <div className="view-profile-field-label">ระดับ</div>
               <div className="view-profile-field-value level">{user?.level ?? STARTING_LEVEL}</div>
-            </div>
+            </Reveal>
           </div>
 
           <div className="view-profile-divider" />

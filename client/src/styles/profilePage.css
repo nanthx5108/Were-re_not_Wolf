@@ -66,6 +66,7 @@
    ===================================================== */
 .profile-topbar { margin-bottom: var(--space-4); }
 
+/* ขอบมาจาก .sketch-border-lite ที่ติดมากับ class ใน JSX (ปุ่มเดี่ยว ไม่ต้องใช้ filter ตัวเต็ม) */
 .profile-back-btn {
   display: inline-flex;
   align-items: center;
@@ -76,42 +77,14 @@
   font-size: 0.82rem;
   position: relative;
   background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 4px 14px rgba(0,0,0,0.5);
-  transition: color var(--ease), transform var(--ease), box-shadow var(--ease);
-}
-.profile-back-btn::before,
-.profile-back-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  transition: opacity var(--ease);
-}
-.profile-back-btn::before {
-  background-image:
-    radial-gradient(circle 2px at 8px 8px, rgba(94,76,50,0.65) 0%, transparent 75%),
-    radial-gradient(circle 2px at calc(100% - 8px) 8px, rgba(94,76,50,0.65) 0%, transparent 75%),
-    radial-gradient(circle 2px at 8px calc(100% - 8px), rgba(94,76,50,0.65) 0%, transparent 75%),
-    radial-gradient(circle 2px at calc(100% - 8px) calc(100% - 8px), rgba(94,76,50,0.65) 0%, transparent 75%);
-  opacity: 0.6;
-}
-.profile-back-btn::after {
-  background-image:
-    radial-gradient(circle 5px at 8px 8px, rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at calc(100% - 8px) 8px, rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at 8px calc(100% - 8px), rgba(var(--accent-rgb),0.9) 0%, transparent 75%),
-    radial-gradient(circle 5px at calc(100% - 8px) calc(100% - 8px), rgba(var(--accent-rgb),0.9) 0%, transparent 75%);
-  opacity: 0;
+  transition: color var(--ease), transform var(--ease), box-shadow var(--ease), border-color var(--ease);
 }
 .profile-back-btn:hover { color: var(--gold-bright); transform: translateX(-3px); }
-.profile-back-btn:hover::before { opacity: 0.2; }
-.profile-back-btn:hover::after  { opacity: 1; }
 
 /* =====================================================
    CARD
    ===================================================== */
+/* ขอบมาจาก .sketch-border ที่ติดมากับ class ใน JSX — ห้ามประกาศ border ที่นี่ ไม่งั้นจะทับกัน */
 .profile-card {
   position: relative;
   padding: var(--space-6);
@@ -120,7 +93,6 @@
     linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)),
     linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
   background-color: var(--bg-elevated);
-  border: 1px solid rgba(255,255,255,0.05);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.02),
     inset 0 -10px 24px rgba(0,0,0,0.55),
@@ -129,21 +101,6 @@
   flex-direction: column;
   gap: var(--space-4);
   animation: fadeUp 400ms ease both;
-}
-
-.profile-card-corner {
-  position: absolute;
-  width: 14px; height: 14px;
-  pointer-events: none;
-  border-radius: 50%;
-}
-.profile-card-corner.tl { top: 10px; left: 10px; }
-.profile-card-corner.br { bottom: 10px; right: 10px; }
-.profile-card-corner::before {
-  content: '';
-  position: absolute; inset: 0; border-radius: 50%;
-  background: radial-gradient(circle, rgba(94,76,50,0.7) 0%, transparent 75%);
-  opacity: 0.6;
 }
 
 /* =====================================================
@@ -479,6 +436,7 @@
   animation: fadeIn 180ms ease both;
 }
 
+/* ขอบมาจาก .sketch-border ที่ติดมากับ class ใน JSX — ไม่ประกาศ border ที่นี่ */
 .profile-modal {
   width: 100%;
   max-width: 360px;
@@ -488,11 +446,9 @@
     linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.08)),
     linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
   background-color: var(--bg-elevated);
-  border: 1px solid rgba(var(--accent-rgb),0.18);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.03),
-    0 24px 60px rgba(0,0,0,0.7),
-    var(--shadow-gold);
+    0 24px 60px rgba(0,0,0,0.7);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);

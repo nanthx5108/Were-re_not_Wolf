@@ -123,7 +123,7 @@ async function _advancePhase(io, roomId) {
   // เหตุการณ์ประจำเช้า — สุ่มทุกครั้งที่เข้าสู่ Day Phase
   const morning = nextPhase === PHASES.DAY ? rollMorningEvent(roomId) : null;
 
-  // เหตุการณ์ที่ปรับเวลาแชท (น้ำขึ้นสูง / กองไฟ) คิดจากเวลา day ที่ host ตั้งไว้ ไม่ใช่ค่าคงที่
+  // เหตุการณ์ที่ปรับเวลาแชท (เหมายัน / คืนนี้ยาวนาน) คิดจากเวลา day ที่ host ตั้งไว้ ไม่ใช่ค่าคงที่
   const dayDuration = morning?.event.dayTimerMod
     ? morning.event.dayTimerMod(getPhaseDurationMs(roomId, PHASES.DAY))
     : undefined;

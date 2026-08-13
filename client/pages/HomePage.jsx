@@ -296,14 +296,14 @@ function WolfEasterEgg({ visible }) {
 /* โลโก้เวอร์ชันจอโหลด — ตัวอักษรชุดเดียวกับ TitleLetters แต่ไม่มี state/easter egg
    จอโหลดไม่ควรมี interaction ใด ๆ */
 function LoadingLogo() {
-  const head = "WE'RE NOT ";
+  const head = "We're not ";
   return (
-    <h1 className="home-title loading-logo" aria-label="WE'RE NOT WOLF">
+    <h1 className="home-title loading-logo" aria-label="We're not Wolf">
       {head.split('').map((ch, i) => (
         <span key={i} className="title-ch">{ch === ' ' ? ' ' : ch}</span>
       ))}
       <span className="title-wolf">
-        {'WOLF'.split('').map((ch, i) => (
+        {'Wolf'.split('').map((ch, i) => (
           <span key={i} className="title-ch">{ch}</span>
         ))}
       </span>
@@ -312,7 +312,7 @@ function LoadingLogo() {
 }
 
 function TitleLetters() {
-  const head = "WE'RE NOT ";
+  const head = "We're not ";
 
   const hoverTimestamps = useRef([]);
   const [showWolfGraphic, setShowWolfGraphic] = useState(false);
@@ -342,7 +342,7 @@ function TitleLetters() {
         </span>
       ))}
       <span className="title-wolf" onMouseEnter={handleWolfEnter}>
-        {'WOLF'.split('').map((ch, i) => (
+        {'Wolf'.split('').map((ch, i) => (
           <span key={i} className="title-ch" style={{ '--ch-i': head.length + i }}>{ch}</span>
         ))}
         <WolfEasterEgg visible={showWolfGraphic} />
@@ -379,7 +379,7 @@ function Leaderboard({ players, loading }) {
       ) : (
         <div className="leaderboard-list">
           {players.map((p, i) => (
-            <div key={`${p.name}-${i}`} className={`leaderboard-row sketch-border-lite ${RANK_CLASS[i] || ''}`} style={{ '--lb-i': i }}>
+            <div key={`${p.name}-${i}`} className={`leaderboard-row cv-auto sketch-border-lite ${RANK_CLASS[i] || ''}`} style={{ '--lb-i': i }}>
               <span className="leaderboard-rank">{i + 1}</span>
               <span className="leaderboard-ava">
                 {p.avatarUrl
@@ -452,6 +452,7 @@ export default function HomePage() {
   const [roomCode, setRoomCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(8);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [gameMode, setGameMode] = useState('classic'); // 'classic' | 'chaos'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -472,6 +473,7 @@ export default function HomePage() {
   const logoRef = useRef(null);
   const [logoHiddenByCursor, setLogoHiddenByCursor] = useState(false);
   const rafId = useRef(null);
+
 
   useEffect(() => {
     if (isLoading) return;
@@ -543,7 +545,9 @@ export default function HomePage() {
           roomName: roomName.trim(),
           maxPlayers,
           isPrivate,
+          gameMode,
           // ไม่ส่ง config มาด้วย — server ใส่ค่าเริ่มต้นตามขนาดห้องให้ แล้ว host ไปปรับใน Lobby
+          // (โหมดโกลาหลข้ามการปรับ role/เวลา — server สุ่ม + fix เวลาให้ตอนกดเริ่มเกม)
         }),
       });
       const data = await res.json();
@@ -632,7 +636,7 @@ export default function HomePage() {
     setRoomName(''); setRoomCode('');
     setJoinStep('browse'); setSelectedRoom(null);
     setRoomSearch(''); setRoomFilter('all');
-    setMaxPlayers(8); setIsPrivate(false);
+    setMaxPlayers(8); setIsPrivate(false); setGameMode('classic');
   }
 
   const HOST_AVATAR_COLORS = ['#b4cbda', '#9fbcd0', '#5FA36A', '#c98a8a', '#d6a45c'];
@@ -739,7 +743,18 @@ export default function HomePage() {
                   className={`home-header ${logoHiddenByCursor ? 'is-hidden-by-cursor' : ''}`}
                 >
                   <TitleLetters />
-                  <div className="title-ornament">
+                  <div className="home-hero-copy">
+                  <p className="home-hero-subtitle">
+                    กลยุทธ์ ความสงสัย และคำพูดเล็ก ๆ น้อย ๆ จะกำหนดชะตาของหมู่บ้าน —
+                    ทุกคืนคือการเดิมพันใหม่ ทุกการโหวตคือบทพิสูจน์
+                  </p>
+                  <div className="home-hero-pill-list">
+                    <span className="hero-pill">พูดคุยแบบเรียลไทม์</span>
+                    <span className="hero-pill">โหวตคนที่สงสัย</span>
+                    <span className="hero-pill">สุ่มบทบาททุกตา</span>
+                  </div>
+                </div>
+                <div className="title-ornament">
                     <span className="title-ornament-line" />
                     <span className="title-ornament-mark" />
                     <span className="title-ornament-line" />
@@ -792,6 +807,29 @@ export default function HomePage() {
                   onChange={e => setNickname(e.target.value)} max={32} autoFocus />
                 <Field label="ชื่อห้อง" id="room" value={roomName}
                   onChange={e => setRoomName(e.target.value)} max={64} />
+
+                <div className="mode-select" role="radiogroup" aria-label="โหมดเกม">
+                  <label className="field-label">โหมดเกม</label>
+                  <div className="mode-options">
+                    {[
+                      { key: 'classic', title: 'คลาสสิค'},
+                      { key: 'chaos',   title: 'โกลาหล'},
+                    ].map(m => (
+                      <button
+                        key={m.key}
+                        type="button"
+                        role="radio"
+                        aria-checked={gameMode === m.key}
+                        className={`mode-card sketch-border-lite${gameMode === m.key ? ' is-active' : ''}`}
+                        onClick={() => setGameMode(m.key)}
+                      >
+                        <span className="mode-card-title">{m.title}</span>
+                        <span className="mode-card-desc">{m.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="settings-row">
                   <div className="field-col">
                     <label htmlFor="maxPlayers" className="field-label">จำนวนผู้เล่นสูงสุด</label>
@@ -809,14 +847,16 @@ export default function HomePage() {
                     <span>
                       ห้องส่วนตัว
                       <span className="privacy-hint">
-                        {isPrivate ? 'เข้าได้เฉพาะคนที่มีรหัสห้อง' : 'ใครก็เข้าได้ ห้องจะแสดงในรายการ'}
+                        {isPrivate ? 'ผู้เล่นจะเข้าห้องส่วนตัวได้ต้องเข้าผ่านรหัสห้องเท่านั้น' : 'ใครก็เข้าร่วมห้องได้'}
                       </span>
                     </span>
                   </label>
                 </div>
 
                 <p className="form-note">
-                  บทบาทและเวลาแต่ละช่วง
+                  {gameMode === 'chaos'
+                    ? 'โหมดโกลาหล: ระบบสุ่มบทบาทให้ตอนเริ่มเกม และใช้เวลาคงที่ (กลางคืน 25 วิ · คุย 90 วิ · โหวต 25 วิ)'
+                    : 'บทบาทและเวลาแต่ละช่วงตั้งได้ในห้องรอก่อนเริ่มเกม'}
                 </p>
 
                 <div className="btn-row">
@@ -896,7 +936,7 @@ export default function HomePage() {
                             const hostInitial = (r.host || '?').trim().charAt(0).toUpperCase();
                             const hostColor = HOST_AVATAR_COLORS[i % HOST_AVATAR_COLORS.length];
                             return (
-                              <div key={r.id} className={`room-row-rich sketch-border-lite ${disabled ? 'is-disabled' : ''}`}>
+                              <div key={r.id} className={`room-row-rich cv-auto sketch-border-lite ${disabled ? 'is-disabled' : ''}`}>
                                 <span className="room-row-index">{String(i + 1).padStart(2, '0')}</span>
 
                                 <span className="room-row-icon">
@@ -1037,8 +1077,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Footer — อยู่ท้ายสุด ซ่อนไว้จนเลื่อนถึง */}
-      <Reveal as="footer" className="home-footer">
+      {/* Footer — กลับไปเป็น footer ปกติ ไม่ซ่อนรอเลื่อนแล้ว (ของเดิมก่อน Reveal) */}
+      <footer className="home-footer">
         <div className="home-footer-left">
           <span className="version">v1.0.1</span>
           <span className="footer-credit">© 2026 Nanthaphat Punyaphat &amp; Nam</span>
@@ -1051,7 +1091,7 @@ export default function HomePage() {
             <IconFacebook />
           </a>
         </div>
-      </Reveal>
+      </footer>
 
       {showModal && <AuthModal onClose={() => setShowModal(false)} />}
       {showHowTo && <HowToPlayModal onClose={() => setShowHowTo(false)} />}

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     name        VARCHAR(64)     NOT NULL,
     host_id     VARCHAR(36)     DEFAULT NULL,
     status      ENUM('waiting','in_progress','finished') NOT NULL DEFAULT 'waiting',
+    game_mode   ENUM('classic','chaos') NOT NULL DEFAULT 'classic',
     max_players TINYINT         NOT NULL DEFAULT 8,
     is_private  BOOLEAN         NOT NULL DEFAULT FALSE,
     config      JSON            DEFAULT NULL,
@@ -62,6 +63,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url         VARCHAR(500)    DEFAULT NULL,
     username_changed_at DATETIME       DEFAULT NULL,
     google_id          VARCHAR(255)    DEFAULT NULL UNIQUE,
+    is_admin           BOOLEAN         NOT NULL DEFAULT FALSE,
     created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -83,6 +85,8 @@ ALTER TABLE users ADD COLUMN google_id VARCHAR(255) DEFAULT NULL UNIQUE;
 ALTER TABLE users MODIFY COLUMN password VARCHAR(255) DEFAULT NULL;
 ALTER TABLE rooms ADD COLUMN is_private BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE rooms ADD COLUMN config JSON DEFAULT NULL;
+-- 2 โหมดเกม: classic (host ตั้ง role/เวลาเอง) · chaos/โกลาหล (สุ่ม role + เวลา fix)
+ALTER TABLE rooms ADD COLUMN game_mode ENUM('classic','chaos') NOT NULL DEFAULT 'classic';
 
 -- ห้องแชทของคนตาย — database เดิมมี enum แค่ 3 ค่า ต้องขยายก่อนถึงจะบันทึกได้
 ALTER TABLE messages MODIFY COLUMN channel ENUM('village','werewolf','system','dead') NOT NULL DEFAULT 'village';
@@ -91,6 +95,7 @@ ALTER TABLE messages MODIFY COLUMN channel ENUM('village','werewolf','system','d
 -- ตารางเดิมอาจมีคอลัมน์ level ที่ default เป็น 1 อยู่ จึงบังคับ default ใหม่ด้วย MODIFY
 ALTER TABLE users ADD COLUMN exp INT NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN level INT NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users MODIFY COLUMN exp INT NOT NULL DEFAULT 0;
 ALTER TABLE users MODIFY COLUMN level INT NOT NULL DEFAULT 0;
 UPDATE users SET level = 0 WHERE games_played = 0;

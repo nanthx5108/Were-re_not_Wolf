@@ -2,18 +2,25 @@ import React, { useEffect, useRef, useState } from 'react';
 
 /**
  * ห่อส่วนที่อยู่นอกจอไว้ — ซ่อนไว้ก่อน แล้วค่อย pop ขึ้นมาตอนผู้ใช้เลื่อนมาเจอ
+ * และตั้ง content-visibility: auto ให้เบราว์เซอร์ข้ามงาน layout/paint ของเนื้อหา
+ * ที่ยังไม่เข้าจอไปเลย (ประหยัดจริง ไม่ใช่แค่ opacity ซ่อนแล้วยังคำนวณอยู่ข้างใน)
  *
- * once = true (ค่าเริ่มต้น) โผล่แล้วโผล่เลย ไม่ซ่อนอีกตอนเลื่อนผ่านไป —
- * ถ้าให้ซ่อนกลับทุกครั้ง เนื้อหาจะกะพริบตอนเลื่อนขึ้นลงเร็ว ๆ
+ * once = false (ค่าเริ่มต้น) ซ่อนกลับทุกครั้งที่เลื่อนผ่านออกจากจอ ไม่ใช่แค่ตอนเปิดหน้าแรก —
+ * ตั้งใจให้เนื้อหานอกจอไม่ถูก render ค้างไว้ (คู่กับ content-visibility ด้านบน)
+ * ส่ง once={true} ที่จุดใช้งานถ้าไม่อยากให้กะพริบตอนเลื่อนขึ้นลงเร็ว ๆ
  *
  * as = แท็กที่จะ render (บางที่ต้องเป็น li/section ไม่ใช่ div)
+ * intrinsicSize = ความสูงโดยประมาณ ใช้กันเลย์เอาต์กระโดดตอน content-visibility
+ *   ยังไม่เคยวัดขนาดจริง (ค่าเริ่มต้นเดาไว้กว้าง ๆ — เบราว์เซอร์จะจำขนาดจริงหลัง reflow แรก)
  */
 export default function Reveal({
   children,
   className = '',
   delay = 0,
   as: Tag = 'div',
-  once = true,
+  once = false,
+  intrinsicSize = 300,
+  style,
   ...rest
 }) {
   const ref = useRef(null);
@@ -51,7 +58,11 @@ export default function Reveal({
     <Tag
       ref={ref}
       className={`reveal ${revealed ? 'is-revealed' : ''} ${className}`.trim()}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+      style={{
+        ...(delay ? { transitionDelay: `${delay}ms` } : null),
+        containIntrinsicSize: `auto ${intrinsicSize}px`,
+        ...style,
+      }}
       {...rest}
     >
       {children}

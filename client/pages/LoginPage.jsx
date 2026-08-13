@@ -58,7 +58,7 @@ export default function LoginPage() {
       <div className="auth-overlay" />
       <div className="auth-fog" />
 
-      <div className="auth-card">
+      <div className="auth-card sketch-border">
         {/* Logo */}
         <div className="auth-logo">
           <span className="auth-logo-wolf">WE'RE</span>
@@ -103,7 +103,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="auth-btn auth-btn-primary"
+            className="auth-btn auth-btn-primary sketch-border"
             disabled={loading || !username.trim() || !password}
           >
             {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}

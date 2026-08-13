@@ -2,19 +2,21 @@ import pool from '../../db/connection.js';
 import {
   getRoom, addPlayerToRoom, removePlayerFromRoom,
   updatePlayer, getPlayersArray, getConnectedPlayers,
-  serializeRoom, serializeRoomForPlayer, updateRoom, deleteRoom,
+  serializeRoom, serializeRoomForPlayer, updateRoom,
 } from '../game/gameStore.js';
 import { distributeRoles }   from '../game/Roledistributor.js';
 import { PLAYER_LIMITS, CHANNELS, PHASES } from '../game/constants.js';
 import { canJoinRoom, getRoomPlayerLimit } from '../game/roomCapacity.js';
 import {
   validateConfigForPlayerCount, buildDefaultRoleConfig, normalizeRoomConfig,
+  buildChaosRoleConfig, CHAOS_PHASE_DURATIONS, GAME_MODES,
 } from '../game/roomConfig.js';
 import {
-  startPhaseTimer, advancePhase, clearPhaseTimer, getPhaseDurationMs,
+  startPhaseTimer, advancePhase, getPhaseDurationMs,
   endGameIfDecided, scheduleRoomAbandon, cancelRoomAbandon,
 } from '../game/phaseManager.js';
-import { castVote, hasAllVoted, clearVoting } from '../game/voteManager.js';
+import { castVote, hasAllVoted } from '../game/voteManager.js';
+import { teardownRoom } from '../game/roomMaintenance.js';
 import { initNightActions, submitNightAction, getBlockedProtectTargets } from '../game/nightActions.js';
 import { censorProfanity } from '../game/profanity.js';
 
@@ -198,10 +200,22 @@ export function registerSocketHandlers(socket, io) {
       return socket.emit('error', { message: `Need at least ${PLAYER_LIMITS.MIN} players.` });
     }
 
+    // โหมดโกลาหล: สุ่ม role ใหม่ตอนกดเริ่มด้วยจำนวนผู้เล่นจริง + บังคับเวลา phase คงที่
+    // (ไม่ใช้ค่าที่ host ตั้งไว้ใน Lobby) — Classic ใช้ config เดิมของห้อง
+    const isChaos = room.gameMode === GAME_MODES.CHAOS;
+    if (isChaos) {
+      updateRoom(roomId, { phaseDurations: { ...CHAOS_PHASE_DURATIONS } });
+    }
+
     // config ตั้งไว้ตาม maxPlayers แต่คนเข้าจริงอาจน้อยกว่า — ต้องเช็คกับจำนวนจริงก่อนแจกบทบาท
-    const roleConfig = room.roleConfig || buildDefaultRoleConfig(players.length);
+    const roleConfig = isChaos
+      ? buildChaosRoleConfig(players.length)
+      : (room.roleConfig || buildDefaultRoleConfig(players.length));
     const configError = validateConfigForPlayerCount(roleConfig, players.length);
     if (configError) return socket.emit('error', { message: configError });
+
+    // เก็บ roleConfig ที่ใช้จริงไว้บนห้อง เผื่อ resume/serialize อ้างถึง (โกลาหลจะได้ตรงกับที่แจกไปจริง)
+    if (isChaos) updateRoom(roomId, { roleConfig });
 
     const assigned = distributeRoles(players, roleConfig);
     for (const p of assigned) {
@@ -346,6 +360,8 @@ async function handleRejoin(socket, io, roomId, playerId) {
   socket.join(roomId);
   socket.data = { roomId, playerId, nickname: player.nickname };
   cancelRoomAbandon(roomId);
+  // เจ้าของห้องรีเฟรชกลับมาทันใน grace → ยกเลิกการปิดห้อง
+  if (room.hostId === playerId) cancelHostGrace(roomId);
 
   socket.emit('room:state', serializeRoomForPlayer(roomId, playerId));
 
@@ -410,8 +426,26 @@ async function handleDisconnect(socket, io) {
   const room = getRoom(roomId);
   if (!room) return;
 
-  // ยังไม่เริ่มเกม — หลุดคือออกไปเลย ไม่มีอะไรให้กลับมาหา
-  if (room.status !== 'in_progress') return handleLeave(socket, io);
+  // ยังไม่เริ่มเกม (ล็อบบี้)
+  if (room.status !== 'in_progress') {
+    // เจ้าของห้องปิดแท็บ/หลุด → ปิดห้องทั้งหมด แต่ให้ grace สั้น ๆ เผื่อรีเฟรช
+    // (ไม่ลบ host ออกจาก players ทันที เพื่อให้ handleRejoin จำได้และยกเลิก grace)
+    if (room.hostId === playerId) {
+      updatePlayer(roomId, playerId, { isConnected: false, socketId: null });
+      clearPlayerTyping(io, roomId, playerId);
+      socket.leave(roomId);
+      io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
+      io.to(roomId).emit('chat:message', {
+        id: `sys-${Date.now()}`, channel: CHANNELS.SYSTEM,
+        content: `${nickname} (เจ้าของห้อง) หลุดการเชื่อมต่อ… ถ้าไม่กลับมาห้องจะถูกปิด`,
+        sentAt: new Date().toISOString(),
+      });
+      scheduleHostGrace(io, roomId);
+      return;
+    }
+    // ผู้เล่นทั่วไปหลุด — ออกไปเลย ไม่มีอะไรให้กลับมาหา (เหมือนเดิม)
+    return handleLeave(socket, io);
+  }
 
   updatePlayer(roomId, playerId, { isConnected: false, socketId: null });
   clearPlayerTyping(io, roomId, playerId);
@@ -460,17 +494,16 @@ async function handleLeave(socket, io) {
     return;
   }
 
+  // เจ้าของห้องกดออกเอง (ตั้งใจ) → ปิดห้องทั้งหมดทันที ไม่ต้องรอ grace และไม่ย้าย host ให้ใคร
+  if (room.hostId === playerId) {
+    cancelHostGrace(roomId);
+    return closeRoomByHost(io, roomId);
+  }
+
   removePlayerFromRoom(roomId, playerId);
   await pool.query(`DELETE FROM players WHERE id = ?`, [playerId]);
 
   if (room.players.size === 0) return destroyRoom(roomId);
-
-  if (room.hostId === playerId) {
-    const newHost = room.players.values().next().value;
-    updateRoom(roomId, { hostId: newHost.id });
-    await pool.query(`UPDATE rooms SET host_id = ? WHERE id = ?`, [newHost.id, roomId]);
-    io.to(roomId).emit('room:host_changed', { newHostId: newHost.id });
-  }
 
   io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
   io.to(roomId).emit('chat:message', {
@@ -480,12 +513,47 @@ async function handleLeave(socket, io) {
   });
 }
 
+// logic การปิดห้องอยู่ที่ roomMaintenance.teardownRoom ที่เดียว (sweep ก็เรียกตัวเดียวกัน)
 async function destroyRoom(roomId) {
-  clearPhaseTimer(roomId);
-  cancelRoomAbandon(roomId);
-  clearVoting(roomId);
-  deleteRoom(roomId);
-  await pool.query(`DELETE FROM rooms WHERE id = ?`, [roomId]);
+  cancelHostGrace(roomId);
+  await teardownRoom(roomId);
+}
+
+// ── เจ้าของห้องออก = ปิดห้อง (เฉพาะตอนอยู่ในล็อบบี้ ยังไม่เริ่มเกม) ─────────────
+// ปิดแท็บ/เน็ตหลุดให้ grace สั้น ๆ เผื่อรีเฟรช — กลับมาทัน (handleRejoin) ก็ยกเลิก
+// กดออกเองถือว่าตั้งใจ ปิดทันทีไม่ต้องรอ
+const HOST_LEAVE_GRACE_MS = 10_000;
+const hostGraceTimers = new Map();
+
+function scheduleHostGrace(io, roomId) {
+  cancelHostGrace(roomId);
+  hostGraceTimers.set(roomId, setTimeout(() => {
+    hostGraceTimers.delete(roomId);
+    closeRoomByHost(io, roomId).catch(err => console.error('[host grace]', err));
+  }, HOST_LEAVE_GRACE_MS));
+}
+
+function cancelHostGrace(roomId) {
+  const t = hostGraceTimers.get(roomId);
+  if (t) {
+    clearTimeout(t);
+    hostGraceTimers.delete(roomId);
+  }
+}
+
+// บอกผู้เล่นที่เหลือว่าห้องปิดแล้ว (client จะเคลียร์ session แล้วเด้งกลับหน้าแรก) → ทำลายห้อง
+async function closeRoomByHost(io, roomId) {
+  const room = getRoom(roomId);
+  if (!room) return;
+
+  io.to(roomId).emit('chat:message', {
+    id: `sys-${Date.now()}`, channel: CHANNELS.SYSTEM,
+    content: 'เจ้าของห้องออกไปแล้ว — ห้องนี้ถูกปิด',
+    sentAt: new Date().toISOString(),
+  });
+  io.to(roomId).emit('room:closed', { reason: 'host_left' });
+
+  await destroyRoom(roomId);
 }
 
 // เอาชื่อออกจากรายชื่อคนกำลังพิมพ์ แล้วบอกทั้งห้อง — ใช้ตอน stop_typing / หลุด / ออก

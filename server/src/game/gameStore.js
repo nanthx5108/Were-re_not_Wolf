@@ -2,12 +2,13 @@ import { buildDefaultRoomConfig } from './roomConfig.js';
 
 const roomStore = new Map();
 
-export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false, config }) {
+export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false, gameMode = 'classic', config }) {
   const { roleConfig, phaseDurations, revealRoleOnDeath } = config || buildDefaultRoomConfig(maxPlayers);
 
   roomStore.set(id, {
     id, name, hostId,
     status:      'waiting',
+    gameMode,
     phase:       'lobby',
     round:       1,
     phaseEndsAt: null,
@@ -24,6 +25,7 @@ export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false
 
 export function getRoom(roomId)             { return roomStore.get(roomId) || null; }
 export function deleteRoom(roomId)          { roomStore.delete(roomId); }
+export function getAllRooms()               { return Array.from(roomStore.values()); }
 
 export function updateRoom(roomId, updates) {
   const room = getRoom(roomId);
@@ -88,6 +90,7 @@ export function serializeRoom(roomId) {
     name:        room.name,
     hostId:      room.hostId,
     status:      room.status,
+    gameMode:    room.gameMode || 'classic',
     phase:       room.phase,
     round:       room.round,
     phaseEndsAt: room.phaseEndsAt,

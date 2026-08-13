@@ -59,7 +59,7 @@ export function submitNightAction(roomId, playerId, action) {
     // ห้ามป้องกันคนเดิม 2 คืนติด
     if (getBlockedProtectTargets(roomId, playerId).includes(targetId)) return null;
 
-    // เหตุการณ์ "เรือกลับเข้าฝั่ง" — คืนนี้ผู้พิทักษ์เลือกป้องกันได้ 2 คน
+    // เหตุการณ์ "คืนที่ปลอดภัย" — คืนนี้ผู้พิทักษ์เลือกป้องกันได้ 2 คน
     const maxTargets = getActiveNightEffect(roomId) === 'double_guard' ? 2 : 1;
     const existing = next.bodyguard?.playerId === playerId
       ? (next.bodyguard.targetIds || [next.bodyguard.targetId].filter(Boolean))
