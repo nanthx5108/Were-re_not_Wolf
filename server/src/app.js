@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import fs from 'node:fs';
-import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import roomRoutes from './routes/roomRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -10,7 +10,7 @@ import statsRoutes from './routes/statsRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const app = express();
+const app = express(); 
 
 export const IS_PROD  = process.env.NODE_ENV === 'production';
 const SESSION_SECRET  = process.env.SESSION_SECRET || 'wolf-secret-change-in-prod';
@@ -49,6 +49,14 @@ app.use(session({
 }));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
+
+app.use('/api/auth', rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
+}));
 
 app.use('/api/auth',  authRoutes);
 app.use('/api/rooms', roomRoutes);

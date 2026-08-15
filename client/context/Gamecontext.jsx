@@ -1,8 +1,10 @@
 import React, {
   createContext, useContext, useReducer,
-  useEffect, useCallback,
+  useEffect, useCallback, useMemo,
 } from 'react';
 import { socket } from '../src/socket/socket.jsx';
+import { useToast } from './ToastContext.jsx';
+import { soundManager } from '../sound/soundManager.js';
 
 export const SOCKET_EVENTS = Object.freeze({
   ROOM_JOIN:            'room:join',
@@ -38,6 +40,11 @@ export const SOCKET_EVENTS = Object.freeze({
   CHAT_SILENCED:        'chat:silenced',
   MORNING_EVENT:        'morning:event',
   MORNING_EVENT_PRIVATE:'morning:event:private',
+  FORTUNE_PRIVATE_INFO: 'fortune:private_info',
+  FORTUNE_EARLY_INFO:   'fortune:early_info',
+  FORTUNE_REALTIME_VOTE_COUNT: 'fortune:realtime_vote_count',
+  PHASE_REQUEST_EXTRA_TIME: 'phase:request_extra_time',
+  FORTUNE_CARD_DRAWN:   'fortune:card_drawn',
   GAME_ENDED:           'game:ended',
   GAME_RESUMED:         'game:resumed',
   ROOM_CLOSED:          'room:closed',
@@ -72,6 +79,7 @@ const initialState = {
   voteResult: null,
   connected:  false,
   error:      null,
+  highlights: [],
   wolfTargets:   {},
   teammates:     [],
   seerResult:    null,
@@ -84,6 +92,10 @@ const initialState = {
   silencedNote:   null,
   censorNote:     null,
   actionLog:      [],   // narrator เสียดสีของ action log bar — สังเคราะห์จาก event ที่มีอยู่
+  fortuneInfo:    null,
+  earlyInfo:      null, // For 'good_to_know' card
+  realtimeVoteCounts: null, // For 'magic_eyes' card
+  myFortuneCard:  null, // System 3: การ์ดโชคดี/ร้ายประจำรอบ
   nightZero:      { readyCount: 0, total: 0 },   // ความคืบหน้า "ดูแล้ว" ในคืนที่ 0
   typingIds:      [],   // ผู้เล่นที่กำลังพิมพ์ — ใช้จัดลำดับ sidebar
   roomClosed:     false, // เจ้าของห้องปิดห้อง — ใช้เด้งผู้เล่นที่เหลือกลับหน้าแรก
@@ -149,6 +161,7 @@ function gameReducer(state, action) {
       return {
         ...state,
         messages: [...state.messages, action.message].slice(-200),
+        actionLog: action.message.isWhisper ? state.actionLog : pushLog(state.actionLog, '💬', `${action.message.nickname}: ${action.message.content}`),
       };
 
     // แชทย้อนหลังของห้องวิญญาณ — ขอตอนเพิ่งตาย จะได้เห็นว่าคนที่ตายก่อนหน้าคุยอะไรกันไว้
@@ -205,6 +218,10 @@ function gameReducer(state, action) {
         myNightAction: action.phase === 'night' ? null : state.myNightAction,
         privateNote:   action.phase === 'night' ? null : state.privateNote,
         // การปิดปากมีผลแค่วันเดียว — พอขึ้นคืนใหม่ก็พูดได้ (ตรงกับที่ server เคลียร์)
+        fortuneInfo:   action.phase === 'night' ? null : state.fortuneInfo,
+        earlyInfo:     action.phase === 'night' ? null : state.earlyInfo,
+        realtimeVoteCounts: null, // Clear vote stream when phase changes
+        myFortuneCard: action.phase === 'night' ? null : state.myFortuneCard, // การ์ดโชคมีผลแค่วันเดียว
         silencedNote:  action.phase === 'night' ? null : state.silencedNote,
         // morningEvent คงไว้ข้ามคืน — NightAction ใช้เช็ค effect เช่น คืนที่ปลอดภัย (เลือกป้องกัน 2 คน)
       };
@@ -233,9 +250,6 @@ function gameReducer(state, action) {
               : 'ไม่มีใครถูกโหวตออก — ประชาธิปไตยล้มเหลวอีกครั้ง'
         ),
       };
-
-    case 'SET_ERROR':
-      return { ...state, error: action.error };
 
     case 'NIGHT_ACTION_ACK':
       return { ...state, myNightAction: action.payload, nightResult: null };
@@ -290,6 +304,18 @@ function gameReducer(state, action) {
     case 'MORNING_EVENT_PRIVATE':
       return { ...state, privateNote: action.payload.message };
 
+    case 'FORTUNE_CARD_DRAWN':
+      return { ...state, myFortuneCard: action.payload.card };
+
+    case 'FORTUNE_PRIVATE_INFO':
+      return { ...state, fortuneInfo: action.payload };
+
+    case 'FORTUNE_EARLY_INFO':
+      return { ...state, earlyInfo: action.payload.data };
+
+    case 'FORTUNE_REALTIME_VOTE_COUNT':
+      return { ...state, realtimeVoteCounts: action.payload.counts };
+
     // กลับเข้าเกมหลังรีเฟรช/เน็ตหลุด — server ส่ง state ส่วนตัวมาให้ครบชุด
     case 'GAME_RESUMED':
       return {
@@ -315,13 +341,11 @@ function gameReducer(state, action) {
       return {
         ...state,
         gameResult: { winner: action.winner, message: action.message, reveal: action.reveal ?? [] },
+        highlights: action.highlights ?? [],
       };
 
-    case 'CLEAR_ERROR':
-      return { ...state, error: null };
-
     case 'RESET':
-      return { ...initialState };
+      return { ...initialState, playerId: state.playerId, nickname: state.nickname };
 
     default:
       return state;
@@ -332,24 +356,37 @@ const GameContext = createContext(null);
 
 export function GameProvider({ children }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  const { addToast } = useToast();
 
   useEffect(() => {
     const handlers = {
       connect:    () => dispatch({ type: 'SOCKET_CONNECTED' }),
       disconnect: () => dispatch({ type: 'SOCKET_DISCONNECTED' }),
-
       [SOCKET_EVENTS.ROOM_STATE]:           (room)          => dispatch({ type: 'ROOM_STATE', room }),
       [SOCKET_EVENTS.ROOM_PLAYERS_UPDATED]: (players)       => dispatch({ type: 'PLAYERS_UPDATED', players }),
       [SOCKET_EVENTS.ROOM_HOST_CHANGED]:    ({ newHostId }) => dispatch({ type: 'HOST_CHANGED', newHostId }),
       [SOCKET_EVENTS.ROOM_CONFIG_UPDATED]:  (config)        => dispatch({ type: 'CONFIG_UPDATED', ...config }),
-      [SOCKET_EVENTS.CHAT_MESSAGE]:         (message)       => dispatch({ type: 'CHAT_MESSAGE', message }),
+      [SOCKET_EVENTS.CHAT_MESSAGE]: (message) => {
+        // Play sound for received messages, but not for own messages or system messages.
+        const session = loadSession();
+        if (
+          message.channel !== 'system' &&
+          message.playerId !== session?.playerId
+        ) {
+          soundManager.playSfx('/audio/sfx_chat_receive.wav', 0.5);
+        }
+        dispatch({ type: 'CHAT_MESSAGE', message });
+      },
       [SOCKET_EVENTS.CHAT_TYPING_UPDATE]:   ({ typingIds }) => dispatch({ type: 'TYPING_UPDATE', typingIds }),
       [SOCKET_EVENTS.CHAT_CENSORED]:        (payload)       => dispatch({ type: 'CENSORED', payload }),
       [SOCKET_EVENTS.CHAT_DEAD_HISTORY]:    ({ messages })  => dispatch({ type: 'DEAD_HISTORY', messages: messages ?? [] }),
       [SOCKET_EVENTS.GAME_STARTED]:         (data)          => dispatch({ type: 'GAME_STARTED', ...data }),
       [SOCKET_EVENTS.NIGHTZERO_READY]:      (data)          => dispatch({ type: 'NIGHTZERO_READY', ...data }),
-      [SOCKET_EVENTS.PHASE_CHANGED]:        (data)          => dispatch({ type: 'PHASE_CHANGED', ...data }),
-      [SOCKET_EVENTS.ERROR]:                ({ message })   => dispatch({ type: 'SET_ERROR', error: message }),
+      [SOCKET_EVENTS.PHASE_CHANGED]: (data) => {
+        soundManager.playSfx('/audio/sfx_phase_change.wav');
+        dispatch({ type: 'PHASE_CHANGED', ...data });
+      },
+      [SOCKET_EVENTS.ERROR]: ({ message }) => addToast(message, 'error'),
       [SOCKET_EVENTS.NIGHT_ACTION_ACK]:     (payload)       => dispatch({ type: 'NIGHT_ACTION_ACK', payload }),
       [SOCKET_EVENTS.NIGHT_ACTION_UPDATE]:  (payload)       => dispatch({ type: 'WOLF_TARGET_UPDATE', payload }),
       [SOCKET_EVENTS.NIGHT_RESULT]:         (payload)       => dispatch({ type: 'NIGHT_RESULT', payload }),
@@ -358,8 +395,12 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.CHAT_SILENCED]:        (payload)       => dispatch({ type: 'SILENCED', payload }),
       [SOCKET_EVENTS.MORNING_EVENT]:        (payload)       => dispatch({ type: 'MORNING_EVENT', payload }),
       [SOCKET_EVENTS.MORNING_EVENT_PRIVATE]:(payload)       => dispatch({ type: 'MORNING_EVENT_PRIVATE', payload }),
+      [SOCKET_EVENTS.FORTUNE_PRIVATE_INFO]: (payload)       => dispatch({ type: 'FORTUNE_PRIVATE_INFO', payload }),
+      [SOCKET_EVENTS.FORTUNE_EARLY_INFO]:   (payload)       => dispatch({ type: 'FORTUNE_EARLY_INFO', payload }),
+      [SOCKET_EVENTS.FORTUNE_REALTIME_VOTE_COUNT]: (payload) => dispatch({ type: 'FORTUNE_REALTIME_VOTE_COUNT', payload }),
+      [SOCKET_EVENTS.FORTUNE_CARD_DRAWN]:   (payload)       => dispatch({ type: 'FORTUNE_CARD_DRAWN', payload }),
       [SOCKET_EVENTS.GAME_RESUMED]:         (data)          => dispatch({ type: 'GAME_RESUMED', ...data }),
-      [SOCKET_EVENTS.GAME_ENDED]:           ({ winner, message, reveal }) => dispatch({ type: 'GAME_ENDED', winner, message, reveal }),
+      [SOCKET_EVENTS.GAME_ENDED]:           (payload) => dispatch({ type: 'GAME_ENDED', ...payload }),
       [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
       [SOCKET_EVENTS.VOTE_RESULT]: (data) => dispatch({ type: 'VOTE_RESULT', ...data }),
       // เจ้าของห้องปิดห้อง → ล้าง session แล้วตั้ง flag ให้ Lobby เด้งกลับหน้าแรก
@@ -370,7 +411,7 @@ export function GameProvider({ children }) {
     return () => {
       for (const [event, handler] of Object.entries(handlers)) socket.off(event, handler);
     };
-  }, []);
+  }, [addToast]);
 
   const setIdentity   = useCallback((pid, nick) => dispatch({ type: 'SET_IDENTITY', playerId: pid, nickname: nick }), []);
 
@@ -401,35 +442,36 @@ export function GameProvider({ children }) {
     socket.on('connect', rejoin);
     return () => socket.off('connect', rejoin);
   }, []);
-  const sendMessage   = useCallback((content, channel = 'village') => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel }), []);
-  const sendTyping     = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_TYPING), []);
-  const sendStopTyping = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_STOP_TYPING), []);
+  const sendMessage   = useCallback((content, channel = 'village', options = {}, targetPlayerId = null) => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel, options, targetPlayerId }), []);
+  const sendTyping    = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_TYPING), []);
+  const sendStopTyping= useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_STOP_TYPING), []);
   const startGame     = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
   const markReady     = useCallback(() => socket.emit(SOCKET_EVENTS.PLAYER_READY), []);
   const updateRoomConfig = useCallback((config) => socket.emit(SOCKET_EVENTS.ROOM_CONFIG, { config }), []);
   const advancePhase  = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
   const castVote      = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
+  const requestExtraTime = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_REQUEST_EXTRA_TIME), []);
   const submitNightAction = useCallback((targetId) => socket.emit(SOCKET_EVENTS.NIGHT_ACTION, { targetId }), []);
-  const clearError    = useCallback(() => dispatch({ type: 'CLEAR_ERROR' }), []);
-  const clearCensorNote  = useCallback(() => dispatch({ type: 'CLEAR_CENSOR_NOTE' }), []);
-  const loadDeadHistory  = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_DEAD_HISTORY), []);
+  const clearCensorNote = useCallback(() => dispatch({ type: 'CLEAR_CENSOR_NOTE' }), []);
+  const loadDeadHistory = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_DEAD_HISTORY), []);
 
   // ตายหรือยัง — อ่านจาก players ที่ server ส่งมา ไม่ให้ component แต่ละตัวไปคำนวณเอง
-  const isDead = Boolean(
+  const isDead = useMemo(() => Boolean(
     state.room?.status === 'in_progress' &&
     state.room.players?.find(p => p.id === state.playerId)?.isAlive === false
-  );
+  ), [state.room?.status, state.room?.players, state.playerId]);
+
+  const contextValue = useMemo(() => ({
+    ...state,
+    isDead,
+    setIdentity, joinRoom, leaveRoom,
+    sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase, requestExtraTime,
+    castVote, submitNightAction, updateRoomConfig,
+    clearCensorNote, loadDeadHistory,
+  }), [state, isDead, setIdentity, joinRoom, leaveRoom, sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase, requestExtraTime, castVote, submitNightAction, updateRoomConfig, clearCensorNote, loadDeadHistory]);
 
   return (
-    <GameContext.Provider value={{
-      ...state,
-      isDead,
-      setIdentity, joinRoom, leaveRoom,
-      sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase,
-      castVote, submitNightAction,
-      updateRoomConfig, clearError,
-      clearCensorNote, loadDeadHistory,
-    }}>
+    <GameContext.Provider value={contextValue}>
       {children}
     </GameContext.Provider>
   );

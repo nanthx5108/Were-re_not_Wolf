@@ -13,10 +13,7 @@ import pool from '../../db/connection.js';
 import { getAllRooms, getConnectedPlayers, deleteRoom } from './gameStore.js';
 import { clearPhaseTimer, cancelRoomAbandon } from './phaseManager.js';
 import { clearVoting } from './voteManager.js';
-
-const SWEEP_INTERVAL_MS   = 30_000;  // เดินตรวจทุก 30 วิ
-// เผื่อช่วงเวลาระหว่างสร้างห้องเสร็จ (REST) กับตอน socket ต่อเข้ามาจริง — ไม่งั้นจะลบห้องที่เพิ่งสร้าง
-const EMPTY_ROOM_GRACE_MS = 60_000;
+import { getSetting } from '../services/gameSettingsService.js';
 
 // ปิดห้อง + เก็บกวาด timer/vote ให้เรียบ แล้วลบทั้งใน memory และ DB
 // ใช้ร่วมกับ socketHandlers.destroyRoom เพื่อไม่ให้ logic การปิดห้องแตกเป็นสองที่
@@ -40,11 +37,15 @@ export async function purgeStaleRoomsOnStartup() {
 
 // เดินตรวจเป็นระยะ ลบห้องรอเล่นที่ไม่มีใคร connect อยู่จริง
 export function startRoomSweep() {
+  const SWEEP_INTERVAL_MS = getSetting('room.sweep_interval_ms', 30000);
+  const EMPTY_ROOM_GRACE_MS = getSetting('room.empty_grace_ms', 60000);
+
   const timer = setInterval(() => {
     const now = Date.now();
     for (const room of getAllRooms()) {
       // ไม่มีผู้เล่นเหลือเลย — ปิดได้ทันที ไม่ต้องรอ grace
       if (room.players.size === 0) {
+        console.log(`[Room Sweep] Tearing down room ${room.id} (no players).`);
         teardownRoom(room.id).catch(err => console.error('[room sweep]', err));
         continue;
       }
@@ -64,6 +65,7 @@ export function startRoomSweep() {
         continue;
       }
       if (now - room._emptySince >= EMPTY_ROOM_GRACE_MS) {
+        console.log(`[Room Sweep] Tearing down room ${room.id} (empty grace period expired).`);
         teardownRoom(room.id).catch(err => console.error('[room sweep]', err));
       }
     }

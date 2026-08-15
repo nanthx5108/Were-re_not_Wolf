@@ -27,7 +27,7 @@ export default function AuthModal({ onClose, message }) {
           <button className="modal-btn modal-btn-primary"   onClick={goLogin}>เข้าสู่ระบบ</button>
           <button className="modal-btn modal-btn-secondary" onClick={goRegister}>สมัครสมาชิก</button>
         </div>
-        <button className="modal-close" onClick={onClose}>Close</button>
+        <button className="modal-close" onClick={onClose} aria-label="ปิดหน้าต่าง">Close</button>
       </div>
     </div>
   );

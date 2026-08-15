@@ -22,6 +22,25 @@ import { censorProfanity } from '../game/profanity.js';
 
 export function registerSocketHandlers(socket, io) {
 
+  const EVENT_COOLDOWN_MS = 100; // Max 10 events per second per user
+
+  // Simple rate limiting middleware for this socket connection
+  socket.use(([event, ...args], next) => {
+    const now = Date.now();
+    const lastEventTime = socket.lastEventTime || 0;
+
+    if (now - lastEventTime < EVENT_COOLDOWN_MS) {
+      // Allow low-impact, frequent events like typing indicators to pass through
+      if (event !== 'chat:typing' && event !== 'chat:stop_typing') {
+        // Silently drop the event to prevent spam, without disconnecting the user.
+        return;
+      }
+    }
+
+    socket.lastEventTime = now;
+    next();
+  });
+
   socket.on('room:join', async ({ roomId, playerId, nickname }) => {
     try {
       const room = getRoom(roomId);
@@ -56,7 +75,7 @@ export function registerSocketHandlers(socket, io) {
   socket.on('room:leave', () => handleLeave(socket, io));
   socket.on('disconnect', () => handleDisconnect(socket, io));
 
-  socket.on('chat:send', async ({ content, channel = CHANNELS.VILLAGE }) => {
+  socket.on('chat:send', async ({ content, channel = CHANNELS.VILLAGE, options = {}, targetPlayerId = null }) => {
     const { roomId, playerId, nickname } = socket.data || {};
     if (!roomId || !playerId) return;
 
@@ -64,23 +83,18 @@ export function registerSocketHandlers(socket, io) {
     if (!room) return;
     const player = room.players.get(playerId);
     if (!player) return;
+    
+    const validationError = getChatValidationError(room, player, channel);
+    if (validationError) return socket.emit('error', { message: validationError });
 
-    // คนตายพูดกับคนเป็นไม่ได้ แต่คุยกันเองในห้องคนตายได้ (คนเป็นไม่เห็นช่องนี้เลย)
-    if (!player.isAlive) {
-      if (channel !== CHANNELS.DEAD) {
-        return socket.emit('error', { message: 'เจ้าตายไปแล้ว พูดได้แค่ในห้องวิญญาณเท่านั้น' });
-      }
-    } else if (channel === CHANNELS.DEAD) {
-      return socket.emit('error', { message: 'คนเป็นเข้าห้องวิญญาณไม่ได้' });
-    }
+    let finalOptions = { ...options };
 
-    // Silencer ปิดปากไว้เมื่อคืน — มีผลตลอดวันนี้ ทุกช่องแชทของคนเป็น
-    if (player.isAlive && room.silencedPlayerId === playerId) {
-      return socket.emit('error', { message: 'เจ้าถูกปิดปากไว้ วันนี้พูดไม่ได้' });
-    }
-
-    if (channel === CHANNELS.WEREWOLF && player.role !== 'werewolf') {
-      return socket.emit('error', { message: 'Only werewolves can use this channel.' });
+    if (targetPlayerId) {
+      const whisperResult = handleWhisperLogic(room, playerId, targetPlayerId);
+      if (whisperResult.error) return socket.emit('error', { message: whisperResult.error });
+      finalOptions = { ...finalOptions, ...whisperResult.options };
+    } else if (options.isWhisper) {
+      return socket.emit('error', { message: 'ต้องเลือกผู้เล่นที่จะกระซิบ' });
     }
 
     // กรองคำหยาบฝั่ง server เสมอ — client จะกรองมาก่อนหรือไม่ก็เชื่อไม่ได้
@@ -90,8 +104,10 @@ export function registerSocketHandlers(socket, io) {
     const message = {
       id:      `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       playerId, nickname, channel,
+      ...finalOptions,
       content: clean,
       sentAt:  new Date().toISOString(),
+      isHighlighted: options.isHighlighted === true,
     };
 
     await pool.query(
@@ -99,8 +115,13 @@ export function registerSocketHandlers(socket, io) {
       [roomId, playerId, nickname, message.content, channel]
     );
 
-    if (censored) {
-      socket.emit('chat:censored', { message: 'คำหยาบในข้อความของเจ้าถูกกลบไว้แล้ว' });
+    if (censored) socket.emit('chat:censored', { message: 'คำหยาบในข้อความของเจ้าถูกกลบไว้แล้ว' });
+
+    if (finalOptions.isWhisper) {
+      const targetSocket = io.sockets.sockets.get(targetPlayerId);
+      if (targetSocket) targetSocket.emit('chat:message', message);
+      socket.emit('chat:message', message); // Send to self
+      return;
     }
 
     if (channel === CHANNELS.WEREWOLF) {
@@ -306,26 +327,105 @@ export function registerSocketHandlers(socket, io) {
     }
   });
 
-  socket.on('vote:cast', ({ targetId }) => {
+  // --- REQUEST_EXTRA_TIME card effect ---
+  socket.on('phase:request_extra_time', async () => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
 
     const room = getRoom(roomId);
-    if (!room) return socket.emit('error', { message: 'Room not found.' });
-    if (room.phase !== PHASES.VOTING) return socket.emit('error', { message: 'Not voting phase.' });
+    if (!room || room.phase !== PHASES.DAY) {
+      return socket.emit('error', { message: 'ไม่สามารถขอต่อเวลาได้ในตอนนี้' });
+    }
+
+    const playerCard = room.fortuneCards?.get(playerId);
+    const isInjuryTimeCard = playerCard?.id === 'injury_time';
+
+    if (!isInjuryTimeCard || room.usedExtraTime.has(playerId)) {
+      return socket.emit('error', { message: 'คุณไม่มีสิทธิ์ขอต่อเวลา หรือใช้สิทธิ์ไปแล้ว' });
+    }
+
+    room.usedExtraTime.add(playerId); // Mark card as used
+
+    const extraDurationMs = playerCard.clientEffect.duration || 20_000;
+    const newEndsAt = room.phaseEndsAt + extraDurationMs;
+    updateRoom(roomId, { phaseEndsAt: newEndsAt });
+
+    io.to(roomId).emit('phase:changed', {
+      phase: room.phase,
+      endsAt: newEndsAt,
+      durationMs: getPhaseDurationMs(roomId, room.phase) + extraDurationMs, // Update total duration for client clock
+      round: room.round,
+      message: 'เวลาพูดคุยถูกต่อเพิ่ม!',
+    });
+  });
+
+  socket.on('vote:cast', async ({ targetId }) => { // Replaces the original handler
+    const { roomId, playerId } = socket.data || {};
+    if (!roomId || !playerId) return;
+
+    const room = getRoom(roomId);
+    if (!room || room.phase !== PHASES.VOTING) {
+      return socket.emit('error', { message: 'ไม่อยู่ในช่วงโหวต' });
+    }
 
     const player = room.players.get(playerId);
-    if (!player?.isAlive) return socket.emit('error', { message: 'Dead players cannot vote.' });
+    if (!player?.isAlive) {
+      return socket.emit('error', { message: 'คนตายโหวตไม่ได้' });
+    }
 
     const target = room.players.get(targetId);
-    if (!target)          return socket.emit('error', { message: 'Player not found.' });
-    if (!target.isAlive)  return socket.emit('error', { message: 'Cannot vote for dead player.' });
-    if (targetId === playerId) return socket.emit('error', { message: 'Cannot vote for yourself.' });
+    if (!target || !target.isAlive) {
+      return socket.emit('error', { message: 'ไม่สามารถโหวตผู้เล่นที่ไม่มีอยู่จริงหรือตายไปแล้วได้' });
+    }
+    if (targetId === playerId) {
+      return socket.emit('error', { message: 'โหวตให้ตัวเองไม่ได้' });
+    }
 
-    const voteData = castVote(roomId, playerId, targetId);
-    if (!voteData) return socket.emit('error', { message: 'Voting not initialized.' });
+    const playerCard = room.fortuneCards?.get(playerId);
+    const isOpportunist = playerCard?.id === 'opportunist';
+    const timeRemaining = room.phaseEndsAt ? Math.ceil((room.phaseEndsAt - Date.now()) / 1000) : Infinity;
+    const previousTargetId = room.votes.voteMap[playerId];
 
-    io.to(roomId).emit('vote:update', voteData);
+    if (previousTargetId) { // Already voted
+      if (isOpportunist && timeRemaining <= 5 && previousTargetId !== targetId) {
+        if (!room.usedOpportunist) room.usedOpportunist = new Set();
+        if (room.usedOpportunist.has(playerId)) {
+          return socket.emit('error', { message: 'คุณใช้สิทธิ์เปลี่ยนโหวตไปแล้ว' });
+        }
+        room.usedOpportunist.add(playerId);
+        // Decrement old vote count
+        if (room.votes.counts[previousTargetId]) {
+          room.votes.counts[previousTargetId]--;
+        }
+      } else {
+        return socket.emit('error', { message: 'คุณโหวตไปแล้ว' });
+      }
+    }
+
+    // This is now safe for both new votes and changed votes
+    room.votes.voteMap[playerId] = targetId;
+    room.votes.counts[targetId] = (room.votes.counts[targetId] || 0) + 1;
+
+    // --- ANONYMOUS_VOTE card effect (from original code) ---
+    const players = getPlayersArray(roomId);
+    for (const p of players) {
+      const playerSocket = io.sockets.sockets.get(p.socketId);
+      if (!playerSocket) continue;
+
+      const maskedVoteMap = {};
+      for (const [voterId, votedTargetId] of Object.entries(room.votes.voteMap)) {
+        const voterCard = room.fortuneCards?.get(voterId);
+        const isAnonymous = voterCard?.id === 'like_the_wind';
+
+        if (isAnonymous && p.id !== voterId) {
+          const anonKey = `ANON_${voterId}`;
+          maskedVoteMap[anonKey] = votedTargetId;
+        } else {
+          maskedVoteMap[voterId] = votedTargetId;
+        }
+      }
+      playerSocket.emit('vote:update', { voteMap: maskedVoteMap, counts: room.votes.counts });
+    }
 
     const alivePlayers = getPlayersArray(roomId).filter(p => p.isAlive);
     if (hasAllVoted(roomId, alivePlayers.map(p => p.id))) {
@@ -511,6 +611,48 @@ async function handleLeave(socket, io) {
     content: `${nickname} left the island.`,
     sentAt: new Date().toISOString(),
   });
+}
+
+function getChatValidationError(room, player, channel) {
+  if (!player.isAlive) {
+    if (channel !== CHANNELS.DEAD) {
+      return 'เจ้าตายไปแล้ว พูดได้แค่ในห้องวิญญาณเท่านั้น';
+    }
+  } else if (channel === CHANNELS.DEAD) {
+    return 'คนเป็นเข้าห้องวิญญาณไม่ได้';
+  }
+
+  if (player.isAlive && room.silencedPlayerId === player.id) {
+    return 'เจ้าถูกปิดปากไว้ วันนี้พูดไม่ได้';
+  }
+
+  if (channel === CHANNELS.WEREWOLF && player.role !== 'werewolf') {
+    return 'Only werewolves can use this channel.';
+  }
+
+  return null; // No error
+}
+
+function handleWhisperLogic(room, playerId, targetPlayerId) {
+  const playerCard = room.fortuneCards?.get(playerId);
+  const isWhisperCard = playerCard?.id === 'whisper';
+
+  if (!isWhisperCard || room.usedWhispers.has(playerId)) {
+    return { error: 'คุณไม่สามารถกระซิบได้' };
+  }
+
+  const targetPlayer = room.players.get(targetPlayerId);
+  if (!targetPlayer || !targetPlayer.isAlive) {
+    return { error: 'ไม่พบผู้เล่นที่จะกระซิบ หรือผู้เล่นคนนั้นตายไปแล้ว' };
+  }
+  if (targetPlayerId === playerId) {
+    return { error: 'กระซิบกับตัวเองไม่ได้' };
+  }
+
+  room.usedWhispers.add(playerId);
+  return {
+    options: { isWhisper: true, whisperTargetId: targetPlayerId, whisperTargetNickname: targetPlayer.nickname },
+  };
 }
 
 // logic การปิดห้องอยู่ที่ roomMaintenance.teardownRoom ที่เดียว (sweep ก็เรียกตัวเดียวกัน)

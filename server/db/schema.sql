@@ -63,8 +63,76 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url         VARCHAR(500)    DEFAULT NULL,
     username_changed_at DATETIME       DEFAULT NULL,
     google_id          VARCHAR(255)    DEFAULT NULL UNIQUE,
-    is_admin           BOOLEAN         NOT NULL DEFAULT FALSE,
+    banned_until       DATETIME        DEFAULT NULL,
+    ban_reason         TEXT            DEFAULT NULL,
     created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+    id                 INT             NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name_en            VARCHAR(50)     NOT NULL UNIQUE,
+    name_th            VARCHAR(50)     NOT NULL,
+    description_th     TEXT            NOT NULL,
+    faction            ENUM('village','werewolf','neutral') NOT NULL,
+    icon               VARCHAR(10)     NOT NULL, -- Emoji or short icon string
+    night_action       BOOLEAN         NOT NULL DEFAULT FALSE,
+    is_active          BOOLEAN         NOT NULL DEFAULT TRUE,
+    created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_roles_faction (faction)
+);
+
+CREATE TABLE IF NOT EXISTS admins (
+    user_id            VARCHAR(36)     NOT NULL PRIMARY KEY,
+    created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_admins_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS news (
+    id                 INT             NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title              VARCHAR(255)    NOT NULL,
+    content            TEXT            NOT NULL,
+    tag                VARCHAR(50)     NOT NULL DEFAULT 'อัปเดต', -- e.g., 'อัปเดต', 'กิจกรรม', 'ประกาศ', 'แพทช์', 'ชุมชน'
+    author_id          VARCHAR(36)     DEFAULT NULL,
+    author_username    VARCHAR(32)     DEFAULT NULL,
+    created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_news_created_at (created_at),
+    INDEX idx_news_tag (tag)
+);
+
+CREATE TABLE IF NOT EXISTS admin_logs (
+    id                 INT             NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    admin_id           VARCHAR(36)     NOT NULL,
+    admin_username     VARCHAR(32)     NOT NULL,
+    action_type        VARCHAR(50)     NOT NULL, -- e.g., 'user_update', 'user_ban', 'user_delete', 'room_close'
+    target_id          VARCHAR(36)     DEFAULT NULL, -- ID of the user/room affected
+    target_name        VARCHAR(64)     DEFAULT NULL, -- Name of the user/room affected
+    details            JSON            DEFAULT NULL, -- JSON for additional context (e.g., old/new values, ban reason)
+    created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_admin_logs_admin_id (admin_id)
+);
+
+CREATE TABLE IF NOT EXISTS fortune_cards (
+    id                 INT             NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name_en            VARCHAR(50)     NOT NULL UNIQUE,
+    name_th            VARCHAR(50)     NOT NULL,
+    description_th     TEXT            NOT NULL,
+    type               ENUM('good', 'bad') NOT NULL,
+    icon               VARCHAR(100)    NOT NULL, -- Can be emoji or an image path
+    is_active          BOOLEAN         NOT NULL DEFAULT TRUE,
+    created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_fortune_cards_type (type)
+);
+
+CREATE TABLE IF NOT EXISTS game_settings (
+    setting_key        VARCHAR(50)     NOT NULL PRIMARY KEY,
+    setting_value      TEXT            NOT NULL,
+    value_type         VARCHAR(20)     NOT NULL DEFAULT 'string', -- 'string', 'number', 'boolean', 'json'
+    description        TEXT            DEFAULT NULL,
+    updated_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_players_room_id   ON players(room_id);
@@ -77,7 +145,6 @@ CREATE INDEX idx_users_username    ON users(username);
 -- (บน database ใหม่ CREATE TABLE ข้างบนครอบคลุมแล้ว → statement พวกนี้จะโดนข้ามด้วย error 1060)
 ALTER TABLE users ADD COLUMN games_played INT NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN display_name VARCHAR(32) DEFAULT NULL;
-ALTER TABLE users ADD COLUMN birthdate DATE DEFAULT NULL;
 ALTER TABLE users ADD COLUMN email VARCHAR(255) DEFAULT NULL;
 ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500) DEFAULT NULL;
 ALTER TABLE users ADD COLUMN username_changed_at DATETIME DEFAULT NULL;
@@ -95,7 +162,8 @@ ALTER TABLE messages MODIFY COLUMN channel ENUM('village','werewolf','system','d
 -- ตารางเดิมอาจมีคอลัมน์ level ที่ default เป็น 1 อยู่ จึงบังคับ default ใหม่ด้วย MODIFY
 ALTER TABLE users ADD COLUMN exp INT NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN level INT NOT NULL DEFAULT 0;
-ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users MODIFY COLUMN exp INT NOT NULL DEFAULT 0;
 ALTER TABLE users MODIFY COLUMN level INT NOT NULL DEFAULT 0;
 UPDATE users SET level = 0 WHERE games_played = 0;
+ALTER TABLE users ADD COLUMN banned_until DATETIME DEFAULT NULL;
+ALTER TABLE users ADD COLUMN ban_reason TEXT DEFAULT NULL;

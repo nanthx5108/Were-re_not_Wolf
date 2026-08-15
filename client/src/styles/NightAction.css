@@ -1,0 +1,105 @@
+/* =========================================================
+   Night Action Panel
+   Used during the night phase in Game.jsx
+   ========================================================= */
+
+.na-panel {
+  border: 1px solid var(--border-strong);
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(8, 12, 20, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: fadeUp 220ms ease both;
+}
+
+.na-title {
+  margin: 0;
+  color: var(--silver);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.na-prompt {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.na-hint {
+  margin: -0.5rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.na-role-info {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.na-complete-msg {
+  margin: 0;
+  color: var(--sage-bright);
+  font-weight: 600;
+}
+
+.na-target-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.na-chosen-info {
+  width: 100%;
+  color: var(--sage-bright);
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.na-target-btn {
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-accent-dim);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: opacity 200ms ease, background 200ms ease, transform 200ms ease;
+}
+
+.na-target-btn:hover:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.1);
+  transform: translateY(-1px);
+}
+
+.na-target-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.na-teammates {
+  margin-top: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.na-teammates strong {
+  color: var(--danger);
+}
+
+.na-seer-result {
+  margin: 0;
+}
+
+.na-seer-result .is-wolf {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.na-seer-result .is-village {
+  color: var(--sage-bright);
+  font-weight: 700;
+}

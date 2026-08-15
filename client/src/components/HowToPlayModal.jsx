@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ROLE_INFO, MORNING_EVENT_INFO, morningEventChance } from '../constants/game.js';
+import { morningEventChance } from '../constants/game.js';
+import { useGameData } from '../context/GameDataContext.jsx';
 import '../styles/HowToPlay.css';
 
 // สามหัวข้อตามที่ผู้เล่นมักถาม: เล่นยังไงให้ชนะ · บทบาทมีอะไรบ้าง · เช้าจะเจออะไร
@@ -33,6 +34,7 @@ const TIPS = [
 ];
 
 export default function HowToPlayModal({ onClose }) {
+  const { roles: allRoles, roleMap, morningEvents: allMorningEvents } = useGameData();
   const [tab, setTab] = useState('win');
 
   // ปิดด้วย Esc — ผู้เล่นที่เปิดมาอ่านเฉย ๆ ไม่ควรต้องหาปุ่มปิด
@@ -69,9 +71,9 @@ export default function HowToPlayModal({ onClose }) {
         </nav>
 
         <div className="htp-body custom-scrollbar">
-          {tab === 'win'    && <WinSection />}
-          {tab === 'roles'  && <RolesSection />}
-          {tab === 'events' && <EventsSection />}
+          {tab === 'win'    && <WinSection allRoles={allRoles} roleMap={roleMap} />}
+          {tab === 'roles'  && <RolesSection allRoles={allRoles} roleMap={roleMap} />}
+          {tab === 'events' && <EventsSection allMorningEvents={allMorningEvents} />}
         </div>
       </div>
     </div>
@@ -118,38 +120,36 @@ function WinSection() {
   );
 }
 
-function RolesSection() {
+function RolesSection({ allRoles, roleMap }) {
+  // Filter out villager from configurable roles for display, and sort by a predefined order
+  const displayRoles = ROLE_ORDER.map(roleKey => roleMap.get(roleKey)).filter(Boolean);
+
   return (
     <>
       <p className="htp-lead">
         บทบาทถูกสุ่มแจกตอนเริ่มเกม เจ้าจะเห็นเฉพาะบทบาทของตัวเองเท่านั้น
         (เจ้าของห้องเป็นคนตั้งว่าเกมนี้จะมีบทบาทไหนบ้างและกี่คน)
       </p>
-
       <div className="htp-roles">
-        {ROLE_ORDER.map(key => {
-          const r = ROLE_INFO[key];
-          if (!r) return null;
-          return (
-            <article key={key} className={`htp-role cv-auto-lg is-${key}`}>
+        {displayRoles.map(r => (
+            <article key={r.name_en} className={`htp-role cv-auto-lg is-${r.name_en}`}>
               <div className="htp-role-head">
                 <span className="htp-role-icon" aria-hidden="true">{r.icon}</span>
                 <div>
-                  <h4 className="htp-role-name">{r.label}</h4>
-                  <span className="htp-role-faction">{r.faction}</span>
+                  <h4 className="htp-role-name">{r.name_th}</h4>
+                  <span className="htp-role-faction">{r.faction_th}</span>
                 </div>
               </div>
-              <p className="htp-role-summary">{r.summary}</p>
-              <p className="htp-role-detail">{r.detail}</p>
+              <p className="htp-role-summary">{r.description_th.split('.')[0] + '.'}</p>
+              <p className="htp-role-detail">{r.description_th}</p>
             </article>
-          );
-        })}
+        ))}
       </div>
     </>
   );
 }
 
-function EventsSection() {
+function EventsSection({ allMorningEvents }) {
   return (
     <>
       <p className="htp-lead">
@@ -163,12 +163,18 @@ function EventsSection() {
       </p>
 
       <div className="htp-events">
-        {MORNING_EVENT_INFO.map(ev => {
-          const chance = morningEventChance(ev);
-          return (
+        {allMorningEvents.map(ev => {
+          const chance = morningEventChance(ev, allMorningEvents);
+          return ev.id !== 'quiet_morning' && ( // Don't display quiet_morning in the list
             <article key={ev.id} className={`htp-event cv-auto-lg ${ev.conditional ? 'is-conditional' : ''}`}>
               <div className="htp-event-head">
-                <span className="htp-event-icon" aria-hidden="true">{ev.icon}</span>
+                <div className="htp-event-icon" aria-hidden="true">
+                  {ev.card_image ? (
+                    <img src={ev.card_image} alt={ev.title} className="htp-event-image" />
+                  ) : (
+                    ev.icon
+                  )}
+                </div>
                 <h4 className="htp-event-name">{ev.title}</h4>
                 <span className="htp-event-chance">
                   {chance !== null ? `~${chance}%` : 'มีเงื่อนไข'}

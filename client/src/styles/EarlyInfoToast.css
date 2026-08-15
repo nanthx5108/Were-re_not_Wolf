@@ -1,0 +1,43 @@
+/* Early Info Toast for 'good_to_know' card */
+.eit-toast {
+  position: fixed;
+  top: 90px; /* Below the top bar */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  width: 320px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  backdrop-filter: blur(16px);
+  background: rgba(var(--accent-rgb), 0.12);
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.22);
+}
+
+.eit-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.eit-icon {
+  font-size: 1.2rem;
+}
+
+.eit-title {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gold-bright); /* Teal accent */
+}
+
+.eit-message {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  text-align: center;
+}

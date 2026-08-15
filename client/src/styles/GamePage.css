@@ -1,12 +1,8 @@
 /* =========================================================
-   WE'RE NOT WOLF — GamePage layout (redesign)
-   โครง grid ใหม่: TOP BAR / ACTION LOG / LEFT chat / CENTER / RIGHT sidebar
-   ใช้ design token จาก global.css — carved wood panel + หมุดไม้ + เรืองแสงอำพัน
+   WE'RE NOT WOLF — GamePage layout
+   Design Theme: "Digital Occult" (consistent with Lobby)
    ========================================================= */
-
 .gp-page {
-  --wood-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.15' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32 0 0 0 0 0.24 0 0 0 0 0.15 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
-
   min-height: 100dvh;
   background-color: var(--bg-void);
   color: var(--text-primary);
@@ -37,15 +33,13 @@
 
 .gp-page > * { position: relative; z-index: 1; }
 
-/* ── carved wood panel: base ที่ทุกกล่องในหน้าเกมใช้ร่วมกัน ── */
+/* Frosted glass panel base */
 .gp-panel {
   position: relative;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%),
-    var(--bg-elevated);
-  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(13, 19, 26, 0.86);
+  backdrop-filter: blur(16px);
   overflow: hidden;
 }
 .gp-panel::before {
@@ -66,10 +60,9 @@
   padding: var(--space-3) var(--space-4);
 }
 
-.gp-top-left  { justify-self: start; }
-.gp-top-right { justify-self: end; text-align: right; }
+.gp-top-left  { justify-self: start; display: flex; }
+.gp-top-right { justify-self: end; text-align: right; display: flex; }
 
-/* Setting button — ไอคอน grid + หมุดไม้เรืองอำพันตอน hover */
 .gp-setting-btn {
   position: relative;
   width: 46px;
@@ -77,23 +70,9 @@
   display: grid;
   place-items: center;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-default);
-  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-strong);
+  background: rgba(255,255,255,0.05);
   color: var(--text-secondary);
-}
-.gp-setting-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--ease);
-  background-image:
-    radial-gradient(circle 5px at 7px 7px, rgba(var(--accent-rgb),0.9) 0%, transparent 78%),
-    radial-gradient(circle 5px at calc(100% - 7px) 7px, rgba(var(--accent-rgb),0.9) 0%, transparent 78%),
-    radial-gradient(circle 5px at 7px calc(100% - 7px), rgba(var(--accent-rgb),0.9) 0%, transparent 78%),
-    radial-gradient(circle 5px at calc(100% - 7px) calc(100% - 7px), rgba(var(--accent-rgb),0.9) 0%, transparent 78%);
 }
 .gp-setting-btn:hover {
   border-color: var(--gold-dim);
@@ -118,10 +97,10 @@
 .gp-clock-orb {
   font-size: 1.5rem;
   line-height: 1;
-  filter: drop-shadow(0 0 10px rgba(var(--accent-rgb),0.35));
+  filter: drop-shadow(0 0 10px rgba(79,209,197,0.35));
 }
 .gp-clock.is-night .gp-clock-orb {
-  filter: drop-shadow(0 0 10px rgba(159,188,208,0.45));
+  filter: drop-shadow(0 0 10px rgba(159,188,208,0.55));
 }
 .gp-clock-time {
   font-family: var(--font-meta);
@@ -153,8 +132,8 @@
   width: 210px;
   padding: 5px 10px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-default);
-  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-strong);
+  background: rgba(255,255,255,0.04);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -200,11 +179,11 @@
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.16em;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-default);
 }
 .gp-daybadge.is-day {
   color: var(--phase-day);
-  background: rgba(var(--accent-rgb),0.10);
+  background: rgba(79,209,197,0.10);
 }
 .gp-daybadge.is-night {
   color: var(--phase-night);
@@ -335,7 +314,7 @@
   width: 32px; height: 32px;
   display: grid; place-items: center;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-strong);
   color: var(--text-secondary);
   font-size: 1.1rem;
 }
@@ -454,7 +433,7 @@
 .gpc-form { display: flex; gap: 6px; }
 .gpc-select {
   background: var(--bg-input);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 0.8rem;
@@ -463,7 +442,7 @@
 .gpc-input {
   flex: 1;
   background: var(--bg-input);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-family: var(--font-body);
@@ -473,14 +452,14 @@
 .gpc-input:disabled { opacity: 0.5; cursor: not-allowed; }
 .gpc-send {
   border-radius: var(--radius-sm);
-  border: 1px solid var(--gold-dim);
-  background: rgba(var(--accent-rgb),0.14);
+  border: 1px solid var(--color-accent-dim);
+  background: rgba(79,209,197,0.14);
   color: var(--gold-bright);
   font-family: var(--font-display);
   font-weight: 700;
   padding: 8px 16px;
 }
-.gpc-send:hover:not(:disabled) { background: rgba(var(--accent-rgb),0.24); }
+.gpc-send:hover:not(:disabled) { background: rgba(79,209,197,0.24); }
 .gpc-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── RIGHT player sidebar (gps-) ─────────────────────────── */
@@ -519,12 +498,12 @@
   align-items: center;
   padding: 6px 8px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.02);
   transition: border-color var(--ease), background var(--ease);
 }
-.gps-row.is-me { border-color: var(--gold-dim); background: rgba(var(--accent-rgb),0.06); }
-.gps-row.is-active { border-color: var(--gold-dim); box-shadow: 0 0 12px rgba(var(--accent-rgb),0.14); }
+.gps-row.is-me { border-color: var(--color-accent-dim); background: rgba(79,209,197,0.06); }
+.gps-row.is-active { border-color: var(--color-accent-dim); box-shadow: 0 0 12px rgba(79,209,197,0.14); }
 .gps-row.is-dead { opacity: 0.55; }
 
 .gps-avatar {
@@ -536,8 +515,8 @@
   font-weight: 700;
   font-size: 1rem;
   color: var(--on-accent);
-  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold-dim));
-  border: 1px solid var(--border-strong);
+  background: radial-gradient(circle at 35% 30%, var(--color-accent), var(--color-accent-dim));
+  border: 1px solid var(--border-default);
 }
 .gps-row.is-dead .gps-avatar {
   filter: grayscale(1) brightness(0.7);
@@ -575,7 +554,7 @@
   border-radius: var(--radius-sm);
   display: grid; place-items: center;
   font-size: 1.1rem;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-strong);
 }
 .gps-role.is-facedown {
   color: var(--silver-dim);
@@ -585,8 +564,8 @@
   font-family: var(--font-display);
 }
 .gps-role.is-revealed {
-  background: rgba(var(--accent-rgb),0.08);
-  border-color: var(--gold-dim);
+  background: rgba(79,209,197,0.08);
+  border-color: var(--color-accent-dim);
 }
 
 .gps-all-btn {
@@ -639,7 +618,7 @@
   width: min(240px, 60%);
   aspect-ratio: 3 / 4;
   border-radius: var(--radius-lg);
-  border: 1px dashed var(--border-strong);
+  border: 1px dashed var(--border-default);
   display: grid;
   place-items: center;
   background:
@@ -670,7 +649,7 @@
   text-align: center;
   border-color: var(--gold-dim);
   background:
-    linear-gradient(135deg, rgba(var(--accent-rgb),0.08) 0%, transparent 55%),
+    linear-gradient(135deg, rgba(79,209,197,0.08) 0%, transparent 55%),
     var(--bg-elevated);
 }
 .gpz-kicker {
@@ -748,7 +727,7 @@
   gap: var(--space-3);
 }
 .gpr-icon { font-size: 2.4rem; line-height: 1; }
-.gpr-name { font-family: var(--font-display); font-size: 1.3rem; color: var(--gold-bright); }
+.gpr-name { font-family: var(--font-display); font-size: 1.3rem; color: var(--color-accent); }
 .gpr-faction { font-family: var(--font-meta); font-size: 0.66rem; letter-spacing: 0.08em; color: var(--silver); }
 .gpr-summary { font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; }
 .gpr-detail  { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
@@ -763,8 +742,8 @@
   font-family: var(--font-body);
   font-size: 0.66rem;
   letter-spacing: 0.02em;
-  color: var(--gold-bright);
-  border: 1px solid var(--gold-dim);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-dim);
   border-radius: var(--radius-sm);
   padding: 3px 12px;
 }
@@ -791,7 +770,7 @@
   font-family: var(--font-meta);
   font-size: 0.82rem;
   letter-spacing: 0.02em;
-  color: var(--text-gold);
+  color: var(--text-gold); /* This should be teal now */
   font-style: italic;
   overflow: hidden;
   text-overflow: ellipsis;

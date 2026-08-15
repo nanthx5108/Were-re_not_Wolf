@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/Gamecontext.jsx';
+import { useSound } from '../context/SoundContext.jsx';
 import ChatBox from '../src/components/ChatBox.jsx';
 import PlayerSidebar from '../src/components/PlayerSidebar.jsx';
 import ActionLogBar from '../src/components/ActionLogBar.jsx';
@@ -9,6 +10,11 @@ import NightAction from '../src/components/NightAction.jsx';
 import MorningEventBanner from '../src/components/MorningEventBanner.jsx';
 import MyRoleCard from '../src/components/MyRoleCard.jsx';
 import '../src/styles/GamePage.css';
+import EarlyInfoToast from '../src/components/EarlyInfoToast.jsx';
+import FortuneInfoPanel from '../src/components/FortuneInfoPanel.jsx';
+import HighlightTimeline from '../src/components/HighlightTimeline.jsx';
+import FortuneEffects from '../src/components/FortuneEffects.jsx';
+import FortuneCard from '../src/components/FortuneCard.jsx';
 
 const ROLE_LABEL = {
   villager:  '🧑‍🌾 Villager',
@@ -124,27 +130,53 @@ export default function Game() {
     playerId,
     nickname,
     myRole,
+    messages,
     myNightAction,
-    typingIds,
-    connected,
-    error,
+    typingIds,    connected,
     leaveRoom,
     advancePhase,
     castVote,
     votes,
     voteResult,
     gameResult,
+    requestExtraTime,
+    highlights,
+    realtimeVoteCounts,
+    fortuneInfo,
     silencedNote,
+    myFortuneCard,
     isDead,
-    clearError,
   } = useGame();
 
+  const sound = useSound();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   function handleLeave() {
     leaveRoom();
     navigate('/', { replace: true });
   }
+
+  useEffect(() => {
+    if (gameResult) {
+      const villageRoles = new Set(['villager', 'seer', 'bodyguard', 'silencer']);
+      let playerWins = false;
+
+      if (gameResult.winner === 'villagers' && villageRoles.has(myRole)) {
+        playerWins = true;
+      } else if (gameResult.winner === 'werewolves' && myRole === 'werewolf') {
+        playerWins = true;
+      } else if (gameResult.winner === 'fool' && myRole === 'fool') {
+        playerWins = true;
+      }
+
+      const sfx = playerWins ? '/audio/sfx_game_win.wav' : '/audio/sfx_game_lose.wav';
+      sound.playSfx(sfx);
+
+      const bgm = playerWins ? '/audio/bgm_win.mp3' : '/audio/bgm_lose.mp3';
+      // Stop any current BGM and play the end-game music (not looping)
+      sound.playBgm(bgm, false);
+    }
+  }, [gameResult, myRole, sound]);
 
   if (!room) {
     return (
@@ -169,6 +201,8 @@ export default function Game() {
   return (
     <div className="gp-page">
       <MorningEventBanner />
+      <EarlyInfoToast />
+      <FortuneEffects card={myFortuneCard} messages={messages} />
 
       {/* ── TOP BAR ─────────────────────────────────────────── */}
       <header className="gp-top gp-panel">
@@ -213,16 +247,10 @@ export default function Game() {
         </div>
       </header>
 
-      {error && (
-        <div className="gp-banner">
-          <span>{error}</span>
-          <button onClick={clearError}>ปิด</button>
-        </div>
-      )}
-
       {gameResult && (
         <section className="gp-endcard gp-panel">
           <h2>{gameResult.message}</h2>
+          <HighlightTimeline highlights={highlights} players={gameResult.reveal} />
           {gameResult.reveal?.length > 0 && (
             <div className="gp-reveal">
               {gameResult.reveal.map((p) => (
@@ -245,14 +273,15 @@ export default function Game() {
       {/* ── LEFT: Chat ──────────────────────────────────────── */}
       <aside className="gp-chat">
         <NightAction />
-        {isVoting && <VotingPanel players={players} playerId={playerId} votes={votes} onVote={castVote} />}
+        {isVoting && <VotingPanel players={players} playerId={playerId} votes={votes} onVote={castVote} myFortuneCard={myFortuneCard} realtimeVoteCounts={realtimeVoteCounts} phaseEndsAt={room.phaseEndsAt} />}
         {isResults && voteResult && (
           <div className="gp-panel" style={{ padding: 'var(--space-4)' }}>
             <h3 style={{ color: 'var(--gold-bright)', marginBottom: 'var(--space-2)' }}>ผลโหวต</h3>
             <p>{voteResult.eliminatedNickname ? `${voteResult.eliminatedNickname} ถูกเนรเทศ` : 'ไม่มีใครถูกเนรเทศ'}</p>
           </div>
         )}
-        <ChatBox showWerewolfChannel />
+        {isResults && <FortuneInfoPanel />}
+        <ChatBox showWerewolfChannel clientEffect={myFortuneCard?.clientEffect} players={players} playerId={playerId} />
       </aside>
 
       {/* ── CENTER: character stage + your role ─────────────── */}
@@ -285,6 +314,8 @@ export default function Game() {
         typingIds={typingIds}
       />
 
+      <FortuneCard card={myFortuneCard} />
+
       {/* ── in-game settings modal ──────────────────────────── */}
       {settingsOpen && (
         <div className="gp-modal-backdrop" onClick={() => setSettingsOpen(false)}>
@@ -300,6 +331,11 @@ export default function Game() {
               {isHost && (isNight || isVoting || isResults) && (
                 <button className="gp-btn" onClick={() => { advancePhase(); setSettingsOpen(false); }}>
                   ข้ามช่วงนี้ (host)
+                </button>
+              )}
+              {myFortuneCard?.id === 'injury_time' && room.phase === 'day' && (
+                <button className="gp-btn" onClick={() => { requestExtraTime(); setSettingsOpen(false); }}>
+                  ขอต่อเวลา (+20 วิ)
                 </button>
               )}
               <button className="gp-btn" onClick={handleLeave}>ออกจากเกม</button>

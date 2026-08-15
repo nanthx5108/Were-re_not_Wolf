@@ -1,11 +1,4 @@
-export const ROLES = Object.freeze({
-  VILLAGER:   'villager',
-  WEREWOLF:   'werewolf',
-  SEER:       'seer',
-  BODYGUARD:  'bodyguard',
-  SILENCER:   'silencer',
-  FOOL:       'fool',
-});
+import { getActiveRoles } from '../services/gameDataService.js';
 
 export const FACTIONS = Object.freeze({
   VILLAGE:  'village',
@@ -13,17 +6,42 @@ export const FACTIONS = Object.freeze({
   NEUTRAL:  'neutral',
 });
 
-export const ROLE_FACTION = Object.freeze({
-  villager:  'village',
-  seer:      'village',
-  bodyguard: 'village',
-  silencer:  'village',
-  werewolf:  'werewolf',
-  fool:      'neutral',
-});
+/**
+ * Returns an object of role names, e.g., { VILLAGER: 'villager', ... }
+ * @returns {Readonly<Record<string, string>>}
+ */
+export function getRoles() {
+  const roles = {};
+  for (const role of getActiveRoles()) {
+    roles[role.name_en.toUpperCase()] = role.name_en;
+  }
+  return Object.freeze(roles);
+}
 
-// บทบาทที่มี night action — ใช้ตรวจสิทธิ์ก่อนรับ action
-export const NIGHT_ACTION_ROLES = Object.freeze(['werewolf', 'seer', 'bodyguard', 'silencer']);
+/**
+ * Returns an object mapping role names to their faction.
+ * e.g., { villager: 'village', werewolf: 'werewolf' }
+ * @returns {Readonly<Record<string, string>>}
+ */
+export function getRoleFactionMap() {
+  const map = {};
+  for (const role of getActiveRoles()) {
+    map[role.name_en] = role.faction;
+  }
+  return Object.freeze(map);
+}
+
+/**
+ * Returns an array of role names that have a night action.
+ * @returns {Readonly<string[]>}
+ */
+export function getNightActionRoles() {
+  return Object.freeze(
+    getActiveRoles()
+      .filter(role => role.night_action)
+      .map(role => role.name_en)
+  );
+}
 
 export const PLAYER_LIMITS = Object.freeze({ MIN: 4, MAX: 8 });
 
@@ -43,12 +61,4 @@ export const CHANNELS = Object.freeze({
   SYSTEM:   'system',
   // ห้องแชทของคนตาย — คนเป็นต้องไม่เห็นแม้แต่ข้อความเดียว ไม่งั้นคนตายจะใบ้เกมได้
   DEAD:     'dead',
-});
-
-export const ROLE_DISTRIBUTION = Object.freeze({
-  4: ['werewolf', 'seer', 'villager', 'villager'],
-  5: ['werewolf', 'seer', 'bodyguard', 'villager', 'villager'],
-  6: ['werewolf', 'werewolf', 'seer', 'bodyguard', 'fool', 'villager'],
-  7: ['werewolf', 'werewolf', 'seer', 'bodyguard', 'fool', 'villager', 'villager'],
-  8: ['werewolf', 'werewolf', 'seer', 'bodyguard', 'fool', 'villager', 'villager', 'villager'],
 });

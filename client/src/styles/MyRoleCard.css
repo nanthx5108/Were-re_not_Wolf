@@ -1,145 +1,140 @@
-/* การ์ดบทบาทส่วนตัวในหน้าเกม — ข้อมูลนี้ไม่ควรหลุดถึงผู้เล่นคนอื่น
-   ฝ่ายสื่อผ่านสีของป้าย faction (ไม่ใช้แถบสีข้างการ์ด) เพื่อให้จำได้เร็ว */
-.my-role-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* =========================================================
+   Game Player Role Card (Flippable)
+   ========================================================= */
 
-.my-role-card.is-werewolf { --faction-color: #e57373; }
-.my-role-card.is-fool     { --faction-color: var(--faction-neutral); }
-
-.my-role-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.my-role-kicker {
-  font-size: 0.66rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.my-role-toggle {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-muted);
+.gpr-container {
+  /* Sizing and perspective for the 3D effect */
+  width: 240px;
+  height: 336px;
+  perspective: 1000px;
   cursor: pointer;
-  font-size: 0.72rem;
-  padding: 3px 10px;
-}
-.my-role-toggle:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
-.my-role-hidden {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  font-style: italic;
-  padding: 10px 0;
-  text-align: center;
+.gpr-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.my-role-identity {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.gpr-card.is-flipped {
+  transform: rotateY(180deg);
 }
 
-.my-role-icon { font-size: 1.9rem; line-height: 1; }
-
-.my-role-name {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  color: var(--color-text);
-}
-
-.my-role-faction {
-  font-size: 0.72rem;
-  color: var(--faction-color, var(--color-accent));
-  letter-spacing: 0.04em;
-  font-weight: 600;
-}
-
-.my-role-summary {
-  font-size: 0.86rem;
-  color: var(--color-text);
-  line-height: 1.5;
-}
-
-.my-role-detail {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-  line-height: 1.55;
-}
-
-.my-role-team {
-  margin-top: 2px;
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  background: rgba(229, 115, 115, 0.10);
-  border: 1px solid rgba(229, 115, 115, 0.30);
+.gpr-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  box-shadow: var(--shadow-lg);
 }
-.my-role-team-label {
-  font-size: 0.66rem;
+
+.gpr-face-front {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  transform: rotateY(180deg); /* Initially hidden */
+}
+
+.gpr-face-back {
+  background: var(--bg-base);
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.gpr-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.gpr-art-back {
+  filter: brightness(0.8);
+}
+
+.gpr-qmark {
+  font-size: 5rem;
+  font-family: var(--font-logo);
+  color: var(--border-strong);
+}
+
+.gpr-kicker, .gpr-hint, .gpr-toggle {
+  position: relative;
+  z-index: 1;
+  font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #e57373;
-}
-.my-role-team-names {
-  font-size: 0.86rem;
-  color: var(--color-text);
+  color: var(--text-muted);
+  background: rgba(13, 19, 26, 0.7);
+  padding: 4px 10px;
+  border-radius: 99px;
+  backdrop-filter: blur(4px);
 }
 
-/* แถบสถานะระหว่างเกม (โดนปิดปาก / ตายแล้ว) — ต้องเห็นชัดโดยไม่ต้องเปิดแชท */
-.game-status-row {
+.gpr-kicker {
+  position: absolute;
+  top: 1rem;
+}
+
+.gpr-toggle {
+  position: absolute;
+  bottom: 1rem;
+}
+
+.gpr-content {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding: 1rem;
+  background: linear-gradient(to top, rgba(8, 12, 20, 0.95) 40%, rgba(8, 12, 20, 0.6) 80%, transparent);
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.game-status {
-  display: inline-flex;
+.gpr-identity {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  border-radius: var(--radius-md);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  gap: 0.75rem;
 }
 
-.game-status-icon { font-size: 1.05rem; flex-shrink: 0; }
+.gpr-icon { font-size: 2rem; line-height: 1; }
 
-.game-status.is-silenced {
-  background: rgba(139, 32, 32, 0.16);
-  border: 1px solid rgba(229, 115, 115, 0.40);
-  color: #e57373;
-  animation: silencedPulse 2.2s ease-in-out infinite;
+.gpr-name {
+  font-family: var(--font-logo);
+  font-size: 1.25rem;
 }
 
-@keyframes silencedPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 115, 115, 0); }
-  50%      { box-shadow: 0 0 14px 1px rgba(229, 115, 115, 0.28); }
+.gpr-faction {
+  font-size: 0.7rem;
+  color: var(--faction-color, var(--gold-bright));
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .game-status.is-silenced { animation: none; }
+.gpr-summary {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
 }
 
-.game-status.is-dead {
-  background: rgba(154, 168, 199, 0.12);
-  border: 1px solid rgba(154, 168, 199, 0.35);
-  color: #9aa8c7;
+.gpr-detail { display: none; } /* Hide detail by default, summary is enough */
+
+.gpr-teammates {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
 }

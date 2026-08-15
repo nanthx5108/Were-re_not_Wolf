@@ -16,6 +16,8 @@ export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false
     isPrivate,
     roleConfig,
     phaseDurations,
+    usedWhispers: new Set(), // For 'whisper' card
+    usedExtraTime: new Set(), // For 'injury_time' card
     revealRoleOnDeath: revealRoleOnDeath === true,
     players:     new Map(),
     nightActions: {},
@@ -118,11 +120,3 @@ export function serializeRoomForPlayer(roomId, requestingPlayerId) {
     myRole: room.players.get(requestingPlayerId)?.role || null,
   };
 }
-
-
-
-
-
-
-
-

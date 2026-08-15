@@ -1,0 +1,80 @@
+/* =========================================================
+   Fortune Card (System 3)
+   Floating panel that shows the player's drawn luck card.
+   ========================================================= */
+
+.fc-card {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  z-index: 50;
+  width: 280px;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  backdrop-filter: blur(16px);
+  /* sketch-border provides the base border */
+}
+
+.fc-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fc-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.fc-icon.is-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border-subtle);
+}
+
+.fc-icon.is-fallback {
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+}
+
+.fc-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.fc-desc {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* Good card variant (Gold/Amber) */
+.fc-card.is-good {
+  background: rgba(var(--accent-rgb), 0.12);
+  border-color: rgba(var(--accent-rgb), 0.4);
+  box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.22);
+}
+.fc-card.is-good .fc-name,
+.fc-card.is-good .fc-icon {
+  color: var(--gold-bright); /* Teal accent */
+}
+
+/* Bad card variant (Purple/Dark) */
+.fc-card.is-bad {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.22);
+}
+.fc-card.is-bad .fc-name,
+.fc-card.is-bad .fc-icon {
+  color: #c4b5fd; /* light purple */
+}

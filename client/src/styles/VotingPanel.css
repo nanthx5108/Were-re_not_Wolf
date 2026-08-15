@@ -1,0 +1,191 @@
+/* =========================================================
+   Voting Panel
+   Used during the voting phase in Game.jsx
+   ========================================================= */
+
+.voting-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vp-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vp-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.vp-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-accent);
+}
+
+.vp-sub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.vp-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vp-progress-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.vp-progress-track {
+  flex: 1;
+  height: 6px;
+  background: var(--color-surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.vp-progress-fill {
+  height: 100%;
+  background: var(--phase-voting);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.vp-my-vote-box {
+  background: rgba(var(--accent-rgb), 0.07);
+  border: 1px solid var(--color-accent-dim);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vp-my-vote-box.can-change {
+  border-color: var(--gold-bright);
+  background: rgba(var(--accent-rgb), 0.15);
+}
+
+.vp-my-vote-box strong {
+  color: var(--color-accent);
+}
+
+.vp-change-vote-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.vp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  gap: 8px;
+  background: var(--color-surface-2);
+}
+
+.vp-row.is-my-target {
+  background: rgba(var(--accent-rgb), 0.07);
+  border-color: var(--color-accent);
+}
+
+.vp-player-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.vp-avatar {
+  font-size: 16px;
+}
+
+.vp-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.vp-voted-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--color-village);
+  color: #a8d8c8;
+  border-radius: 999px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+
+.vp-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.vp-vote-count {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  transition: color 0.3s;
+}
+
+.vp-vote-count.is-realtime {
+  color: var(--gold-bright);
+}
+
+.vp-vote-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--transition);
+  white-space: nowrap;
+}
+
+.vp-vote-btn.is-selected {
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: var(--on-accent);
+}
+
+.vp-vote-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.vp-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-align: center;
+  font-style: italic;
+}

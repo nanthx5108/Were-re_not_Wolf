@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ROLE_INFO } from '../constants/game.js';
+import { useGameData } from '../context/GameDataContext.jsx';
 
 const SIDEBAR_LIMIT = 6;
 
@@ -36,18 +36,19 @@ function prioritize(players, voteMap, typingIds) {
 }
 
 // กล่องสถานะ role: การ์ดคว่ำ '?' หรือ role จริงถ้าคนตาย + host เปิด revealRoleOnDeath
-// (server ส่ง player.revealedRole มาเมื่อ setting เปิด — ยังไม่มีจนกว่าจะทำ Part 7)
+// (server ส่ง player.revealedRole มาเมื่อ setting เปิด)
 function RoleBox({ player }) {
+  const { roleMap } = useGameData();
   const revealed = !player.isAlive && player.revealedRole;
   if (revealed) {
-    const info = ROLE_INFO[player.revealedRole];
+    const info = roleMap.get(player.revealedRole);
     return (
-      <div className="gps-role is-revealed" title={info?.label || player.revealedRole}>
+      <div className="gps-role is-revealed" title={info?.name_th || player.revealedRole}>
         {info?.icon || '?'}
       </div>
     );
   }
-  return <div className="gps-role is-facedown">?</div>;
+  return <div className="gps-role is-facedown" title="บทบาทถูกซ่อนไว้">?</div>;
 }
 
 function PlayerRow({ player, isMe, isHost }) {

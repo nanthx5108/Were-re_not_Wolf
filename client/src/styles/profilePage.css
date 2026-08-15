@@ -1,138 +1,128 @@
 /* =========================================================
-   WE'RE NOT WOLF — Profile / Account Page
-   Same carved-wood + peg-corner + lantern-glow language as
-   HomePage buttons and NewsPage cards.
+   Profile Page - "Digital Occult" Theme
    ========================================================= */
 
 .profile-page {
   min-height: 100dvh;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: var(--space-6) var(--space-5) var(--space-8);
-  background-color: var(--bg-void);
   background-size: cover;
-  background-position: center top;
+  background-position: center;
+  background-color: var(--bg-void);
   position: relative;
-  overflow-x: hidden;
   font-family: var(--font-body);
   color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  padding: var(--space-5) 0;
 
-  /* สีเน้น → เขียวทะเล teal ให้ตรงกับหน้าแรก */
-  --accent-rgb:       79,209,197;
-  --gold-bright:      #4fd1c5;
-  --gold-mid:         #2a9d9e;
-  --gold-dim:         #1a5f60;
-  --on-accent:        #04231f;
-  --color-accent:     #4fd1c5;
-  --color-accent-dim: #1a5f60;
-  --text-gold:        #a7d8d2;   /* ข้อความน้ำเสียงเน้น → อมเขียวจาง แทนอมทอง */
+  /* Teal accent color scheme */
+  --accent-rgb: 79, 209, 197;
+  --gold-bright: #4fd1c5;
+  --gold-mid: #2a9d9e;
+  --gold-dim: #1a5f60;
+  --on-accent: #04231f;
 }
 
-.profile-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background:
-    radial-gradient(ellipse 60% 40% at 50% -5%, rgba(180,200,255,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 120% 80% at 50% 50%, transparent 35%, rgba(0,0,0,0.72) 100%),
-    linear-gradient(180deg,
-      rgba(3,6,10,0.80) 0%,
-      rgba(4,7,12,0.62) 25%,
-      rgba(4,7,12,0.78) 75%,
-      rgba(2,4,8,0.93) 100%
-    );
-  pointer-events: none;
-}
-
+.profile-overlay,
 .profile-fog {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse 70% 25% at 50% 100%, rgba(140,160,200,0.05) 0%, transparent 65%);
-  animation: fogDrift 28s ease-in-out infinite alternate;
+}
+
+.profile-overlay {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(180, 200, 255, 0.07) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(8, 12, 16, 0.55) 0%, rgba(8, 12, 16, 0.7) 100%);
+}
+
+.profile-fog {
+  background: radial-gradient(ellipse 80% 20% at 50% 100%, rgba(160, 170, 150, 0.06) 0%, transparent 65%);
+  animation: authFogDrift 24s ease-in-out infinite alternate;
 }
 
 .profile-container {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 480px;
+  max-width: 640px;
+  padding: 96px var(--space-5) var(--space-5);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-/* =====================================================
-   BACK BUTTON
-   ===================================================== */
-.profile-topbar { margin-bottom: var(--space-4); }
+.profile-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: var(--space-4) var(--space-6);
+  background: rgba(7, 12, 17, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+}
 
-/* ขอบมาจาก .sketch-border-lite ที่ติดมากับ class ใน JSX (ปุ่มเดี่ยว ไม่ต้องใช้ filter ตัวเต็ม) */
 .profile-back-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: 9px 16px;
+  gap: 8px;
+  padding: 9px 18px;
   border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  position: relative;
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
-  transition: color var(--ease), transform var(--ease), box-shadow var(--ease), border-color var(--ease);
+  border: 1px solid var(--border-default);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  transition: all var(--ease);
 }
-.profile-back-btn:hover { color: var(--gold-bright); transform: translateX(-3px); }
+.profile-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
 
-/* =====================================================
-   CARD
-   ===================================================== */
-/* ขอบมาจาก .sketch-border ที่ติดมากับ class ใน JSX — ห้ามประกาศ border ที่นี่ ไม่งั้นจะทับกัน */
 .profile-card {
   position: relative;
-  padding: var(--space-6);
+  background: rgba(13, 19, 26, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
   border-radius: var(--radius-md);
-  background-image:
-    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)),
-    linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
-  background-color: var(--bg-elevated);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.02),
-    inset 0 -10px 24px rgba(0,0,0,0.55),
-    0 20px 50px rgba(0,0,0,0.6);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  animation: fadeUp 400ms ease both;
+  gap: var(--space-5);
+  animation: fadeUp 400ms var(--ease-out) both;
+}
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
 }
 
-/* =====================================================
-   HEADER
-   ===================================================== */
 .profile-title {
-  font-family: var(--font-display) !important;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
   color: var(--text-primary);
   text-align: center;
-  margin: 0;
-  letter-spacing: 0.03em;
-}
-
-.profile-sub {
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  text-align: center;
-  font-style: italic;
-  margin-top: -8px;
 }
 
 .profile-error {
   background: var(--danger-soft);
-  border: 1px solid rgba(139,32,32,0.4);
-  border-radius: var(--radius-sm);
+  border: 1px solid rgba(139, 32, 32, 0.4);
   padding: 10px 14px;
+  border-radius: var(--radius-sm);
   color: #ffaaaa;
-  font-size: 0.82rem;
-  text-align: center;
+  font-size: 0.84rem;
+  animation: shake 300ms ease;
 }
 
 .profile-form {
@@ -141,517 +131,344 @@
   gap: var(--space-4);
 }
 
-/* =====================================================
-   AVATAR
-   ===================================================== */
 .profile-avatar-row {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .profile-avatar-wrap {
   position: relative;
-  width: 96px;
-  height: 96px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  border: 1px solid var(--border-default);
-  background: radial-gradient(circle at 35% 35%, var(--bg-overlay), var(--bg-void));
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  overflow: hidden;
-  transition: border-color var(--ease), transform var(--ease);
+  border: 2px solid var(--teal-dim);
+  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.25), inset 0 0 12px rgba(0, 0, 0, 0.5);
+  transition: all var(--ease);
 }
 .profile-avatar-wrap:hover {
-  border-color: var(--gold-mid);
-  transform: scale(1.04);
+  transform: scale(1.05);
+  box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.4), inset 0 0 12px rgba(0, 0, 0, 0.5);
+}
+.profile-avatar-wrap:hover .profile-avatar-edit-badge {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.profile-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
 
 .profile-avatar-edit-badge {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  background: rgba(0,0,0,0.65);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 0.62rem;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px;
+  background: rgba(var(--accent-rgb), 0.8);
+  color: var(--on-accent);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
   text-align: center;
-  padding: 3px 0;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
   opacity: 0;
-  transition: opacity var(--ease);
+  transform: translateY(10px);
+  transition: all var(--ease);
 }
-.profile-avatar-wrap:hover .profile-avatar-edit-badge { opacity: 1; }
 
-.profile-avatar-input { display: none; }
+.profile-avatar-input {
+  display: none;
+}
 
 .profile-avatar-hint {
-  /* ข้อความไทย — Special Elite ไม่มี glyph ไทย ต้องใช้ Sriracha */
-  font-family: var(--font-body);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
-  text-align: center;
-  max-width: 320px;
+}
+.profile-view-link {
+  color: var(--gold-bright);
+  text-decoration: underline;
+  margin-left: 4px;
 }
 
-/* =====================================================
-   FIELDS
-   ===================================================== */
 .profile-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 200ms ease;
 }
-
-.profile-label {
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+.profile-field.is-active {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .profile-label-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.profile-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .profile-cooldown {
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  color: var(--gold-dim);
-  font-style: italic;
-  text-transform: none;
-  letter-spacing: 0.02em;
-}
-
-.profile-input {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color var(--ease), box-shadow var(--ease);
-}
-.profile-input:focus {
-  border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.10);
-}
-.profile-input:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-}
-
-.profile-hint {
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  color: var(--text-muted);
-}
-
-/* Input + small icon button combo (username edit, email link) */
-.profile-input-with-btn {
-  display: flex;
-  gap: var(--space-2);
-}
-.profile-input-with-btn .profile-input { flex: 1; }
-
-.profile-icon-btn {
-  flex-shrink: 0;
-  width: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  transition: color var(--ease), border-color var(--ease), background var(--ease);
-}
-.profile-icon-btn:hover:not(:disabled) {
-  color: var(--gold-bright);
-  border-color: var(--gold-dim);
-  background: rgba(var(--accent-rgb),0.08);
-}
-.profile-icon-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.profile-link-btn {
-  flex-shrink: 0;
-  padding: 0 16px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-meta);
-  font-size: 0.76rem;
-  color: var(--gold-mid);
-  background: rgba(var(--accent-rgb),0.08);
-  border: 1px solid rgba(var(--accent-rgb),0.25);
-  transition: color var(--ease), border-color var(--ease), background var(--ease);
-  white-space: nowrap;
-}
-.profile-link-btn:hover:not(:disabled) {
-  color: var(--gold-bright);
-  background: rgba(var(--accent-rgb),0.14);
-}
-.profile-link-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* =====================================================
-   BIRTHDATE — custom day/month/year select row
-   ===================================================== */
-.profile-birthdate-row {
-  display: grid;
-  grid-template-columns: 0.7fr 1.3fr 0.9fr;
-  gap: var(--space-2);
-}
-
-.profile-select {
-  width: 100%;
-  padding: 12px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  outline: none;
-  cursor: pointer;
-  transition: border-color var(--ease), box-shadow var(--ease);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a9aaa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 14px;
-  padding-right: 28px;
-}
-.profile-select:focus {
-  border-color: var(--gold-dim);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.10);
-}
-.profile-select option {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-}
-
-/* =====================================================
-   BUTTONS
-   ===================================================== */
-.profile-btn-row { margin-top: var(--space-1); }
-
-/* CTA หลัก — ใช้ภาษาเดียวกับปุ่ม .btn-primary ที่หน้าแรก (เขียวทะเลเต็มสี + เรืองสีตัวเอง)
-   ขอบมาจาก .sketch-border ที่ติดมากับ class ใน JSX — ห้ามประกาศ border ที่นี่ ไม่งั้นจะทับกัน */
-.profile-btn-save {
-  position: relative;
-  width: 100%;
-  padding: 13px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--on-teal);
-  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 100%);
-  box-shadow:
-    0 3px 10px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.2),
-    inset 0 -2px 4px rgba(0,0,0,0.25);
-  transition: transform var(--ease), box-shadow var(--ease), filter var(--ease);
-}
-.profile-btn-save:hover:not(:disabled) {
-  transform: translateY(-2px);
-  /* filter ต้องพ่วง url(#sketch-edge) ไปด้วย ไม่งั้นขอบมือวาดจะหายตอน hover */
-  filter: url(#sketch-edge) brightness(1.06);
-  box-shadow:
-    0 0 16px rgba(79,209,197,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.25),
-    inset 0 -2px 4px rgba(0,0,0,0.2);
-}
-.profile-btn-save:active:not(:disabled) { transform: translateY(0); }
-.profile-btn-save:disabled { opacity: 0.45; cursor: not-allowed; }
-
-.profile-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border-default), transparent);
-}
-
-.profile-logout-btn {
-  background: transparent;
-  border: 1px solid rgba(139,32,32,0.30);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  color: #c08078;
-  font-family: var(--font-meta);
-  font-size: 0.8rem;
-  transition: background var(--ease), color var(--ease);
-}
-.profile-logout-btn:hover {
-  background: rgba(139,32,32,0.10);
-  color: #e0a098;
-}
-
-/* =====================================================
-   EMAIL STATUS
-   ===================================================== */
-.profile-email-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-meta);
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-.profile-email-status.is-linked { color: #6ecf8a; }
-.profile-email-note {
-  font-family: var(--font-meta);
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  font-style: italic;
-  margin-top: 2px;
-}
-
-/* =====================================================
-   CONFIRM MODAL
-   ===================================================== */
-.profile-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-5);
-  animation: fadeIn 180ms ease both;
-}
-
-/* ขอบมาจาก .sketch-border ที่ติดมากับ class ใน JSX — ไม่ประกาศ border ที่นี่ */
-.profile-modal {
-  width: 100%;
-  max-width: 360px;
-  padding: var(--space-5);
-  border-radius: var(--radius-md);
-  background-image:
-    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.08)),
-    linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%);
-  background-color: var(--bg-elevated);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.03),
-    0 24px 60px rgba(0,0,0,0.7);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  animation: fadeUp 220ms cubic-bezier(0.22,1,0.36,1) both;
-}
-
-.profile-modal-title {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  text-align: center;
-}
-
-.profile-modal-message {
-  font-family: var(--font-thai);
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  text-align: center;
-  line-height: 1.55;
-}
-
-.profile-modal-actions {
-  display: flex;
-  gap: var(--space-3);
-  margin-top: var(--space-1);
-}
-
-.profile-modal-btn-cancel {
-  flex: 1;
-  padding: 11px;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  background: transparent;
-  border: 1px solid var(--border-default);
-  font-size: 0.84rem;
-  transition: background var(--ease), color var(--ease);
-}
-.profile-modal-btn-cancel:hover {
-  background: rgba(255,255,255,0.04);
-  color: var(--text-secondary);
-}
-
-.profile-modal-btn-confirm {
-  flex: 1;
-  padding: 11px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.84rem;
-  letter-spacing: 0.03em;
-  color: var(--gold-bright);
-  background: linear-gradient(135deg, rgba(var(--accent-rgb),0.22) 0%, rgba(var(--accent-rgb),0.10) 100%);
-  border: 1px solid var(--gold-mid);
-  transition: transform var(--ease), box-shadow var(--ease);
-}
-.profile-modal-btn-confirm:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-gold);
-}
-.profile-modal-btn-confirm.is-danger {
-  color: #ffaaaa;
-  background: linear-gradient(135deg, rgba(139,32,32,0.22) 0%, rgba(139,32,32,0.10) 100%);
-  border-color: rgba(139,32,32,0.5);
-}
-.profile-modal-btn-confirm.is-danger:hover {
-  box-shadow: 0 0 20px rgba(139,32,32,0.25);
-}
-/* =====================================================
-   โหมดอ่านอย่างเดียว — ช่องข้อมูลโชว์ค่าเฉย ๆ จนกว่าจะคลิก
-   ===================================================== */
-.profile-field {
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  margin: -8px -10px;   /* หักคืน ไม่ให้ระยะห่างระหว่างช่องเปลี่ยนไปจากเดิม */
-  cursor: pointer;
-  transition: background var(--ease), box-shadow var(--ease);
-}
-/* ช่องที่ถูกคลิกล่าสุด — เรืองขาวจาง ๆ บอกว่ากำลังโฟกัสอันนี้ */
-.profile-field.is-active {
-  background: rgba(255,255,255,0.03);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+  font-size: 0.75rem;
+  color: var(--rust-mid);
 }
 
 .profile-readrow {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: space-between;
   min-height: 42px;
 }
+
 .profile-readvalue {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-body);
   font-size: 0.95rem;
   color: var(--text-primary);
-  word-break: break-word;
 }
 .profile-readvalue.is-empty {
   color: var(--text-muted);
   font-style: italic;
 }
-/* ปุ่มดินสอโผล่มาแบบ fade สั้น ๆ ไม่ใช่กระตุกขึ้นมาเฉย ๆ */
-.profile-readrow .profile-icon-btn {
-  height: 38px;
-  animation: profileEditIn 160ms ease both;
+
+.profile-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  transition: all var(--ease);
 }
-@keyframes profileEditIn {
-  from { opacity: 0; transform: translateX(4px); }
-  to   { opacity: 1; transform: translateX(0); }
+.profile-icon-btn:hover:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--gold-bright);
+}
+.profile-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-/* ลิงก์ "กดดูรูป" ที่อยู่ในบรรทัดคำอธิบายใต้รูป */
-.profile-view-link {
-  margin-left: 4px;
-  padding: 0;
-  font-family: inherit;
-  font-size: inherit;
-  color: var(--teal-bright);
-  background: none;
-  border: none;
+.profile-input,
+.profile-select {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  transition: all var(--ease);
+}
+.profile-input:focus,
+.profile-select:focus {
+  border-color: var(--teal-dim);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+}
+
+.profile-birthdate-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: var(--space-2);
+}
+
+.profile-input-with-btn {
+  display: flex;
+  gap: var(--space-2);
+}
+.profile-link-btn {
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.profile-link-btn:hover:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--gold-bright);
+}
+.profile-link-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-hint,
+.profile-email-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.profile-email-status {
+  font-size: 0.75rem;
+}
+.profile-email-status.is-linked {
+  color: var(--sage-bright);
+}
+.profile-email-status.is-empty {
+  color: var(--text-muted);
+}
+
+.profile-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.profile-btn-save {
+  padding: 13px 28px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 100%);
+  border: 1px solid var(--teal-bright);
+  color: var(--on-accent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  box-shadow: var(--shadow-md);
+}
+.profile-btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+.profile-btn-save:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.profile-divider {
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.profile-logout-btn {
+  align-self: flex-start;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+.profile-logout-btn:hover {
   text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  transition: color var(--ease);
 }
-.profile-view-link:hover { color: #fff; }
 
-/* =====================================================
-   ดูรูปโปรไฟล์เต็ม
-   ===================================================== */
-.profile-viewer-overlay {
+/* Modal */
+.profile-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 220;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-5);
-  background: rgba(3,6,10,0.82);
-  animation: fadeIn 160ms ease;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 6, 10, 0.72);
+  backdrop-filter: blur(3px);
 }
-.profile-viewer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+.profile-modal {
+  width: min(400px, 90vw);
   padding: var(--space-5);
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.65);
-  animation: fadeUp 200ms cubic-bezier(0.22, 1, 0.36, 1);
-  max-width: min(420px, 92vw);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.profile-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+.profile-modal-message {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.profile-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.profile-modal-btn-cancel,
+.profile-modal-btn-confirm {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+.profile-modal-btn-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+.profile-modal-btn-confirm {
+  background: var(--gold-mid);
+  color: var(--on-accent);
+}
+.profile-modal-btn-confirm.is-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Viewer */
+.profile-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 6, 10, 0.72);
+  backdrop-filter: blur(3px);
+}
+.profile-viewer {
+  width: min(400px, 90vw);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
 }
 .profile-viewer-img {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  background: radial-gradient(circle at 35% 35%, var(--bg-overlay), var(--bg-void));
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
   overflow: hidden;
 }
 .profile-viewer-img img {
   width: 100%;
-  height: auto;
-  max-height: 60vh;
-  object-fit: contain;
-  display: block;
+  height: 100%;
+  object-fit: cover;
 }
-
 .profile-viewer-actions {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-2);
+}
+.profile-viewer-edit,
+.profile-viewer-close {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
 }
 .profile-viewer-edit {
-  flex: 1;
-  padding: 11px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  color: var(--on-teal);
-  background: linear-gradient(180deg, var(--teal-bright) 0%, var(--teal-mid) 100%);
-  border: 1px solid var(--teal-mid);
-  cursor: pointer;
-  transition: transform var(--ease), box-shadow var(--ease), filter var(--ease);
-}
-.profile-viewer-edit:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
-  box-shadow: 0 0 16px rgba(79,209,197,0.4);
+  background: var(--gold-mid);
+  color: var(--on-accent);
 }
 .profile-viewer-close {
-  padding: 11px 20px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.12);
-  cursor: pointer;
-  transition: color var(--ease), border-color var(--ease);
-}
-.profile-viewer-close:hover {
-  color: var(--text-primary);
-  border-color: rgba(255,255,255,0.4);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
 }

@@ -154,6 +154,11 @@
   letter-spacing: 0.02em;
 }
 
+.news-loading, .news-error, .news-empty {
+  text-align: center;
+  color: var(--text-muted);
+}
+
 /* =====================================================
    FILTER TABS — mini peg-corner buttons
    ===================================================== */
@@ -215,32 +220,7 @@
   transition: transform var(--ease-md), box-shadow var(--ease-md), border-color var(--ease-md);
 }
 
-/* Wooden peg corners — same language as menu buttons */
-.news-card-corner {
-  position: absolute;
-  width: 12px; height: 12px;
-  pointer-events: none;
-  border-radius: 50%;
-}
-.news-card-corner.tl { top: 8px; left: 8px; }
-.news-card-corner.br { bottom: 8px; right: 8px; }
-.news-card-corner::before,
-.news-card-corner::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  transition: opacity var(--ease);
-}
-.news-card-corner::before {
-  background: radial-gradient(circle, rgba(94,76,50,0.7) 0%, transparent 75%);
-  opacity: 0.6;
-}
-.news-card-corner::after {
-  background: radial-gradient(circle, rgba(var(--accent-rgb),0.95) 0%, transparent 75%);
-  opacity: 0;
-}
-.news-card.is-hovered {
+.news-card:hover {
   transform: translateY(-4px);
   border-color: rgba(var(--accent-rgb),0.18);
   box-shadow:
@@ -248,8 +228,6 @@
     0 14px 34px rgba(0,0,0,0.6),
     var(--shadow-gold);
 }
-.news-card.is-hovered .news-card-corner::before { opacity: 0.15; }
-.news-card.is-hovered .news-card-corner::after  { opacity: 1; }
 
 .news-card-tag {
   display: inline-block;
@@ -336,4 +314,41 @@
   font-style: italic;
   letter-spacing: 0.03em;
   opacity: 0.85;
+}
+
+.news-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--space-5);
+}
+
+.news-pagination .pagination-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.news-pagination .pagination-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+}
+
+.news-pagination .pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.news-pagination .pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 }

@@ -1,16 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useGame } from '../../context/Gamecontext.jsx';
-
-// prompt = สั่งให้ทำอะไร, hint = ผลที่ตามมา แยกคนละบรรทัดไปเลย
-// จะได้ไม่ต้องยัดสองประโยคเข้าบรรทัดเดียวแล้วคั่นด้วยขีด
-const ROLE_PROMPTS = {
-  werewolf:  { prompt: 'เลือกเหยื่อของคืนนี้' },
-  seer:      { prompt: 'เลือกคนที่จะตรวจคืนนี้', hint: 'เจ้าจะรู้แค่ว่าเขาอยู่ฝ่ายไหน' },
-  bodyguard: { prompt: 'เลือกคนที่จะปกป้องคืนนี้', hint: 'ห้ามเฝ้าคนเดิมสองคืนติด' },
-  silencer:  { prompt: 'เลือกคนที่จะปิดปาก', hint: 'พรุ่งนี้ทั้งวันเขาจะพิมพ์อะไรไม่ได้เลย' },
-};
-
-const ACTION_ROLES = ['werewolf', 'seer', 'bodyguard', 'silencer'];
+import { useSound } from '../context/SoundContext.jsx';
+import { useGameData } from '../context/GameDataContext.jsx';
+import '../styles/NightAction.css';
 
 const FACTION_LABEL = {
   village:  'ฝ่ายชาวบ้าน',
@@ -24,27 +16,33 @@ export default function NightAction() {
     room, playerId, myRole, submitNightAction, myNightAction,
     morningEvent, seerResult, wolfTargets, teammates, blockedTargets,
   } = useGame();
+  const { roleMap } = useGameData();
+  const sound = useSound();
   const [chosenIds, setChosenIds] = useState([]);
 
   const isNight = room?.phase === 'night';
   useEffect(() => { if (isNight) setChosenIds([]); }, [isNight, room?.round]);
 
+  const nightActionRoles = useMemo(() =>
+    new Set(Array.from(roleMap.values()).filter(r => r.night_action).map(r => r.name_en))
+  , [roleMap]);
+
   const alivePlayers = useMemo(() => (room?.players || []).filter((player) => player.isAlive), [room?.players]);
 
-  if (!room || !myRole || !ACTION_ROLES.includes(myRole)) {
+  if (!room || !myRole || !nightActionRoles.has(myRole)) {
     return null;
   }
 
   // ผลตรวจของ Seer มาถึงตอน night จบ (phase เป็น day แล้ว) จึงต้องแสดงได้นอก night ด้วย
   const seerReport = myRole === 'seer' && seerResult ? (
-    <section style={{ border: '1px solid #9fbcd0', padding: '1rem', borderRadius: '12px', background: 'rgba(8,12,20,0.7)' }}>
-      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>ผลการตรวจ</h3>
-      <p style={{ margin: 0 }}>
+    <section className="na-panel">
+      <h3 className="na-title">ผลการตรวจ</h3>
+      <p className="na-seer-result">
         <strong>{alivePlayers.find((p) => p.id === seerResult.targetId)?.nickname
           ?? room.players.find((p) => p.id === seerResult.targetId)?.nickname
           ?? 'ผู้เล่นคนนั้น'}</strong>
         {' คือ '}
-        <strong style={{ color: seerResult.faction === 'werewolf' ? '#e57373' : '#7ddf7d' }}>
+        <strong className={seerResult.faction === 'werewolf' ? 'is-wolf' : 'is-village'}>
           {FACTION_LABEL[seerResult.faction] ?? 'ไม่ทราบ'}
         </strong>
       </p>
@@ -56,10 +54,11 @@ export default function NightAction() {
   // เหตุการณ์ "คืนที่ปลอดภัย" — คืนนี้ผู้พิทักษ์เลือกป้องกันได้ 2 คน
   const doubleGuard = myRole === 'bodyguard' && morningEvent?.id === 'boat_return';
   const maxTargets = doubleGuard ? 2 : 1;
+  const roleInfo = roleMap.get(myRole);
 
   const { prompt, hint } = doubleGuard
     ? { prompt: 'คืนนี้เจ้าแข็งแรงเป็นพิเศษ เลือกป้องกันได้ 2 คน', hint: null }
-    : ROLE_PROMPTS[myRole] ?? { prompt: 'ถึงเวลาใช้ความสามารถของเจ้า', hint: null };
+    : { prompt: roleInfo?.description_th, hint: null };
 
   const chosenPlayers = alivePlayers.filter((p) =>
     chosenIds.includes(p.id) || (chosenIds.length === 0 && p.id === myNightAction?.targetId)
@@ -69,6 +68,7 @@ export default function NightAction() {
     : Boolean(myNightAction);
 
   function handlePick(targetId) {
+    sound.playSfx('/audio/sfx_action_confirm.wav');
     submitNightAction(targetId);
     setChosenIds((ids) => (ids.includes(targetId) ? ids : [...ids, targetId].slice(0, maxTargets)));
   }
@@ -76,31 +76,28 @@ export default function NightAction() {
   return (
     <>
     {seerReport}
-    <section style={{ border: '1px solid #9fbcd0', padding: '1rem', borderRadius: '12px', background: 'rgba(8,12,20,0.7)' }}>
-      <h3 style={{ marginTop: 0, color: '#9fbcd0' }}>ค่ำคืนนี้</h3>
-      <p style={{ marginBottom: hint ? '0.25rem' : '0.75rem' }}>{prompt}</p>
-      {hint && (
-        <p style={{ marginBottom: '0.75rem', fontSize: '0.82rem', color: '#8a9aaa' }}>{hint}</p>
-      )}
-      <p style={{ marginBottom: '0.75rem', color: '#d9e4ec' }}>
-        บทบาทของเจ้า: <strong>{myRole}</strong>
+    <section className="na-panel">
+      <h3 className="na-title">ค่ำคืนนี้</h3>
+      <p className="na-prompt">{prompt}</p>
+      {hint && <p className="na-hint">{hint}</p>}
+      <p className="na-role-info">
+        บทบาทของเจ้า: <strong>{roleInfo?.name_th || myRole}</strong>
       </p>
 
       {actionComplete ? (
-        <p style={{ color: '#7ddf7d' }}>
+        <p className="na-complete-msg">
           เลือก <strong>{chosenPlayers.map((p) => p.nickname).join(', ') || 'ผู้เล่นคนนี้'}</strong> แล้ว
         </p>
       ) : (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="na-target-list">
           {doubleGuard && chosenPlayers.length > 0 && (
-            <p style={{ width: '100%', color: '#7ddf7d', margin: 0 }}>
+            <p className="na-chosen-info">
               เลือกแล้ว: {chosenPlayers.map((p) => p.nickname).join(', ')} (เลือกได้อีก {maxTargets - chosenPlayers.length})
             </p>
           )}
           {alivePlayers
             .filter((player) => player.id !== playerId && !chosenIds.includes(player.id))
             .map((player) => {
-              // ผู้พิทักษ์เฝ้าคนเดิม 2 คืนติดไม่ได้ — server ก็ปฏิเสธ ปุ่มนี้แค่กันไม่ให้กดไปเสียเปล่า
               const blocked = myRole === 'bodyguard' && (blockedTargets || []).includes(player.id);
               return (
                 <button
@@ -108,14 +105,7 @@ export default function NightAction() {
                   onClick={() => handlePick(player.id)}
                   disabled={blocked}
                   title={blocked ? 'เจ้าเพิ่งเฝ้าคนนี้เมื่อคืน' : undefined}
-                  style={{
-                    padding: '0.6rem 0.9rem', borderRadius: '999px',
-                    border: '1px solid var(--color-accent)',
-                    background: 'var(--bg-input)',
-                    color: 'var(--text-primary)',
-                    opacity: blocked ? 0.35 : 1,
-                    cursor: blocked ? 'not-allowed' : 'pointer',
-                  }}
+                  className="na-target-btn"
                 >
                   {player.nickname}
                 </button>
@@ -125,8 +115,8 @@ export default function NightAction() {
       )}
 
       {myRole === 'werewolf' && (
-        <div style={{ marginTop: '0.75rem', color: '#d9e4ec' }}>
-          <strong style={{ color: '#e57373' }}>ทีมของเจ้า:</strong>{' '}
+        <div className="na-teammates">
+          <strong>ทีมของเจ้า:</strong>{' '}
           {(teammates || []).length === 0
             ? 'เจ้าล่าเพียงลำพัง'
             : teammates.map((mate) => {

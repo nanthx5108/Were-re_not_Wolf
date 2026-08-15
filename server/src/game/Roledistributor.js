@@ -1,5 +1,5 @@
-import { PLAYER_LIMITS, ROLES } from './constants.js';
-import { CONFIGURABLE_ROLES, buildDefaultRoleConfig } from './roomConfig.js';
+import { PLAYER_LIMITS, getRoles } from './constants.js';
+import { CONFIGURABLE_ROLES, buildDefaultRoleConfig } from './roomConfig.js'; // CONFIGURABLE_ROLES is now dynamic
 
 function shuffle(arr) {
   const a = [...arr];
@@ -13,6 +13,7 @@ function shuffle(arr) {
 // กาง roleConfig ({ werewolf: 2, seer: 1, ... }) เป็นรายการบทบาทตามจำนวนผู้เล่นจริง
 // ที่นั่งที่เหลือหลังหักบทบาทพิเศษจะถูกเติมด้วย villager
 export function buildRoleList(roleConfig, playerCount) {
+  const ROLES = getRoles();
   const roles = [];
   for (const role of CONFIGURABLE_ROLES) {
     for (let i = 0; i < (roleConfig[role] || 0); i++) roles.push(role);
@@ -20,7 +21,7 @@ export function buildRoleList(roleConfig, playerCount) {
   if (roles.length > playerCount) {
     throw new Error(`Configured roles (${roles.length}) exceed player count (${playerCount}).`);
   }
-  while (roles.length < playerCount) roles.push(ROLES.VILLAGER);
+  while (roles.length < playerCount) roles.push(ROLES.VILLAGER || 'villager');
   return roles;
 }
 

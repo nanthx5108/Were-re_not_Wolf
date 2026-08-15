@@ -14,27 +14,16 @@ const SALT_ROUNDS = 12;
 const USERNAME_COOLDOWN_DAYS = 90;
 
 // คอลัมน์ที่ต้องดึงทุกครั้งเพื่อประกอบ public user — เพิ่ม field ที่นี่ที่เดียว
-const USER_FIELDS =
-  'id, username, games_played, exp, level, display_name, birthdate, email, avatar_url, username_changed_at';
+const USER_FIELDS = `
+  u.id, u.username, u.games_played, u.exp, u.level, u.display_name, u.birthdate, u.email, u.avatar_url, u.username_changed_at,
+  a.user_id IS NOT NULL AS isAdmin
+`;
 
 const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const GOOGLE_CALLBACK_URL  = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/api/auth/google/callback';
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL);
-
-
-async function ensureProfileColumns() {
-  await pool.query(`
-    ALTER TABLE users
-      ADD COLUMN IF NOT EXISTS display_name VARCHAR(32) DEFAULT NULL,
-      ADD COLUMN IF NOT EXISTS birthdate DATE DEFAULT NULL,
-      ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT NULL,
-      ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500) DEFAULT NULL,
-      ADD COLUMN IF NOT EXISTS username_changed_at DATETIME DEFAULT NULL,
-      ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) DEFAULT NULL UNIQUE
-  `);
-}
 
 /**
  * birthdate เป็นคอลัมน์ DATE — mysql2 คืนมาเป็น Date object (ไม่ได้ตั้ง dateStrings)
@@ -70,6 +59,7 @@ function toPublicUser(user) {
     email: user.email ?? '',
     avatarUrl: user.avatar_url ?? null,
     usernameChangedAt: user.username_changed_at ?? null,
+    isAdmin: !!user.isAdmin,
   };
 }
 
@@ -94,11 +84,11 @@ export async function registerService({ username, password }) {
 }
 
 export async function loginService({ username, password }) {
-  await ensureProfileColumns();
-
   const [rows] = await pool.query(
-    `SELECT ${USER_FIELDS}, password FROM users WHERE username = ?`,
-    [username.trim()]
+    `SELECT ${USER_FIELDS}, u.password
+     FROM users u
+     LEFT JOIN admins a ON u.id = a.user_id
+     WHERE u.username = ?`, [username.trim()]
   );
 
   if (rows.length === 0) {
@@ -147,8 +137,6 @@ export function getGoogleAuthUrl(state) {
 }
 
 export async function loginWithGoogleService(code) {
-  await ensureProfileColumns();
-
   const { tokens } = await googleClient.getToken(code);
   const ticket = await googleClient.verifyIdToken({
     idToken: tokens.id_token,
@@ -158,7 +146,10 @@ export async function loginWithGoogleService(code) {
   const { sub: googleId, email, name, picture } = payload;
 
   const [byGoogleId] = await pool.query(
-    `SELECT ${USER_FIELDS} FROM users WHERE google_id = ?`,
+    `SELECT ${USER_FIELDS}
+     FROM users u
+     LEFT JOIN admins a ON u.id = a.user_id
+     WHERE u.google_id = ?`,
     [googleId]
   );
   if (byGoogleId.length > 0) {
@@ -167,7 +158,10 @@ export async function loginWithGoogleService(code) {
 
   if (email) {
     const [byEmail] = await pool.query(
-      `SELECT ${USER_FIELDS} FROM users WHERE email = ?`,
+      `SELECT ${USER_FIELDS}
+       FROM users u
+       LEFT JOIN admins a ON u.id = a.user_id
+       WHERE u.email = ?`,
       [email]
     );
     if (byEmail.length > 0) {
@@ -195,19 +189,18 @@ export async function loginWithGoogleService(code) {
 }
 
 export async function getUserByIdService(id) {
-  await ensureProfileColumns();
-
   const [rows] = await pool.query(
-    `SELECT ${USER_FIELDS} FROM users WHERE id = ?`,
-    [id]
+    `SELECT ${USER_FIELDS}
+     FROM users u
+     LEFT JOIN admins a ON u.id = a.user_id
+     WHERE u.id = ?`,
+     [id]
   );
   if (rows.length === 0) return null;
   return toPublicUser(rows[0]);
 }
 
 export async function updateProfileService(id, updates) {
-  await ensureProfileColumns();
-
   const [rows] = await pool.query(
     'SELECT username, username_changed_at, avatar_url FROM users WHERE id = ?',
     [id]

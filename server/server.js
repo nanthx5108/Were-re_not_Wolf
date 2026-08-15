@@ -5,7 +5,7 @@ import app, { CLIENT_ORIGINS, IS_PROD } from './src/app.js';
 import { registerSocketHandlers } from './src/sockets/socketHandlers.js';
 import { purgeStaleRoomsOnStartup, startRoomSweep } from './src/game/roomMaintenance.js';
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002; // Changed from 3001 to 3002 to fix EADDRINUSE
 // PaaS ส่วนใหญ่ health-check ผ่าน IP ภายใน — ผูกกับ 0.0.0.0 ไม่ใช่ localhost ไม่งั้นถูกมองว่าตาย
 const HOST = process.env.HOST || '0.0.0.0';
 

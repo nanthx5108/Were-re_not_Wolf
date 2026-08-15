@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useToast } from '../context/ToastContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/Auth.css';
@@ -17,20 +18,20 @@ function GoogleIcon() {
 
 export default function LoginPage() {
   const { login }   = useAuth();
+  const { addToast } = useToast();
   const navigate    = useNavigate();
   const location    = useLocation();
   const from        = location.state?.from || '/';
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
 
   useEffect(() => {
     if (new URLSearchParams(location.search).get('error') === 'google_auth_failed') {
-      setError('เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      addToast('เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', 'error');
     }
-  }, [location.search]);
+  }, [location.search, addToast]);
 
   function handleGoogleAuth() {
     window.location.href = `/api/auth/google?from=${encodeURIComponent(from)}`;
@@ -39,12 +40,12 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!username.trim() || !password) return;
-    setLoading(true); setError('');
+    setLoading(true);
     try {
       await login({ username, password });
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message);
+      addToast(err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -70,8 +71,6 @@ export default function LoginPage() {
 
         <h2 className="auth-title">เข้าสู่ระบบ</h2>
 
-        {error && <div className="auth-error">{error}</div>}
-
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="auth-field">
             <label className="auth-label" htmlFor="username">ชื่อผู้ใช้</label>
@@ -94,7 +93,7 @@ export default function LoginPage() {
               id="password"
               type="password"
               className="auth-input"
-              placeholder="กรอกรหัสผ่านให้ถูกต้อง"
+              placeholder="กรอกรหัสผ่าน"
               value={password}
               onChange={e => setPassword(e.target.value)}
               autoComplete="current-password"

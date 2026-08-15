@@ -1,8 +1,10 @@
-import { ROLE_DISTRIBUTION, PLAYER_LIMITS, ROLE_FACTION } from './constants.js';
+import { PLAYER_LIMITS, getRoleFactionMap, getRoles } from './constants.js';
+import { getActiveRoles } from '../services/gameDataService.js';
+import { getSetting } from '../services/gameSettingsService.js';
 
 // บทบาทที่ host กำหนดจำนวนเองได้ — ที่เหลือเติมเป็น villager อัตโนมัติ
 // เพิ่ม role ใหม่ (เช่น silencer) = เพิ่มชื่อในนี้ + ROLE_FACTION แล้ว validation ตามมาเอง
-export const CONFIGURABLE_ROLES = Object.freeze(['werewolf', 'seer', 'bodyguard', 'silencer', 'fool']);
+export const CONFIGURABLE_ROLES = Object.freeze(getActiveRoles().filter(r => r.name_en !== getRoles().VILLAGER).map(r => r.name_en));
 
 // 2 โหมดเกม
 export const GAME_MODES = Object.freeze({ CLASSIC: 'classic', CHAOS: 'chaos' });
@@ -14,15 +16,15 @@ export function isValidGameMode(mode) {
 // floor 15 วิ กันไว้เผื่ออนาคตปรับค่าพวกนี้แล้วเผลอตั้งต่ำจนเล่นไม่ได้
 export const CHAOS_MIN_DURATION = 15;
 export const CHAOS_PHASE_DURATIONS = Object.freeze({
-  night:  Math.max(CHAOS_MIN_DURATION, 25),
-  day:    Math.max(CHAOS_MIN_DURATION, 90),
-  voting: Math.max(CHAOS_MIN_DURATION, 25),
+  night:  Math.max(CHAOS_MIN_DURATION, getSetting('duration.chaos.night', 25)),
+  day:    Math.max(CHAOS_MIN_DURATION, getSetting('duration.chaos.day', 90)),
+  voting: Math.max(CHAOS_MIN_DURATION, getSetting('duration.chaos.voting', 25)),
 });
 
 export const DEFAULT_PHASE_DURATIONS = Object.freeze({
-  night:  30,
-  day:    60,
-  voting: 30,
+  night:  getSetting('duration.default.night', 30),
+  day:    getSetting('duration.default.day', 60),
+  voting: getSetting('duration.default.voting', 30),
 });
 
 // ขอบเขตเวลาแต่ละ phase (วินาที) — กัน host ตั้งจนเกมเล่นไม่ได้
@@ -34,11 +36,23 @@ export const DURATION_LIMITS = Object.freeze({
 
 // ค่าเริ่มต้นของจำนวน role อิงตารางเดิม เพื่อให้ห้องที่ไม่ตั้ง config ได้สมดุลเท่าของเก่า
 export function buildDefaultRoleConfig(maxPlayers) {
-  const preset = ROLE_DISTRIBUTION[maxPlayers] || ROLE_DISTRIBUTION[PLAYER_LIMITS.MAX];
   const config = {};
-  for (const role of CONFIGURABLE_ROLES) {
-    config[role] = preset.filter((r) => r === role).length;
+  const roles = getRoles();
+  const activeRoleNames = new Set(getActiveRoles().map(r => r.name_en));
+
+  // Ensure at least one werewolf if active
+  if (activeRoleNames.has(roles.WEREWOLF)) {
+    config[roles.WEREWOLF] = 1;
+  } else {
+    // Fallback if werewolf is not active, though it should always be.
+    config[roles.WEREWOLF] = 1;
   }
+
+  // Set other configurable roles to 0 by default, host can add them.
+  for (const roleName of CONFIGURABLE_ROLES) {
+    if (roleName !== roles.WEREWOLF) config[roleName] = 0;
+  }
+
   return config;
 }
 
@@ -139,6 +153,7 @@ function sumRoles(roleConfig) {
 
 // หมาป่าต้องน้อยกว่าฝ่ายชาวบ้าน ไม่งั้นเกมจบทันทีที่เริ่ม (win condition: wolves >= villagers)
 function checkFactionBalance(roleConfig, playerCount) {
+  const ROLE_FACTION = getRoleFactionMap();
   const wolves = roleConfig.werewolf || 0;
   const villagers = CONFIGURABLE_ROLES
     .filter((role) => ROLE_FACTION[role] === 'village')

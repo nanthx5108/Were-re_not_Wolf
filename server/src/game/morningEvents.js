@@ -1,16 +1,9 @@
 import { getRoom, updateRoom, getPlayersArray } from './gameStore.js';
+import { getSetting } from '../services/gameSettingsService.js';
 
 // fallback ตอนไม่มี event ไหน eligible เลย — ต้องเป็นใบที่ "ไม่มีผลต่อเกม" เสมอ
 // (เดิมเป็น full_moon แต่ตอนนี้ full_moon ให้ผลดีกับผู้เล่นแล้ว จะกลายเป็นแจกของฟรี)
 export const DEFAULT_EVENT_ID = 'quiet_morning';
-
-// ─── ค่าปรับได้ของ 🌙 จันทร์เต็มดวง ──────────────────────────────────────────
-// อัตราโชคดี:โชคร้ายของการ์ดโชค (System 3) เฉพาะรอบที่ใบนี้ออก
-// แยกออกมาเป็น config เพื่อให้จูนได้โดยไม่ต้องไปแก้ใน catalog
-export const FULL_MOON_CONFIG = Object.freeze({
-  goodChance: 0.7, // 70:30 — รอบปกติใช้ค่าตั้งต้นของ System 3 เอง
-  weight: 8,       // ลดจาก 12 เพราะเปลี่ยนจากใบเปล่าเป็นใบที่ผู้เล่นได้เปรียบ
-});
 
 // ─── Event catalog ───────────────────────────────────────────────────────────
 // เพิ่ม event ใหม่ = เพิ่ม object ใหม่ในนี้ ไม่ต้องแก้ logic กลาง
@@ -38,6 +31,7 @@ export const NO_EVENT = Object.freeze({
   title: 'เช้าที่เงียบสงบ',
   effect: 'ไม่มีเหตุการณ์เกิดขึ้นเลย เกมดำเนินไปตามปกติ',
   baseWeight: 20,
+  card_image: null, // เหตุการณ์นี้ไม่มีภาพการ์ดแสดงผล
 });
 
 export const MORNING_EVENTS = [
@@ -53,6 +47,7 @@ export const MORNING_EVENTS = [
     minAlive: 5,
     weightMultiplier: (ctx) => (ctx.lastNight.someoneKilled ? 1 : 3),
     nightEffect: 'blackout',
+    card_image: '/events/blackout.png',
   },
   {
     id: 'fog', // B2
@@ -63,6 +58,7 @@ export const MORNING_EVENTS = [
     baseWeight: 5,
     cooldownDays: 2,
     nightEffect: 'fog',
+    card_image: '/events/fog.png',
   },
   {
     id: 'boat_return', // B3
@@ -74,6 +70,7 @@ export const MORNING_EVENTS = [
     cooldownDays: 2,
     requires: (ctx) => ctx.lastNight.prevented,
     nightEffect: 'double_guard',
+    card_image: '/events/boat_return.png',
   },
   {
     id: 'high_tide', // B4
@@ -84,6 +81,7 @@ export const MORNING_EVENTS = [
     baseWeight: 10,
     cooldownDays: 2,
     dayTimerMod: (ms) => Math.floor(ms / 2),
+    card_image: '/events/high_tide.png',
   },
   {
     id: 'distant_howl', // A1
@@ -97,6 +95,7 @@ export const MORNING_EVENTS = [
       const wolves = ctx.alive.filter((p) => p.role === 'werewolf').length;
       return `ยังมีหมาป่าหลงเหลืออยู่ ${wolves} ตัวในหมู่บ้าน`;
     },
+    card_image: '/events/distant_howl.png',
   },
   {
     id: 'circling_crow', // A2
@@ -108,6 +107,7 @@ export const MORNING_EVENTS = [
     weightMultiplier: (ctx) => (ctx.lastNight.skillCount >= 2 ? 2 : 1),
     buildAnnouncement: (ctx) =>
       `เมื่อคืนมีการใช้ความสามารถทั้งหมด ${ctx.lastNight.skillCount} ครั้ง`,
+    card_image: '/events/circling_crow.png',
   },
   {
     id: 'full_moon', // A3
@@ -115,10 +115,11 @@ export const MORNING_EVENTS = [
     title: 'จันทร์เต็มดวง',
     narrator: 'จันทร์เต็มดวงลอยเด่นเหนือทะเล ผู้เฒ่าว่าคืนแบบนี้ดวงของทุกคนจะดีกว่าปกติ... หรือแกก็แค่อยากปลอบใจ ใครจะรู้',
     effect: 'วันนี้เป็นวันที่โชคดี — โอกาสได้รับการ์ดโชคดีสูงกว่าปกติ',
-    baseWeight: FULL_MOON_CONFIG.weight,
+    baseWeight: getSetting('morning_event.full_moon.weight', 8),
     // System 3 (การ์ดโชค) อ่านค่านี้ผ่าน consumeLuckBias()/getActiveLuckBias()
     // ถ้า System 3 ยังไม่ถูก implement ค่านี้จะถูกตั้งแล้วไม่มีใครอ่าน — ไม่กระทบเกม
-    luckBias: { goodChance: FULL_MOON_CONFIG.goodChance },
+    luckBias: { goodChance: getSetting('morning_event.full_moon.good_chance', 0.7) },
+    card_image: '/events/full_moon.png',
   },
   {
     id: 'bonfire', // A4
@@ -128,10 +129,8 @@ export const MORNING_EVENTS = [
     effect: 'เวลาพูดคุยของวันนี้เพิ่มขึ้นอีก 30 วินาที',
     baseWeight: 12,
     dayTimerMod: (ms) => ms + 30_000,
+    card_image: '/events/bonfire.png',
   },
-  // TODO: การ์ดใบที่ 10 — ยังไม่ได้กำหนดชื่อ/effect/ไอคอน (รอสเปคจากเจ้าของโปรเจกต์)
-  //       ห้ามเดา effect เอง ใส่เข้ามาในอาร์เรย์นี้ได้เลยเมื่อได้สเปค
-  //       กลไก buildPrivateNote (ข้อความลับถึงผู้เล่นคนเดียว) ยังพร้อมใช้อยู่ ดู rollMorningEvent
 ];
 
 // ─── Selection ───────────────────────────────────────────────────────────────

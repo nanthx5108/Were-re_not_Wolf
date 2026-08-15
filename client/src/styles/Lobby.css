@@ -1,38 +1,13 @@
 /* =========================================================
    LOBBY — ห้องรอก่อนคืนแรก
-   ฉากหลังเกาะเต็มจอ + สามคอลัมน์ลอยอยู่บนฉาก:
-   ตั้งค่าห้อง · แชท/กติกา · รายชื่อผู้เล่น
-   ทุกสีอ้าง token จาก global.css ไม่มีเลขสีลอย ๆ ในไฟล์นี้
+   Design Theme: "The Craftsman of the Mysterious Island"
+   UI elements are crafted from wood, metal, and stone, with amber/lantern light.
    ========================================================= */
 
 .lobby-shell {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-}
-
-.lobby-shell,
-.lobby-loading {
-  /* สีเน้น → เขียวทะเล teal ให้ตรงกับหน้าแรก (ทุก var(--gold-*)/accent ในไฟล์นี้จะกลายเป็น teal) */
-  --accent-rgb:       79,209,197;
-  --gold-bright:      #4fd1c5;
-  --gold-mid:         #2a9d9e;
-  --gold-dim:         #1a5f60;
-  --on-accent:        #04231f;
-  --color-accent:     #4fd1c5;
-  --color-accent-dim: #1a5f60;
-  --text-gold:        #a7d8d2;   /* ข้อความน้ำเสียงเน้น → อมเขียวจาง แทนอมทอง */
-
-  /* เลิกใช้ลายไม้ — หน้านี้ย้ายมาใช้ panel โปร่งสีเข้ม + ขอบลายเส้นวาดแบบ HomePage แล้ว
-     คงชื่อตัวแปรไว้เป็น none เพื่อไม่ต้องรื้อทุก background list ที่เคยอ้างถึง */
-  --wood-grain: none;
-
-  /* แถบสีขีดใต้ปุ่มหลัก — ชุดสีเดียวกับ .kolae-stripe ของ HomePage (teal/rust/sage) */
-  --kolae-stripe: linear-gradient(90deg,
-    var(--teal-mid) 0 25%,
-    var(--rust-mid) 25% 50%,
-    var(--sage-mid) 50% 75%,
-    var(--teal-mid) 75% 100%);
 
   position: relative;
   min-height: 100dvh;
@@ -43,6 +18,22 @@
   color: var(--text-primary);
   font-family: var(--font-body);
   overflow: hidden;
+}
+
+.lobby-shell,
+.lobby-loading {
+  /* The core amber/gold from the design system, now as the primary accent */
+  --accent-rgb:       200, 164, 90;
+  --gold-bright:      #c8a45a;
+  --gold-mid:         #a18244;
+  --gold-dim:         #7a6230;
+  --on-accent:        #1a160d;
+  --color-accent:     #c8a45a;
+  --color-accent-dim: #a18244;
+  --text-gold:        #e0c592;
+
+  /* Wood texture for panels */
+  --wood-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.8' numOctaves='1' result='turbulence'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='1.5' intercept='-0.25'/%3E%3CfeFuncG type='linear' slope='1.5' intercept='-0.25'/%3E%3CfeFuncB type='linear' slope='1.5' intercept='-0.25'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
 }
 
 /* ฟ้าคืนกดฉากหลังให้จมลง แผงด้านหน้าจะได้อ่านออก */
@@ -169,7 +160,6 @@
   backdrop-filter: blur(14px);
 }
 
-/* ป้ายไม้เล็กสองใบแขวนคนละมุม เอียงคนละทาง — ไม่ได้แปะด้วยกริด */
 .lobby-leave,
 .lobby-roomid {
   display: inline-flex;
@@ -178,16 +168,9 @@
   padding: 9px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-default);
-  background:
-    var(--wood-grain),
-    rgba(7, 12, 17, 0.8);
-  background-blend-mode: soft-light, normal;
-  box-shadow:
-    var(--shadow-md),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: rgba(7, 12, 17, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
-.lobby-leave  { transform: rotate(-0.5deg); }
-.lobby-roomid { transform: rotate(0.6deg); }
 
 .lobby-leave {
   font-family: var(--font-display);
@@ -433,17 +416,14 @@
 }
 .panel-head .lobby-tabs { padding: 0; }
 
-/* แท็บ = แผ่นไม้เล็กตอกทับป้ายใหญ่ อันที่เลือกคือแผ่นที่โดนแสงตะเกียง */
+/* Minimalist tabs with a glowing underline */
 .lobby-tab {
   position: relative;
   flex: 1;
   padding: 7px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
-  background:
-    var(--wood-grain),
-    rgba(255, 255, 255, 0.02);
-  background-blend-mode: soft-light, normal;
+  background: rgba(255, 255, 255, 0.02);
   color: var(--text-muted);
   font-family: var(--font-display);
   font-size: 0.86rem;
@@ -466,11 +446,10 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 0 16px rgba(79,209,197,0.12);
 }
-/* ขีดอำพันใต้แท็บที่เลือก ยืดออกจากกลาง */
 .lobby-tab.is-active::after {
   content: '';
   position: absolute;
-  left: 18%; right: 18%;
+  left: 15%; right: 15%;
   bottom: -1px;
   height: 2px;
   border-radius: 2px;
@@ -505,7 +484,7 @@
 .lobby-chatwrap .gpc.gp-panel {
   border: none;
   background: none;
-  box-shadow: none;
+  box-shadow: none; /* Override panel box-shadow */
   padding: var(--space-3) var(--space-4) var(--space-4);
 }
 .lobby-chatwrap .gpc.gp-panel::before { display: none; }
@@ -668,16 +647,13 @@
   font-size: 0.95rem;
 }
 
-/* ปุ่มเริ่มเกม = แผ่นไม้ทาสีกอและ ภาษาเดียวกับ .btn-primary ที่หน้าแรก */
+/* Start Game button, modern and sleek */
 .btn-start-game {
   position: relative;
   flex-shrink: 0;
   padding: 9px 22px;
   border-radius: var(--radius-sm);
-  background:
-    var(--wood-grain),
-    rgba(255, 255, 255, 0.02);
-  background-blend-mode: soft-light, normal;
+  background: rgba(255, 255, 255, 0.02);
   color: var(--text-muted);
   border: 1px solid var(--border-subtle);
   font-family: var(--font-display);
@@ -696,20 +672,12 @@
     0 8px 22px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow var(--ease), filter var(--ease);
+  animation: buttonBreathe 2.4s ease-in-out infinite;
 }
-/* แถบสีกอและใต้ปุ่ม — ลายเดียวกับปุ่มหลักหน้าแรก */
-.btn-start-game.ready::before {
-  content: '';
-  position: absolute;
-  left: 10%; right: 10%;
-  bottom: 4px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--kolae-stripe);
-  opacity: 0.6;
-  transition: opacity var(--ease);
+@keyframes buttonBreathe {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
 }
-/* แสงตะเกียงกวาดผ่าน — บอกว่ากดได้แล้ว */
 .btn-start-game.ready::after {
   content: '';
   position: absolute;
@@ -719,6 +687,7 @@
   animation: shimmer 3.6s linear infinite;
 }
 .btn-start-game.ready:hover {
+  animation-play-state: paused;
   transform: translateY(-2px);
   filter: brightness(1.07);
   box-shadow:
@@ -726,7 +695,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     inset 0 -2px 4px rgba(0, 0, 0, 0.2);
 }
-.btn-start-game.ready:hover::before { opacity: 1; }
 .btn-start-game.ready:active { transform: translateY(0); filter: brightness(0.93); }
 
 /* ── ขวา: รายชื่อผู้เล่น ── */
@@ -759,7 +727,6 @@
   background: rgba(var(--accent-rgb), 0.07);
 }
 .islander.is-offline { opacity: 0.45; }
-
 .islander-ava {
   width: 34px;
   height: 34px;

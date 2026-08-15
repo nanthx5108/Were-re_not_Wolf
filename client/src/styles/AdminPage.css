@@ -1,0 +1,528 @@
+/* =========================================================
+   Admin Page - "Digital Occult" Theme
+   ========================================================= */
+
+.admin-page {
+  min-height: 100dvh;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-void);
+  position: relative;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  padding: var(--space-5) 0;
+
+  /* Teal accent color scheme */
+  --accent-rgb: 79, 209, 197;
+  --gold-bright: #4fd1c5;
+  --gold-mid: #2a9d9e;
+  --gold-dim: #1a5f60;
+  --on-accent: #04231f;
+}
+
+.admin-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(180, 200, 255, 0.07) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(8, 12, 16, 0.55) 0%, rgba(8, 12, 16, 0.7) 100%);
+}
+
+.admin-loading {
+  position: relative;
+  z-index: 1;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  margin-top: 20vh;
+}
+
+.admin-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 960px;
+  padding: var(--space-7) var(--space-5) var(--space-5);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.admin-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--gold-bright);
+  text-align: center;
+  text-shadow: 0 0 16px rgba(var(--accent-rgb), 0.3);
+}
+
+.admin-welcome {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.admin-content {
+  background: rgba(13, 19, 26, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* For table container */
+}
+
+.admin-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 var(--space-4);
+  flex-shrink: 0;
+}
+
+.admin-tab {
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  position: relative;
+  border-bottom: 2px solid transparent;
+  transform: translateY(1px);
+  transition: color 200ms ease;
+}
+
+.admin-tab:hover {
+  color: var(--text-primary);
+}
+
+.admin-tab.is-active {
+  color: var(--gold-bright);
+  border-bottom-color: var(--gold-bright);
+}
+
+.admin-tab-content {
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-controls {
+  padding-bottom: var(--space-2);
+}
+
+.admin-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.admin-error {
+  color: var(--danger);
+}
+
+.admin-table-container {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.admin-table th {
+  font-family: var(--font-display);
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  position: sticky;
+  top: 0;
+  background: rgba(13, 19, 26, 0.9);
+}
+
+.admin-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-table tr.is-banned td {
+  background: rgba(192, 90, 78, 0.08);
+  color: #ffc1b9;
+}
+
+.admin-table tr.is-banned:hover td {
+  background: rgba(192, 90, 78, 0.15);
+}
+
+.admin-table .actions {
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-back-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  transition: all var(--ease);
+}
+.admin-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.action-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-secondary);
+}
+.action-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+.action-btn.danger {
+  color: var(--danger);
+  border-color: rgba(192, 90, 78, 0.4);
+}
+.action-btn.danger:hover {
+  background: var(--danger-soft);
+}
+
+.admin-table-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: var(--space-3);
+}
+.admin-table-actions .action-btn.primary {
+  background: var(--gold-mid);
+  color: var(--on-accent);
+}
+
+.admin-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.admin-tag.is-good {
+  background: rgba(67, 160, 71, 0.15);
+  color: #b9f6ca;
+}
+.admin-tag.is-bad {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+.admin-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* --- Game Stats Panel --- */
+.admin-stats-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: var(--space-3);
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  flex: 1;
+}
+
+.admin-stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-stat-card .stat-label {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-stat-card .stat-value {
+  font-family: var(--font-meta);
+  font-size: 2rem;
+  color: var(--gold-bright);
+  text-shadow: 0 0 10px rgba(var(--accent-rgb), 0.3);
+  font-variant-numeric: tabular-nums;
+}
+.pagination-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Modals --- */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 6, 10, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.admin-modal {
+  width: min(400px, 90vw);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.admin-modal-message {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.admin-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.admin-modal-btn-cancel,
+.admin-modal-btn-confirm {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  transition: all var(--ease);
+}
+
+.admin-modal-btn-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+.admin-modal-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.admin-modal-btn-confirm {
+  background: var(--gold-mid);
+  color: var(--on-accent);
+  border: 1px solid var(--gold-mid);
+}
+.admin-modal-btn-confirm:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.admin-modal-btn-confirm.is-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+.admin-modal-btn-confirm.is-danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* --- User Edit Form Styles --- */
+.admin-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-form-field label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.admin-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.admin-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold-bright);
+}
+
+.admin-modal textarea.admin-input {
+  resize: vertical;
+}
+
+.admin-log-details {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  background: rgba(0,0,0,0.2);
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.admin-modal select.admin-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23b7c2c9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 30px;
+}
+
+/* --- Game Settings Panel --- */
+.admin-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+}
+
+.admin-setting-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-setting-key {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.admin-setting-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.admin-setting-value-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-setting-value {
+  font-family: var(--font-meta);
+  font-size: 0.9rem;
+  color: var(--gold-bright);
+}
+
+.admin-checkbox-input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--gold-bright);
+}
+}

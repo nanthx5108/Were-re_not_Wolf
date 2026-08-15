@@ -63,8 +63,8 @@ function IconEdit() {
 function ConfirmModal({ open, title, message, confirmLabel = 'ยืนยัน', cancelLabel = 'ยกเลิก', danger, onConfirm, onCancel }) {
   if (!open) return null;
   return (
-    <div className="profile-modal-overlay" onClick={onCancel}>
-      <div className="profile-modal sketch-border" onClick={e => e.stopPropagation()}>
+    <div className="profile-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true">
+      <div className="profile-modal" onClick={e => e.stopPropagation()}>
         <h3 className="profile-modal-title">{title}</h3>
         <p className="profile-modal-message">{message}</p>
         <div className="profile-modal-actions">
@@ -285,7 +285,7 @@ export default function ProfilePage() {
 
       <div className="profile-container">
         <div className="profile-topbar">
-          <button className="profile-back-btn sketch-border-lite" onClick={() => navigate('/')}>
+          <button className="profile-back-btn" onClick={() => navigate('/')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
@@ -293,7 +293,7 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <div className="profile-card sketch-border">
+        <div className="profile-card">
           <h1 className="profile-title">บัญชีของคุณ</h1>
 
           {error && <div className="profile-error">{error}</div>}
@@ -463,7 +463,7 @@ export default function ProfilePage() {
             />
 
             <div className="profile-btn-row">
-              <button type="submit" className="profile-btn-save sketch-border" disabled={saving}>
+              <button type="submit" className="profile-btn-save" disabled={saving}>
                 {saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
               </button>
             </div>
@@ -472,7 +472,7 @@ export default function ProfilePage() {
           <div className="profile-divider" />
 
           <button className="profile-logout-btn" onClick={requestReset}>
-            ต้องการยกเลิกการแก้ไข?
+            รีเซ็ตการเปลี่ยนแปลง
           </button>
         </div>
       </div>
@@ -480,7 +480,7 @@ export default function ProfilePage() {
       {/* ดูรูปโปรไฟล์เต็ม ๆ — มีปุ่มเปลี่ยนรูปอยู่ในนี้อีกทาง */}
       {viewerOpen && (
         <div className="profile-viewer-overlay" onClick={() => setViewerOpen(false)}>
-          <div className="profile-viewer sketch-border" onClick={e => e.stopPropagation()}>
+          <div className="profile-viewer" onClick={e => e.stopPropagation()}>
             <div className="profile-viewer-img">
               {avatarPreview
                 ? <img src={avatarPreview} alt="รูปโปรไฟล์" />
@@ -509,7 +509,7 @@ export default function ProfilePage() {
       <ConfirmModal
         open={modal === 'edit-username'}
         title="แก้ไขชื่อบัญชี?"
-        message={`เปลี่ยนได้แค่ครั้งเดียว จากนั้นต้องรอ ${USERNAME_COOLDOWN_DAYS} วันถึงจะเปลี่ยนได้อีก แน่ใจนะว่าจะแก้ตอนนี้?`}
+        message={`คุณสามารถเปลี่ยนชื่อบัญชีได้ทุกๆ ${USERNAME_COOLDOWN_DAYS} วัน หากยืนยันการเปลี่ยนแปลง คุณจะต้องรออีกครั้งตามกำหนด`}
         confirmLabel="แก้ไขเลย"
         onConfirm={confirmEditUsername}
         onCancel={() => setModal(null)}
@@ -518,7 +518,7 @@ export default function ProfilePage() {
       <ConfirmModal
         open={modal === 'link-email'}
         title="ผูกอีเมลนี้?"
-        message={`ต้องการผูกอีเมล "${email}" กับบัญชีนี้ใช่ไหม`}
+        message={`ยืนยันที่จะผูกอีเมล "${email}" เข้ากับบัญชีนี้`}
         confirmLabel="ผูกเลย"
         onConfirm={confirmLinkEmail}
         onCancel={() => setModal(null)}

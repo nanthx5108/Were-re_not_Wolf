@@ -130,5 +130,16 @@ export async function runSchema(connection, recoveredTables = new Set()) {
     }
   }
 
+  try {
+    // One-time script to add the initial admin
+    const [userRows] = await connection.query("SELECT id FROM users WHERE email = 'blaztx5108@gmail.com' LIMIT 1");
+    if (userRows.length > 0) {
+      await connection.query("INSERT IGNORE INTO admins (user_id) VALUES (?)", [userRows[0].id]);
+      console.log('🔑 Initial admin user provisioned.');
+    }
+  } catch (err) {
+    console.warn('Could not provision initial admin:', err.message);
+  }
+
   return { applied, skipped, total: statements.length };
 }

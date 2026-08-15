@@ -8,9 +8,19 @@ import {
   resolveVotes, clearVoting, initVoting,
 } from './voteManager.js';
 import { initNightActions, resolveNightActions } from './nightActions.js';
-import { evaluateWinCondition, endGame } from './winConditions.js';
-import { rollMorningEvent } from './morningEvents.js';
+import { evaluateWinCondition, endGame } from './winConditions.js'; 
+import { rollMorningEvent, getActiveLuckBias, consumeLuckBias } from './morningEvents.js';
+import { drawFortuneCard } from './fortuneCards.js';
 import { DEFAULT_PHASE_DURATIONS } from './roomConfig.js';
+import {
+  addKillHighlight,
+  addSaveHighlight,
+  addRevealHighlight,
+  addUnanimousVoteHighlight,
+  addBetrayalHighlight,
+  addFoolWinHighlight,
+  addTurningPointHighlight,
+} from './highlightService.js';
 import { applyExp, expNeeded, EXP_PER_GAME } from '../../../shared/leveling.js';
 
 // RESULTS เป็นแค่หน้าสรุปสั้นๆ — ไม่เปิดให้ host ตั้ง จึงคงที่
@@ -41,6 +51,7 @@ const PHASE_MESSAGES = Object.freeze({
 });
 
 const timers = new Map();
+const streamIntervals = new Map(); // For Magic Eyes card effect
 
 export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
   clearPhaseTimer(roomId);
@@ -56,7 +67,42 @@ export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
     );
   }, duration);
 
-  timers.set(roomId, { timerId, endsAt });
+  // --- MAGIC_EYES card effect ---
+  // Stream vote counts to players with the card during the last 5 seconds of voting.
+  if (phase === PHASES.VOTING && duration > 5000) {
+    const magicEyesStreamer = setTimeout(() => {
+      const room = getRoom(roomId);
+      if (!room || room.phase !== PHASES.VOTING) return;
+
+      const playersWithCard = getPlayersArray(roomId).filter(p => {
+        const card = room.fortuneCards?.get(p.id);
+        return p.isAlive && card?.id === 'magic_eyes';
+      });
+
+      if (playersWithCard.length > 0) {
+        const streamInterval = setInterval(() => {
+          const currentRoom = getRoom(roomId);
+          // Stop if phase changed or room is gone
+          if (!currentRoom || currentRoom.phase !== PHASES.VOTING) {
+            clearInterval(streamInterval);
+            streamIntervals.delete(roomId);
+            return;
+          }
+
+          for (const player of playersWithCard) {
+            const s = player.socketId ? io.sockets.sockets.get(player.socketId) : null;
+            if (s) {
+              s.emit('fortune:realtime_vote_count', { counts: currentRoom.votes.counts || {} });
+            }
+          }
+        }, 800); // Stream every 800ms
+        streamIntervals.set(roomId, streamInterval);
+      }
+    }, duration - 5000); // Start 5 seconds before the end
+    timers.set(roomId, { timerId, endsAt, magicEyesTimeout: magicEyesStreamer });
+  } else {
+    timers.set(roomId, { timerId, endsAt });
+  }
   return endsAt;
 }
 
@@ -89,6 +135,17 @@ async function _advancePhase(io, roomId) {
 
   if (room.phase === PHASES.VOTING) {
     const { eliminatedRole } = await _resolveVotingAndBroadcast(io, roomId);
+    const room = getRoom(roomId); // Re-fetch room state after voting resolution
+
+    if (room.lastEliminatedId) {
+      const eliminatedPlayer = room.players.get(room.lastEliminatedId);
+      if (eliminatedPlayer) {
+        if (eliminatedRole === 'fool') {
+          addFoolWinHighlight(roomId, { foolPlayer: eliminatedPlayer });
+        }
+        addTurningPointHighlight(roomId, { eliminatedPlayer });
+      }
+    }
 
     // Fool ชนะทันทีเมื่อถูกโหวตเนรเทศ (ไม่ใช่ถูกฆ่าตอนกลางคืน)
     if (eliminatedRole === 'fool') {
@@ -107,7 +164,7 @@ async function _advancePhase(io, roomId) {
   if (nextPhase === PHASES.NIGHT) {
     initNightActions(roomId);
     // การปิดปากมีผลแค่วันเดียว — พอขึ้นคืนใหม่ก็พูดได้ตามปกติ
-    updateRoom(roomId, { silencedPlayerId: null });
+    updateRoom(roomId, { silencedPlayerId: null, usedOpportunist: new Set(), usedWhispers: new Set(), usedExtraTime: new Set() });
   }
 
   if (nextPhase === PHASES.VOTING) {
@@ -122,6 +179,25 @@ async function _advancePhase(io, roomId) {
 
   // เหตุการณ์ประจำเช้า — สุ่มทุกครั้งที่เข้าสู่ Day Phase
   const morning = nextPhase === PHASES.DAY ? rollMorningEvent(roomId) : null;
+
+  if (nextPhase === PHASES.DAY) {
+    // System 3: Fortune Cards Distribution
+    // This happens after the morning event is rolled, as the event might affect luck.
+    const alivePlayers = getPlayersArray(roomId).filter(p => p.isAlive);
+    const luckBias = getActiveLuckBias(roomId);
+    const drawnCards = new Map();
+
+    for (const player of alivePlayers) {
+      const card = drawFortuneCard(luckBias);
+      drawnCards.set(player.id, card);
+      const playerSocket = io.sockets.sockets.get(player.socketId);
+      if (playerSocket) {
+        playerSocket.emit('fortune:card_drawn', { card });
+      }
+    }
+    updateRoom(roomId, { fortuneCards: drawnCards });
+    consumeLuckBias(roomId); // Use the bias and then consume it for this round.
+  }
 
   // เหตุการณ์ที่ปรับเวลาแชท (เหมายัน / คืนนี้ยาวนาน) คิดจากเวลา day ที่ host ตั้งไว้ ไม่ใช่ค่าคงที่
   const dayDuration = morning?.event.dayTimerMod
@@ -225,7 +301,13 @@ export function clearPhaseTimer(roomId) {
   const entry = timers.get(roomId);
   if (entry) {
     clearTimeout(entry.timerId);
+    if (entry.magicEyesTimeout) clearTimeout(entry.magicEyesTimeout);
     timers.delete(roomId);
+  }
+  const streamInterval = streamIntervals.get(roomId);
+  if (streamInterval) {
+    clearInterval(streamInterval);
+    streamIntervals.delete(roomId);
   }
 }
 
@@ -238,6 +320,7 @@ export function getTimeRemaining(roomId) {
 // เรียกได้จากนอก phaseManager (เช่น มีคนออกกลางเกมจนฝ่ายใดฝ่ายหนึ่งชนะ)
 export async function endGameIfDecided(io, roomId) {
   const room = getRoom(roomId);
+  const room = getRoom(roomId);
   if (!room || room.status !== 'in_progress') return false;
 
   const win = evaluateWinCondition(roomId);
@@ -249,6 +332,7 @@ export async function endGameIfDecided(io, roomId) {
 }
 
 async function _endGameAndBroadcast(io, roomId, win) {
+  const room = getRoom(roomId);
   const players = getPlayersArray(roomId);
   endGame(roomId, win.winner, win.message);
   await pool.query(`UPDATE rooms SET status = 'finished' WHERE id = ?`, [roomId]);
@@ -258,7 +342,12 @@ async function _endGameAndBroadcast(io, roomId, win) {
     id: p.id, nickname: p.nickname, role: p.role, isAlive: p.isAlive,
   }));
 
-  io.to(roomId).emit('game:ended', { winner: win.winner, message: win.message, reveal });
+  io.to(roomId).emit('game:ended', {
+    winner: win.winner,
+    message: win.message,
+    reveal,
+    highlights: room.highlights || [],
+  });
   io.to(roomId).emit('chat:message', {
     id:      `sys-end-${Date.now()}`,
     channel: CHANNELS.SYSTEM,
@@ -332,9 +421,39 @@ export function cancelRoomAbandon(roomId) {
 async function _resolveNightActionsAndBroadcast(io, roomId) {
   const result = resolveNightActions(roomId);
   if (!result) return null;
+  const room = getRoom(roomId);
+
+  // --- Highlight: Perfect Save ---
+  if (result.prevented && result.selectedTargetId) {
+    const protectedPlayer = room.players.get(result.selectedTargetId);
+    const bodyguard = room.nightActions?.bodyguard?.playerId
+      ? room.players.get(room.nightActions.bodyguard.playerId)
+      : null;
+    addSaveHighlight(roomId, { bodyguard, protectedPlayer });
+  }
+
+  // --- GOOD_TO_KNOW card effect ---
+  const playersWithCard = getPlayersArray(roomId).filter(p => {
+    const card = room.fortuneCards?.get(p.id);
+    // Card effect only applies if the player is alive to see it.
+    return p.isAlive && card?.id === 'good_to_know';
+  });
+
+  if (playersWithCard.length > 0) {
+    const someoneDied = !!result.killedId;
+    for (const player of playersWithCard) {
+      const s = player.socketId ? io.sockets.sockets.get(player.socketId) : null;
+      if (s) {
+        s.emit('fortune:early_info', {
+          data: { someoneDied },
+        });
+      }
+    }
+  }
 
   if (result.killedId) {
     await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [result.killedId]);
+    addKillHighlight(roomId, { killedId: result.killedId, killedNickname: result.killedNickname });
   }
 
   io.to(roomId).emit('night:result', {
@@ -348,6 +467,13 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
     if (seerSocket) {
       seerSocket.emit('night:seer_result', result.seerResult);
     }
+  }
+
+  // --- Highlight: The Reveal ---
+  if (result.seerId && result.seerResult?.faction === 'werewolf') {
+    const seer = room.players.get(result.seerId);
+    const revealedWolf = room.players.get(result.seerResult.targetId);
+    addRevealHighlight(roomId, { seer, revealedWolf });
   }
 
   _notifySilenced(io, roomId, result);
@@ -373,6 +499,68 @@ async function _resolveVotingAndBroadcast(io, roomId) {
   const aliveIds     = alivePlayers.map(p => p.id);
 
   const { eliminatedId, tally, wasTie } = resolveVotes(roomId, aliveIds);
+
+  // --- Highlight: Unanimous Vote ---
+  if (!wasTie && eliminatedId && tally[eliminatedId] === alivePlayers.length) {
+    const eliminatedPlayer = alivePlayers.find(p => p.id === eliminatedId);
+    addUnanimousVoteHighlight(roomId, { eliminatedPlayer });
+  }
+  
+  // --- Highlight: The Betrayal ---
+  const room = getRoom(roomId); // Get the current room state
+  const eliminatedPlayer = eliminatedId ? room.players.get(eliminatedId) : null;
+  if (eliminatedPlayer && eliminatedPlayer.role === 'werewolf') {
+    const betrayingWerewolves = [];
+    for (const [voterId, votedTargetId] of Object.entries(room.votes.voteMap || {})) {
+      const voter = room.players.get(voterId);
+      if (voter && voter.role === 'werewolf' && votedTargetId === eliminatedId && voterId !== eliminatedId) {
+        betrayingWerewolves.push(voter.id);
+      }
+    }
+    addBetrayalHighlight(roomId, { eliminatedPlayer, betrayingWerewolves });
+  }
+  
+  // --- BROKEN_HOME card effect ---
+  const playersWithCard = getPlayersArray(roomId).filter(p => {
+    const card = room.fortuneCards?.get(p.id);
+    return p.isAlive && card?.id === 'broken_home';
+  });
+
+  if (playersWithCard.length > 0) {
+    // 1. Find top 2 voted players
+    const sortedTally = Object.entries(tally)
+      .map(([targetId, voters]) => ({ targetId, voteCount: voters.length }))
+      .sort((a, b) => b.voteCount - a.voteCount);
+
+    const topVotedIds = sortedTally.slice(0, 2).map(item => item.targetId);
+
+    // 2. Find who they voted for
+    const voteInfo = [];
+    const voteMap = room.votes.voteMap || {};
+    for (const voterId of topVotedIds) {
+      const voter = room.players.get(voterId);
+      if (!voter) continue;
+
+      const targetId = voteMap[voterId];
+      const target = targetId ? room.players.get(targetId) : null;
+
+      voteInfo.push({
+        voterId: voter.id,
+        voterNickname: voter.nickname,
+        targetId: target?.id || null,
+        targetNickname: target?.nickname || '???', // They might not have voted
+      });
+    }
+
+    // 3. Send private info to players with the card
+    if (voteInfo.length > 0) {
+      for (const player of playersWithCard) {
+        const s = player.socketId ? io.sockets.sockets.get(player.socketId) : null;
+        if (s) s.emit('fortune:private_info', { type: 'broken_home', title: 'บ้านแตก', data: voteInfo });
+      }
+    }
+  }
+
   clearVoting(roomId);
 
   let eliminatedNickname = null;
@@ -383,6 +571,7 @@ async function _resolveVotingAndBroadcast(io, roomId) {
     eliminatedNickname = target?.nickname ?? 'Unknown';
     eliminatedRole     = target?.role ?? null;
     updatePlayer(roomId, eliminatedId, { isAlive: false });
+    updateRoom(roomId, { lastEliminatedId: eliminatedId });
     await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [eliminatedId]);
   }
 

@@ -9,6 +9,24 @@ import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/GamePage.css';   /* ChatBox ใช้คลาส .gpc-* จากไฟล์นี้ */
 import '../src/styles/Lobby.css';
 
+// --- Role Card Images ---
+import villagerImg from '../src/assets/cards/roles/villager.png';
+import werewolfImg from '../src/assets/cards/roles/werewolf.png';
+import seerImg from '../src/assets/cards/roles/seer.png';
+import bodyguardImg from '../src/assets/cards/roles/guardian.png';
+import silencerImg from '../src/assets/cards/roles/silencer.png';
+import foolImg from '../src/assets/cards/roles/fool.png';
+
+// --- Morning Event Card Images ---
+import blackoutImg from '../src/assets/cards/morning/blackout.png';
+import fogImg from '../src/assets/cards/morning/fog.png';
+import safeNightImg from '../src/assets/cards/morning/boat_return.png';
+import shortDayImg from '../src/assets/cards/morning/high_tide.png';
+import wolfCountImg from '../src/assets/cards/morning/distant_howl.png';
+import skillCountImg from '../src/assets/cards/morning/circling_crow.png';
+import fullMoonImg from '../src/assets/cards/morning/full_moon.png';
+import longNightImg from '../src/assets/cards/morning/long_night.png';
+
 const MIN_PLAYERS = 4;
 
 // กติกาโดยย่อ แยกเป็น 2 เรื่อง: เล่นยังไง / ชนะยังไง — รายละเอียดความสามารถของ role
@@ -34,6 +52,26 @@ const GAME_ROLES = [
   { icon: '🃏',   name: 'Fool',      text: 'ไม่มีความสามารถพิเศษ (เงื่อนไขชนะดูในหัวข้อกติกาโดยย่อด้านบน)' },
   { icon: '🧑‍🌾', name: 'ชาวบ้าน',   text: 'ไม่มีความสามารถพิเศษ ใช้การสังเกตและพูดคุยเท่านั้น' },
 ];
+
+const ROLE_IMAGE_MAP = {
+  '🐺': werewolfImg,
+  '🔮': seerImg,
+  '🛡️': bodyguardImg,
+  '🤐': silencerImg,
+  '🃏': foolImg,
+  '🧑‍🌾': villagerImg,
+};
+
+const MORNING_EVENT_IMAGE_MAP = {
+  '🕯️': blackoutImg,
+  '🌫️': fogImg,
+  '🛡️': safeNightImg,
+  '⏳': shortDayImg,
+  '🐺': wolfCountImg,
+  '🐦‍⬛': skillCountImg,
+  '🌙': fullMoonImg,
+  '🔥': longNightImg,
+};
 
 /* ── หิ่งห้อยลอยเหนือฉากหลัง — ชุดเดียวกับหน้าแรก ให้สองหน้าเป็นเกาะเดียวกัน ── */
 function FirefliesLayer() {
@@ -203,7 +241,7 @@ export default function Lobby() {
       <main className="lobby-grid">
 
         {/* ── ซ้าย: ตั้งค่าห้อง ── */}
-        <section className="lobby-panel lobby-config sketch-border-lite">
+        <section className="lobby-panel lobby-config">
           <div className="panel-head">
             <PlaqueTitle>{isChaos ? 'โหมดโกลาหล' : 'ตั้งค่าห้อง'}</PlaqueTitle>
             {!isChaos && !isHost && <span className="panel-note">โฮสต์เป็นคนตั้ง</span>}
@@ -250,7 +288,7 @@ export default function Lobby() {
         </section>
 
         {/* ── กลาง: แชท / กติกา ── */}
-        <section className="lobby-panel lobby-center sketch-border-lite">
+        <section className="lobby-panel lobby-center">
           <div className="panel-head is-split">
             <div className="lobby-tabs" role="tablist" aria-label="ช่องกลาง">
               {[['chat', 'ช่องแชท'], ['rules', 'กติกา']].map(([key, label]) => (
@@ -264,7 +302,7 @@ export default function Lobby() {
 
             {isHost ? (
               <button onClick={startGame} disabled={!canStart}
-                      className={`btn-start-game${canStart ? ' ready' : ''}`}>
+                      className={`btn-start-game ${canStart ? 'ready' : ''}`}>
                 {canStart
                   ? `เริ่มเกม · ${playerCount}/${roomCapacity}`
                   : `รออีก ${MIN_PLAYERS - playerCount} คน`}
@@ -302,7 +340,11 @@ export default function Lobby() {
               <ul className="events-list">
                 {GAME_ROLES.map((role, i) => (
                   <li key={role.name} className="events-item cv-auto" style={{ '--row-i': i }}>
-                    <span className="events-icon" aria-hidden="true">{role.icon}</span>
+                    {ROLE_IMAGE_MAP[role.icon] ? (
+                      <img src={ROLE_IMAGE_MAP[role.icon]} alt="" className="events-icon is-image" />
+                    ) : (
+                      <span className="events-icon" aria-hidden="true">{role.icon}</span>
+                    )}
                     <span className="events-text">
                       <strong className="events-title">{role.name}</strong>
                       <span className="events-effect">{role.text}</span>
@@ -323,7 +365,11 @@ export default function Lobby() {
               <ul className="events-list">
                 {MORNING_EVENT_INFO.map((ev, i) => (
                   <li key={ev.id} className="events-item cv-auto" style={{ '--row-i': i }}>
-                    <span className="events-icon" aria-hidden="true">{ev.icon}</span>
+                    {MORNING_EVENT_IMAGE_MAP[ev.icon] ? (
+                      <img src={MORNING_EVENT_IMAGE_MAP[ev.icon]} alt="" className="events-icon is-image" />
+                    ) : (
+                      <span className="events-icon" aria-hidden="true">{ev.icon}</span>
+                    )}
                     <span className="events-text">
                       <strong className="events-title">{ev.title}</strong>
                       <span className="events-effect">{ev.effect}</span>
@@ -336,7 +382,7 @@ export default function Lobby() {
         </section>
 
         {/* ── ขวา: รายชื่อผู้เล่น ── */}
-        <aside className="lobby-panel lobby-players sketch-border-lite">
+        <aside className="lobby-panel lobby-players">
           <div className="panel-head">
             <PlaqueTitle>ผู้เล่น</PlaqueTitle>
             <span className="player-badge">{playerCount}/{roomCapacity}</span>
@@ -361,7 +407,7 @@ export default function Lobby() {
           </ul>
 
           <p className="lobby-invite">
-            ส่งรหัส <strong>{room.id}</strong> ให้เพื่อนเพื่อเข้าห้องนี้
+            ชวนเพื่อนด้วยรหัส: <strong>{room.id}</strong>
           </p>
         </aside>
       </main>

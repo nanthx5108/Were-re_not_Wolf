@@ -11,12 +11,6 @@
   flex-direction: column;
   align-items: center;
   overflow-x: hidden;
-
-  --kolae-stripe: linear-gradient(90deg,
-    var(--teal-mid) 0 25%,
-    var(--rust-mid) 25% 50%,
-    var(--sage-mid) 50% 75%,
-    var(--teal-mid) 75% 100%);
 }
 
 .loading-screen {
@@ -51,8 +45,6 @@
   @keyframes loadingPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 }
 
-/* .sketch-border / .sketch-border-lite ย้ายไป global.css แล้ว (ใช้ร่วมทุกหน้า)
-   SVG filter #sketch-edge ประกาศครั้งเดียวใน App.jsx */
 .home-darken-layer {
   position: fixed;
   inset: 0;
@@ -261,6 +253,7 @@
   color: var(--text-primary);
   cursor: pointer;
   transition: background var(--ease), transform var(--ease);
+  border: 1px solid var(--border-default);
 }
 .user-pill:hover {
   background: rgba(255,255,255,0.08);
@@ -324,10 +317,6 @@
 }
 
 .user-pill-flyout.sketch-border {
-  /* .sketch-border (global.css) ก็ตั้ง position:relative ไว้เหมือนกัน — ทั้งคู่ specificity เท่ากัน
-     (คลาสเดียว) ถ้าไม่ผูก 2 คลาสให้ specificity สูงกว่า อันไหนมาทีหลังใน cascade จะชนะแบบสุ่ม
-     พอ relative ชนะ .user-pill-flyout เลยกลับไปมีพื้นที่ในโฟลว์ปกติ ดัน .user-pill-wrap ให้สูงขึ้น
-     แล้ว .home-topbar (align-items:center) ก็เลื่อน .online-badge ลงมาตามกึ่งกลางใหม่ */
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
@@ -340,6 +329,7 @@
   flex-direction: column;
   gap: 2px;
   z-index: 110;
+  border: 1px solid var(--border-strong);
 }
 .user-pill-flyout button {
   text-align: left;
@@ -639,9 +629,10 @@
   /* Ink & Ash: พักตัวมืดเรียบ ไม่มี tint เขียว/ไม่มีแสงเรือง — ต่างจากปุ่มอื่นด้วยขนาด +
      ขีดซ้าย + เงาลึกกว่า ; ขอบใช้ลายเส้นหมึกจาก .sketch-border เหมือนปุ่มอื่น (ไม่ย้อมเขียว) */
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(79,209,197,0.1) 0%, transparent 50%),
     var(--bg-elevated);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.55);
+  border-color: var(--teal-dim);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.55), 0 0 12px rgba(79,209,197,0.1);
 }
 /* ขีดด้านซ้าย — ตัวบอกลำดับความสำคัญ ; พักตัวทึบมืด (teal-dim) ไม่เรือง แล้วค่อย "ติดไฟ" ตอน hover */
 .menu-btn.is-primary::before {
@@ -662,12 +653,12 @@
 .menu-btn.is-primary:hover:not(:disabled) {
   /* สีเขียว + แสงเย็นโผล่เฉพาะตอน hover — จาง เหมือนตะเกียงเพิ่งติดในความมืด */
   background:
-    linear-gradient(90deg, rgba(79,209,197,0.12) 0%, transparent 62%),
-    linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%),
+    linear-gradient(90deg, rgba(79,209,197,0.18) 0%, transparent 62%),
+    linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%),
     var(--bg-elevated);
   box-shadow:
     0 6px 20px rgba(0,0,0,0.55),
-    0 0 22px rgba(79,209,197,0.20);
+    0 0 28px rgba(79,209,197,0.25);
 }
 
 /* hover lift ย้ายไป whileHover ของ motion แล้ว (ดู MenuBtn ใน HomePage.jsx) */
@@ -874,7 +865,6 @@
    กับตัวอักษรเข้มได้ contrast แค่ ~3:1 ตกเกณฑ์ตัวอักษรขนาดเล็ก
    คู่ bright→mid + --on-teal ได้ 10.9:1 และ 6.3:1 ผ่านทั้งสองปลาย */
 .btn-primary {
-  position: relative;
   flex: 1;
   padding: 13px;
   border-radius: var(--radius-sm);
@@ -892,28 +882,9 @@
   overflow: hidden;
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow var(--ease), filter var(--ease);
 }
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  left: 8%; right: 8%;
-  bottom: 5px;
-  height: 3px;
-  border-radius: 2px;
-  /* แถบกอและเวอร์ชันบนพื้นเขียว — เก็บจังหวะ 4 ช่วงเดิมไว้ แต่เปลี่ยนเป็นหมึกที่อ่านออกบน teal
-     (ทองบนเขียวตีกันจนอ่านไม่ออก) */
-  background: linear-gradient(90deg,
-    var(--teal-dim) 0 25%,
-    var(--rust-dim) 25% 50%,
-    rgba(255,255,255,0.75) 50% 75%,
-    var(--teal-dim) 75% 100%);
-  opacity: 0.55;
-  transition: opacity var(--ease), transform var(--ease);
-}
-/* filter ต้องพ่วง url(#sketch-edge) ไปด้วยทุกครั้ง — ประกาศ filter ใหม่จะทับของเดิมทั้งก้อน
-   ถ้าใส่แค่ brightness() ขอบมือวาดจะหายวับตอน hover */
 .btn-primary:not(:disabled):hover {
   transform: translateY(-2px);
-  filter: url(#sketch-edge) brightness(1.08);
+  filter: brightness(1.08);
   /* CTA เป็นที่เดียวที่ hover เรืองเป็นสีของตัวเอง ไม่ใช่ขาว — ให้มันดึงสายตาชนะปุ่มอื่น */
   box-shadow:
     0 0 16px rgba(79,209,197,0.4),
@@ -921,20 +892,9 @@
     inset 0 1px 0 rgba(255,255,255,0.25),
     inset 0 -2px 4px rgba(0,0,0,0.2);
 }
-.btn-primary:not(:disabled):hover::after {
-  opacity: 1;
-  transform: scaleX(1.05);
-  animation: brushDraw 380ms ease-out;
-}
 .btn-primary:not(:disabled):active {
   transform: translateY(0);
-  filter: url(#sketch-edge) brightness(0.92);
-}
-
-@keyframes brushDraw {
-  0%   { clip-path: inset(0 100% 0 0); }
-  60%  { clip-path: inset(0 -10% 0 0); }
-  100% { clip-path: inset(0 0 0 0); }
+  filter: brightness(0.92);
 }
 
 /* ── btn-back / refresh-btn: bare weathered plank, no paint ── */
@@ -1618,7 +1578,6 @@
 
 .socials { display: flex; gap: var(--space-3); }
 
-/* ขอบมาจาก .sketch-border (เส้นมือวาด) — ห้ามประกาศ border ที่นี่ ไม่งั้นจะทับ */
 .soc-btn {
   width: 38px; height: 38px;
   border-radius: 50%;
@@ -1627,6 +1586,7 @@
   justify-content: center;
   color: var(--text-secondary);
   background: transparent;
+  border: 1px solid var(--border-default);
   transition: color var(--ease), border-color var(--ease), background var(--ease), transform var(--ease);
   text-decoration: none;
 }
@@ -1637,8 +1597,7 @@
   background: rgba(255,255,255,0.08);
   transform: translateY(-2px) scale(1.05);
   box-shadow:
-    0 0 14px rgba(255,255,255,0.35),
-    0 0 3px rgba(255,255,255,0.65);
+    0 0 14px rgba(255,255,255,0.35);
 }
 
 /* บอกว่าบทบาท/เวลาไปตั้งที่ Lobby แทน */
@@ -1769,12 +1728,12 @@
 
 /* ที่ 1 — ทอง: เรืองแรงสุด + ฟิล์มไล่เฉดกว้างสุด */
 .leaderboard-row.is-gold {
-  border-color: rgba(232,169,75,0.45);
+  border-color: var(--teal-bright);
   background:
-    linear-gradient(90deg, rgba(240,186,96,0.16) 0%, rgba(232,169,75,0.06) 40%, transparent 72%);
+    linear-gradient(90deg, rgba(var(--accent-rgb),0.16) 0%, rgba(var(--accent-rgb),0.06) 40%, transparent 72%);
   box-shadow:
-    0 0 18px rgba(232,169,75,0.26),
-    inset 0 1px 0 rgba(255,235,190,0.14);
+    0 0 18px rgba(var(--accent-rgb),0.26),
+    inset 0 1px 0 rgba(var(--accent-rgb),0.14);
 }
 .leaderboard-row.is-gold::before {
   background: linear-gradient(180deg, #ffe6a6 0%, var(--gold-bright) 45%, var(--gold-dim) 100%);
@@ -1783,35 +1742,35 @@
 
 /* ที่ 2 — เงิน */
 .leaderboard-row.is-silver {
-  border-color: rgba(214,226,238,0.34);
-  background: linear-gradient(90deg, rgba(214,226,238,0.10) 0%, transparent 62%);
+  border-color: var(--teal-mid);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb),0.10) 0%, transparent 62%);
   box-shadow:
-    0 0 13px rgba(204,216,228,0.16),
+    0 0 13px rgba(var(--accent-rgb),0.16),
     inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .leaderboard-row.is-silver::before {
   background: linear-gradient(180deg, #f2f7fc 0%, #ccd8e4 45%, #7d8d9c 100%);
-  box-shadow: 0 0 8px rgba(204,216,228,0.45);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb),0.45);
 }
 
 /* ที่ 3 — ทองแดง */
 .leaderboard-row.is-bronze {
-  border-color: rgba(199,107,69,0.34);
-  background: linear-gradient(90deg, rgba(199,107,69,0.09) 0%, transparent 58%);
+  border-color: var(--teal-dim);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb),0.09) 0%, transparent 58%);
   box-shadow:
-    0 0 11px rgba(199,107,69,0.16),
-    inset 0 1px 0 rgba(255,210,190,0.07);
+    0 0 11px rgba(var(--accent-rgb),0.16),
+    inset 0 1px 0 rgba(var(--accent-rgb),0.07);
 }
 .leaderboard-row.is-bronze::before {
   background: linear-gradient(180deg, #e6a17c 0%, var(--rust-bright) 45%, var(--rust-dim) 100%);
-  box-shadow: 0 0 8px rgba(199,107,69,0.45);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb),0.45);
 }
 .leaderboard-row.is-gold .leaderboard-rank {
-  color: var(--gold-bright);
-  text-shadow: 0 0 10px rgba(232,169,75,0.65);
+  color: var(--teal-bright);
+  text-shadow: 0 0 10px rgba(var(--accent-rgb),0.65);
 }
-.leaderboard-row.is-silver .leaderboard-rank { color: #ccd8e4; text-shadow: 0 0 8px rgba(204,216,228,0.5); }
-.leaderboard-row.is-bronze .leaderboard-rank { color: var(--rust-bright); text-shadow: 0 0 8px rgba(199,107,69,0.5); }
+.leaderboard-row.is-silver .leaderboard-rank { color: var(--teal-mid); text-shadow: 0 0 8px rgba(var(--accent-rgb),0.5); }
+.leaderboard-row.is-bronze .leaderboard-rank { color: var(--teal-dim); text-shadow: 0 0 8px rgba(var(--accent-rgb),0.5); }
 .leaderboard-ava {
   width: 30px;
   height: 30px;
@@ -2043,7 +2002,7 @@
 /* ── footer: version เป็นชิป + เส้นคั่นไล่เฉด ── */
 .home-footer {
   border-top: none;
-  background: linear-gradient(90deg, transparent, rgba(232,200,150,0.14), transparent) top / 100% 1px no-repeat;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent) top / 100% 1px no-repeat;
 }
 .version {
   padding: 4px 12px;
@@ -2089,8 +2048,8 @@
   pointer-events: none;
   z-index: 5;
   /* หมาป่าโผล่เหนือคำว่า WOLF — ใช้ทองตามคำที่มันเกาะอยู่ */
-  color: var(--gold-bright);
-  filter: drop-shadow(0 0 10px rgba(232,169,75,0.55));
+  color: var(--teal-bright);
+  filter: drop-shadow(0 0 10px rgba(var(--accent-rgb),0.55));
   transition: opacity 250ms var(--ease), transform 250ms var(--ease);
 }
 .wolf-easter-egg.is-visible {

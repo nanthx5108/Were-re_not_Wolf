@@ -1,0 +1,47 @@
+.admin-activation-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 6, 10, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.admin-activation-input {
+  width: 300px;
+  padding: 14px 20px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0);
+  transition: all var(--ease);
+}
+
+.admin-activation-input:focus {
+  border-color: var(--teal-dim);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.2);
+}
+
+.admin-activation-input.is-error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(192, 90, 78, 0.3);
+  animation: shake 300ms ease;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+.admin-activation-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
+}

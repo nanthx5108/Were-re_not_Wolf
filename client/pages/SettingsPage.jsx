@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSound } from '../context/SoundContext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/SettingsPage.css';
 
@@ -33,6 +34,7 @@ function IconBack() {
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const sound = useSound();
   const [settings, setSettings] = useState(loadSettings);
   const [showSaved, setShowSaved] = useState(false);
 
@@ -41,12 +43,15 @@ export default function SettingsPage() {
   }, []);
 
   function updateValue(key, value) {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    sound.updateSettings(newSettings);
   }
 
   function handleSave() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      sound.updateSettings(settings); // Ensure manager is in sync on save
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 1800);
     } catch {
@@ -60,7 +65,7 @@ export default function SettingsPage() {
 
       <div className="settings-container">
         <div className="settings-topbar">
-          <button className="settings-back-btn" onClick={() => navigate('/')} title="กลับหน้าหลัก">
+          <button className="settings-back-btn" onClick={() => navigate('/')} title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก">
             <IconBack />
           </button>
           <h1 className="settings-title">Settings</h1>
