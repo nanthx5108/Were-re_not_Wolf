@@ -1,6 +1,6 @@
 import { Howl, Howler } from 'howler';
 
-const DEFAULTS = { master: 1.0, music: 0.6, sfx: 0.8, muted: false };
+const DEFAULTS = { master: 0.9, music: 0.5, sfx: 0.7, muted: false }; // slightly lower defaults for a less intrusive audio experience
 
 class SoundManager {
   constructor() {
