@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import SoundManager from '../src/sound/SoundManager.js';
 
 const AuthContext = createContext(null);
 const API = '/api/auth';
@@ -26,8 +27,9 @@ export function AuthProvider({ children }) {
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error(data?.error || 'Register failed.');
     setUser(data.user);
-    return data.user;
-  }, []);
+      try { SoundManager.playSfx('/assets/sounds/sfx/sfx_login_success.wav', { volume: 0.9 }); } catch (e) {}
+      return data.user;
+    }, []);
 
   const login = useCallback(async ({ username, password }) => {
     const res = await fetch(`${API}/login`, {
@@ -38,8 +40,9 @@ export function AuthProvider({ children }) {
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error(data?.error || 'Login failed.');
     setUser(data.user);
-    return data.user;
-  }, []);
+      try { SoundManager.playSfx('/assets/sounds/sfx/sfx_login_success.wav', { volume: 0.9 }); } catch (e) {}
+      return data.user;
+    }, []);
 
   const logout = useCallback(async () => {
     await fetch(`${API}/logout`, { method: 'POST', credentials: 'include' });
@@ -62,6 +65,8 @@ export function AuthProvider({ children }) {
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error(data?.error || 'Update profile failed.');
     setUser(data.user);
+    try { SoundManager.playSfx('/assets/sounds/sfx/sfx_save_confirm.wav', { volume: 0.9 }); } catch (e) {}
+    if (payload.avatarFile) { try { SoundManager.playSfx('/assets/sounds/sfx/sfx_avatar_upload.wav', { volume: 0.9 }); } catch (e) {} }
     return data.user;
   }, []);
 

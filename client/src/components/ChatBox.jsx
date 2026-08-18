@@ -23,6 +23,7 @@ export default function ChatBox({ showWerewolfChannel = false }) {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed || isSilenced) return;
+    try { const SoundManager = require('../sound/SoundManager.js').default; SoundManager.playSfx('/assets/sounds/sfx/sfx_notif.wav', { volume: 0.7 }); } catch (e) {}
     sendMessage(trimmed, channel);
     setInput('');
   }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../../context/Gamecontext.jsx';
+import SoundManager from '../sound/SoundManager.js';
 import '../styles/MorningEvent.css';
 
 // Seer รู้แค่ฝ่าย ไม่ใช่บทบาท — Fool อยู่ฝ่ายเป็นกลาง จึงอ่านว่า "ไม่ใช่หมาป่า" เหมือนชาวบ้าน
@@ -15,6 +16,12 @@ export default function MorningEventBanner() {
 
   useEffect(() => { setDismissed(false); }, [morningEvent]);
 
+  // play a card-draw sound when a new morningEvent appears
+  useEffect(() => {
+    if (!morningEvent) return;
+    try { SoundManager.playSfx('/assets/sounds/sfx/sfx_card_draw.wav', { volume: 0.9 }); } catch (e) {}
+  }, [morningEvent]);
+  
   if (!morningEvent || dismissed || room?.phase !== 'day') return null;
 
   const seerTarget = seerResult
@@ -52,7 +59,7 @@ export default function MorningEventBanner() {
           </div>
         )}
 
-        <button className="morning-event-dismiss" onClick={() => setDismissed(true)}>
+        <button className="morning-event-dismiss" onClick={() => { try { SoundManager.playSfx('/assets/sounds/sfx/sfx_notif.wav'); } catch {} setDismissed(true); }}>
           รับทราบ... มั้ง
         </button>
       </div>
