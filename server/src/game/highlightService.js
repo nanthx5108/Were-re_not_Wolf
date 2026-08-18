@@ -1,6 +1,5 @@
 import { getRoom } from './gameStore.js';
 
-/** Helper to add a highlight to the current game's log */
 function addHighlight(roomId, highlight) {
   const room = getRoom(roomId);
   if (!room) return;

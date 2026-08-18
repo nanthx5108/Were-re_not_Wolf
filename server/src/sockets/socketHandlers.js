@@ -24,15 +24,12 @@ export function registerSocketHandlers(socket, io) {
 
   const EVENT_COOLDOWN_MS = 100; // Max 10 events per second per user
 
-  // Simple rate limiting middleware for this socket connection
   socket.use(([event, ...args], next) => {
     const now = Date.now();
     const lastEventTime = socket.lastEventTime || 0;
 
     if (now - lastEventTime < EVENT_COOLDOWN_MS) {
-      // Allow low-impact, frequent events like typing indicators to pass through
       if (event !== 'chat:typing' && event !== 'chat:stop_typing') {
-        // Silently drop the event to prevent spam, without disconnecting the user.
         return;
       }
     }
@@ -46,7 +43,6 @@ export function registerSocketHandlers(socket, io) {
       const room = getRoom(roomId);
       if (!room) return socket.emit('error', { message: 'Room not found.' });
 
-      // ผู้เล่นที่อยู่ในห้องอยู่แล้ว = กลับเข้ามาใหม่ (รีเฟรช/เน็ตหลุด) — ไม่ใช่คนใหม่
       const existing = room.players.get(playerId);
       if (existing) return handleRejoin(socket, io, roomId, playerId);
 
@@ -97,7 +93,6 @@ export function registerSocketHandlers(socket, io) {
       return socket.emit('error', { message: 'ต้องเลือกผู้เล่นที่จะกระซิบ' });
     }
 
-    // กรองคำหยาบฝั่ง server เสมอ — client จะกรองมาก่อนหรือไม่ก็เชื่อไม่ได้
     const { clean, censored } = censorProfanity(content.trim().slice(0, 300));
     if (!clean.trim()) return;
 
@@ -133,8 +128,6 @@ export function registerSocketHandlers(socket, io) {
     }
   });
 
-  // typing indicator — ใช้จัดลำดับ sidebar (คนกำลังพิมพ์ขึ้นก่อน)
-  // ปิดตอนกลางคืน/คืนที่ 0 เพราะแชทหมู่บ้านปิดอยู่ ไม่มีอะไรให้ประกาศ
   socket.on('chat:typing', () => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
@@ -155,13 +148,12 @@ export function registerSocketHandlers(socket, io) {
     clearPlayerTyping(io, roomId, playerId);
   });
 
-  // เพิ่งตายกลางเกม — ขอแชทย้อนหลังของห้องวิญญาณ (คนที่ตายก่อนหน้าคุยอะไรกันไว้บ้าง)
   socket.on('chat:dead_history', async () => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
 
     const player = getRoom(roomId)?.players.get(playerId);
-    if (!player || player.isAlive) return;   // คนเป็นขอไม่ได้ ต่อให้ยิง event ตรง ๆ
+    if (!player || player.isAlive) return;
 
     const [rows] = await pool.query(
       `SELECT id, player_id, nickname, content, channel, sent_at
@@ -184,7 +176,6 @@ export function registerSocketHandlers(socket, io) {
     });
   });
 
-  // host ปรับบทบาท/เวลาได้ใน Lobby ก่อนเริ่มเกม — validate ฝั่ง server เสมอ ไม่เชื่อ client
   socket.on('room:config', async ({ config }) => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
@@ -221,21 +212,17 @@ export function registerSocketHandlers(socket, io) {
       return socket.emit('error', { message: `Need at least ${PLAYER_LIMITS.MIN} players.` });
     }
 
-    // โหมดโกลาหล: สุ่ม role ใหม่ตอนกดเริ่มด้วยจำนวนผู้เล่นจริง + บังคับเวลา phase คงที่
-    // (ไม่ใช้ค่าที่ host ตั้งไว้ใน Lobby) — Classic ใช้ config เดิมของห้อง
     const isChaos = room.gameMode === GAME_MODES.CHAOS;
     if (isChaos) {
       updateRoom(roomId, { phaseDurations: { ...CHAOS_PHASE_DURATIONS } });
     }
 
-    // config ตั้งไว้ตาม maxPlayers แต่คนเข้าจริงอาจน้อยกว่า — ต้องเช็คกับจำนวนจริงก่อนแจกบทบาท
     const roleConfig = isChaos
       ? buildChaosRoleConfig(players.length)
       : (room.roleConfig || buildDefaultRoleConfig(players.length));
     const configError = validateConfigForPlayerCount(roleConfig, players.length);
     if (configError) return socket.emit('error', { message: configError });
 
-    // เก็บ roleConfig ที่ใช้จริงไว้บนห้อง เผื่อ resume/serialize อ้างถึง (โกลาหลจะได้ตรงกับที่แจกไปจริง)
     if (isChaos) updateRoom(roomId, { roleConfig });
 
     const assigned = distributeRoles(players, roleConfig);
@@ -244,8 +231,6 @@ export function registerSocketHandlers(socket, io) {
       await pool.query(`UPDATE players SET role = ? WHERE id = ?`, [p.role, p.id]);
     }
 
-    // Night of Day 0 — แจก role ให้ทุกคนดูก่อน ยังไม่มี night action ใด ๆ
-    // round เริ่มที่ 0 เพื่อให้พอ advance เข้า Night จริงจะกลายเป็น Night 1 พอดี
     updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT_ZERO, round: 0, readyPlayers: new Set() });
     await pool.query(`UPDATE rooms SET status = 'in_progress' WHERE id = ?`, [roomId]);
 
@@ -255,12 +240,10 @@ export function registerSocketHandlers(socket, io) {
       const s = findSocketByPlayerId(io, p.id);
       if (!s) continue;
 
-      // หมาป่าเห็นทีมกันเอง — คนอื่นไม่ได้รับ field นี้เลย
       const teammates = p.role === 'werewolf'
         ? wolves.filter(w => w.id !== p.id).map(w => ({ id: w.id, nickname: w.nickname }))
         : undefined;
 
-      // ไม่มี endsAt/durationMs — night_zero จบด้วยการที่ทุกคนกด "ดูแล้ว" ไม่ใช่หมดเวลา
       s.emit('game:started', {
         phase: PHASES.NIGHT_ZERO, myRole: p.role, endsAt: null, durationMs: null, round: 0, teammates,
       });
@@ -275,7 +258,6 @@ export function registerSocketHandlers(socket, io) {
     });
   });
 
-  // Night of Day 0 — ผู้เล่นกดยืนยันว่าดู role แล้ว; ครบทุกคน (ที่ยังเชื่อมต่อ) → เข้า Night 1
   socket.on('player:ready', () => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
@@ -317,7 +299,6 @@ export function registerSocketHandlers(socket, io) {
 
     socket.emit('night:action:ack', { targetId });
 
-    // เฉพาะหมาป่าเท่านั้นที่เห็นเป้าหมายของเพื่อนร่วมทีม — role ห้ามหลุดออกนอก socket เจ้าตัว
     if (player.role === 'werewolf') {
       broadcastToRole(io, room, 'werewolf', 'night:action:update', {
         playerId,
@@ -327,7 +308,6 @@ export function registerSocketHandlers(socket, io) {
     }
   });
 
-  // --- REQUEST_EXTRA_TIME card effect ---
   socket.on('phase:request_extra_time', async () => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
@@ -353,38 +333,32 @@ export function registerSocketHandlers(socket, io) {
     io.to(roomId).emit('phase:changed', {
       phase: room.phase,
       endsAt: newEndsAt,
-      durationMs: getPhaseDurationMs(roomId, room.phase) + extraDurationMs, // Update total duration for client clock
+      durationMs: getPhaseDurationMs(roomId, room.phase) + extraDurationMs,
       round: room.round,
       message: 'เวลาพูดคุยถูกต่อเพิ่ม!',
     });
   });
 
-  socket.on('vote:cast', async ({ targetId }) => { // Replaces the original handler
+  socket.on('vote:cast', async ({ targetId }) => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
 
     const room = getRoom(roomId);
-    if (!room || room.phase !== PHASES.VOTING) {
-      return socket.emit('error', { message: 'ไม่อยู่ในช่วงโหวต' });
-    }
+    if (!room || room.phase !== PHASES.VOTING) return socket.emit('error', { message: 'ไม่อยู่ในช่วงโหวต' });
 
     const player = room.players.get(playerId);
-    if (!player?.isAlive) {
-      return socket.emit('error', { message: 'คนตายโหวตไม่ได้' });
-    }
+    if (!player?.isAlive) return socket.emit('error', { message: 'คนตายโหวตไม่ได้' });
 
     const target = room.players.get(targetId);
-    if (!target || !target.isAlive) {
-      return socket.emit('error', { message: 'ไม่สามารถโหวตผู้เล่นที่ไม่มีอยู่จริงหรือตายไปแล้วได้' });
-    }
-    if (targetId === playerId) {
-      return socket.emit('error', { message: 'โหวตให้ตัวเองไม่ได้' });
-    }
+    if (!target || !target.isAlive) return socket.emit('error', { message: 'ไม่สามารถโหวตผู้เล่นที่ไม่มีอยู่จริงหรือตายไปแล้วได้' });
+    if (targetId === playerId) return socket.emit('error', { message: 'โหวตให้ตัวเองไม่ได้' });
 
     const playerCard = room.fortuneCards?.get(playerId);
     const isOpportunist = playerCard?.id === 'opportunist';
     const timeRemaining = room.phaseEndsAt ? Math.ceil((room.phaseEndsAt - Date.now()) / 1000) : Infinity;
-    const previousTargetId = room.votes.voteMap[playerId];
+
+    const { voteMap: currentVoteMap } = getVoteData(roomId);
+    const previousTargetId = currentVoteMap[playerId];
 
     if (previousTargetId) { // Already voted
       if (isOpportunist && timeRemaining <= 5 && previousTargetId !== targetId) {
@@ -393,27 +367,20 @@ export function registerSocketHandlers(socket, io) {
           return socket.emit('error', { message: 'คุณใช้สิทธิ์เปลี่ยนโหวตไปแล้ว' });
         }
         room.usedOpportunist.add(playerId);
-        // Decrement old vote count
-        if (room.votes.counts[previousTargetId]) {
-          room.votes.counts[previousTargetId]--;
-        }
       } else {
         return socket.emit('error', { message: 'คุณโหวตไปแล้ว' });
       }
     }
 
-    // This is now safe for both new votes and changed votes
-    room.votes.voteMap[playerId] = targetId;
-    room.votes.counts[targetId] = (room.votes.counts[targetId] || 0) + 1;
+    const { voteMap, counts } = castVote(roomId, playerId, targetId);
 
-    // --- ANONYMOUS_VOTE card effect (from original code) ---
     const players = getPlayersArray(roomId);
     for (const p of players) {
       const playerSocket = io.sockets.sockets.get(p.socketId);
       if (!playerSocket) continue;
 
       const maskedVoteMap = {};
-      for (const [voterId, votedTargetId] of Object.entries(room.votes.voteMap)) {
+      for (const [voterId, votedTargetId] of Object.entries(voteMap)) {
         const voterCard = room.fortuneCards?.get(voterId);
         const isAnonymous = voterCard?.id === 'like_the_wind';
 
@@ -424,7 +391,7 @@ export function registerSocketHandlers(socket, io) {
           maskedVoteMap[voterId] = votedTargetId;
         }
       }
-      playerSocket.emit('vote:update', { voteMap: maskedVoteMap, counts: room.votes.counts });
+      playerSocket.emit('vote:update', { voteMap: maskedVoteMap, counts });
     }
 
     const alivePlayers = getPlayersArray(roomId).filter(p => p.isAlive);
@@ -449,7 +416,6 @@ export function registerSocketHandlers(socket, io) {
   });
 }
 
-// กลับเข้าห้องเดิม — ต้องคืน state ส่วนตัวให้ครบ ไม่งั้นผู้เล่นจะเล่นต่อไม่ได้
 async function handleRejoin(socket, io, roomId, playerId) {
   const room = getRoom(roomId);
   const player = room.players.get(playerId);
@@ -460,7 +426,6 @@ async function handleRejoin(socket, io, roomId, playerId) {
   socket.join(roomId);
   socket.data = { roomId, playerId, nickname: player.nickname };
   cancelRoomAbandon(roomId);
-  // เจ้าของห้องรีเฟรชกลับมาทันใน grace → ยกเลิกการปิดห้อง
   if (room.hostId === playerId) cancelHostGrace(roomId);
 
   socket.emit('room:state', serializeRoomForPlayer(roomId, playerId));
@@ -493,7 +458,6 @@ async function handleRejoin(socket, io, roomId, playerId) {
   });
 }
 
-// แชทย้อนหลัง — คนที่ไม่ใช่หมาป่าต้องไม่เห็นช่องหมาป่า และคนเป็นต้องไม่เห็นห้องวิญญาณ
 async function loadRecentMessages(roomId, player) {
   const channels = [CHANNELS.VILLAGE, CHANNELS.SYSTEM];
   if (player?.role === 'werewolf') channels.push(CHANNELS.WEREWOLF);
@@ -518,7 +482,6 @@ async function loadRecentMessages(roomId, player) {
   }));
 }
 
-// เน็ตหลุด/ปิดแท็บ — ระหว่างเกมยังไม่ถือว่าออก เผื่อกลับมา
 async function handleDisconnect(socket, io) {
   const { roomId, playerId, nickname } = socket.data || {};
   if (!roomId || !playerId) return;
@@ -526,10 +489,7 @@ async function handleDisconnect(socket, io) {
   const room = getRoom(roomId);
   if (!room) return;
 
-  // ยังไม่เริ่มเกม (ล็อบบี้)
   if (room.status !== 'in_progress') {
-    // เจ้าของห้องปิดแท็บ/หลุด → ปิดห้องทั้งหมด แต่ให้ grace สั้น ๆ เผื่อรีเฟรช
-    // (ไม่ลบ host ออกจาก players ทันที เพื่อให้ handleRejoin จำได้และยกเลิก grace)
     if (room.hostId === playerId) {
       updatePlayer(roomId, playerId, { isConnected: false, socketId: null });
       clearPlayerTyping(io, roomId, playerId);
@@ -543,7 +503,6 @@ async function handleDisconnect(socket, io) {
       scheduleHostGrace(io, roomId);
       return;
     }
-    // ผู้เล่นทั่วไปหลุด — ออกไปเลย ไม่มีอะไรให้กลับมาหา (เหมือนเดิม)
     return handleLeave(socket, io);
   }
 
@@ -563,7 +522,6 @@ async function handleDisconnect(socket, io) {
   }
 }
 
-// ตั้งใจกดออก
 async function handleLeave(socket, io) {
   const { roomId, playerId, nickname } = socket.data || {};
   if (!roomId || !playerId) return;
@@ -574,7 +532,6 @@ async function handleLeave(socket, io) {
   socket.leave(roomId);
   clearPlayerTyping(io, roomId, playerId);
 
-  // ออกกลางเกม = ยอมแพ้ ตายไปเลย — ลบทิ้งไม่ได้ ไม่งั้นเงื่อนไขชนะจะนับผิด
   if (room.status === 'in_progress') {
     updatePlayer(roomId, playerId, { isAlive: false, isConnected: false, socketId: null });
     await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [playerId]);
@@ -594,7 +551,6 @@ async function handleLeave(socket, io) {
     return;
   }
 
-  // เจ้าของห้องกดออกเอง (ตั้งใจ) → ปิดห้องทั้งหมดทันที ไม่ต้องรอ grace และไม่ย้าย host ให้ใคร
   if (room.hostId === playerId) {
     cancelHostGrace(roomId);
     return closeRoomByHost(io, roomId);
@@ -630,7 +586,7 @@ function getChatValidationError(room, player, channel) {
     return 'Only werewolves can use this channel.';
   }
 
-  return null; // No error
+  return null;
 }
 
 function handleWhisperLogic(room, playerId, targetPlayerId) {
@@ -655,15 +611,11 @@ function handleWhisperLogic(room, playerId, targetPlayerId) {
   };
 }
 
-// logic การปิดห้องอยู่ที่ roomMaintenance.teardownRoom ที่เดียว (sweep ก็เรียกตัวเดียวกัน)
 async function destroyRoom(roomId) {
   cancelHostGrace(roomId);
   await teardownRoom(roomId);
 }
 
-// ── เจ้าของห้องออก = ปิดห้อง (เฉพาะตอนอยู่ในล็อบบี้ ยังไม่เริ่มเกม) ─────────────
-// ปิดแท็บ/เน็ตหลุดให้ grace สั้น ๆ เผื่อรีเฟรช — กลับมาทัน (handleRejoin) ก็ยกเลิก
-// กดออกเองถือว่าตั้งใจ ปิดทันทีไม่ต้องรอ
 const HOST_LEAVE_GRACE_MS = 10_000;
 const hostGraceTimers = new Map();
 
@@ -683,7 +635,6 @@ function cancelHostGrace(roomId) {
   }
 }
 
-// บอกผู้เล่นที่เหลือว่าห้องปิดแล้ว (client จะเคลียร์ session แล้วเด้งกลับหน้าแรก) → ทำลายห้อง
 async function closeRoomByHost(io, roomId) {
   const room = getRoom(roomId);
   if (!room) return;
@@ -698,7 +649,6 @@ async function closeRoomByHost(io, roomId) {
   await destroyRoom(roomId);
 }
 
-// เอาชื่อออกจากรายชื่อคนกำลังพิมพ์ แล้วบอกทั้งห้อง — ใช้ตอน stop_typing / หลุด / ออก
 function clearPlayerTyping(io, roomId, playerId) {
   const room = getRoom(roomId);
   if (!room?.typingPlayers) return;
@@ -716,7 +666,6 @@ function broadcastToRole(io, room, role, event, data) {
   }
 }
 
-// ห้องวิญญาณ — ส่งถึงคนตายเท่านั้น ห้าม io.to(roomId) เด็ดขาด คนเป็นจะเห็นด้วย
 function broadcastToDead(io, room, event, data) {
   for (const player of room.players.values()) {
     if (player.isAlive) continue;

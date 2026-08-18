@@ -13,7 +13,6 @@ const UPLOADS_ROOT = path.join(__dirname, '../../uploads');
 const SALT_ROUNDS = 12;
 const USERNAME_COOLDOWN_DAYS = 90;
 
-// คอลัมน์ที่ต้องดึงทุกครั้งเพื่อประกอบ public user — เพิ่ม field ที่นี่ที่เดียว
 const USER_FIELDS = `
   u.id, u.username, u.games_played, u.exp, u.level, u.display_name, u.birthdate, u.email, u.avatar_url, u.username_changed_at,
   a.user_id IS NOT NULL AS isAdmin
@@ -25,14 +24,6 @@ const GOOGLE_CALLBACK_URL  = process.env.GOOGLE_CALLBACK_URL || 'http://localhos
 
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL);
 
-/**
- * birthdate เป็นคอลัมน์ DATE — mysql2 คืนมาเป็น Date object (ไม่ได้ตั้ง dateStrings)
- * ถ้าปล่อยผ่าน JSON จะกลายเป็น ISO เต็ม "2000-05-15T00:00:00.000Z" ซึ่งฝั่ง client
- * แยกด้วย split('-') แล้วได้วันเป็น "15T00:00:00.000Z" → Number() = NaN → วันหายไป
- *
- * ต้องใช้ getter แบบ local ไม่ใช่ toISOString() — Date object เป็นเที่ยงคืนตามโซนของ server
- * ถ้าแปลงเป็น UTC วันที่จะเลื่อนถอยหลัง 1 วันในโซนที่ offset เป็นบวก (เช่นไทย +7)
- */
 function toDateOnly(value) {
   if (!value) return '';
   if (typeof value === 'string') return value.slice(0, 10);
@@ -53,7 +44,7 @@ function toPublicUser(user) {
     gamesPlayed: user.games_played ?? 0,
     level,
     exp,
-    expNeeded: expNeeded(level),   // ส่งไปด้วยเลย client จะได้ไม่ต้องคำนวณเอง
+    expNeeded: expNeeded(level),
     displayName: user.display_name ?? null,
     birthdate: toDateOnly(user.birthdate),
     email: user.email ?? '',

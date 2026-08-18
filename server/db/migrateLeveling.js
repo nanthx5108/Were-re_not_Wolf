@@ -1,12 +1,5 @@
 import { levelFromGamesPlayed } from '../../shared/leveling.js';
 
-/**
- * ย้อนคำนวณ level/exp ให้ผู้ใช้เดิมที่มีสถิติ games_played อยู่แล้วแต่ยังไม่มีเลเวล
- * ทำใน JS เพราะ curve เป็น loop — SQL ล้วนคำนวณไม่ได้
- *
- * idempotent: รันซ้ำได้ เพราะแตะเฉพาะแถวที่ level=0 AND exp=0 AND games_played>0
- * (ผู้ใช้ที่ backfill ไปแล้วจะมี exp หรือ level ไม่เป็นศูนย์ จึงถูกข้าม)
- */
 export async function migrateLeveling(pool) {
   const [rows] = await pool.query(
     `SELECT id, games_played FROM users

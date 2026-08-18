@@ -1,32 +1,77 @@
 import express from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import session from 'express-session';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import roomRoutes from './routes/roomRoutes.js';
 import authRoutes from './routes/authRoutes.js';
-import newsRoutes from './routes/newsRoutes.js'; // Import news routes
-import './services/gameSettingsService.js'; // Import to load game settings on startup
-import * as gameDataService from './services/gameDataService.js'; // Import to ensure it loads game data on startup
-import adminRoutes from './routes/adminRoutes.js'; // 1. Import admin routes
+import statsRoutes from './routes/statsRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import newsRoutes from './routes/newsRoutes.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
-// สมมติว่ามีการตั้งค่า session และ middleware อื่นๆ ที่นี่
-// import sessionMiddleware from './middleware/session.js';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express(); 
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { /* ... CORS config ... */ });
+export const IS_PROD  = process.env.NODE_ENV === 'production';
+const SESSION_SECRET  = process.env.SESSION_SECRET || 'wolf-secret-change-in-prod';
+const CLIENT_DIST     = path.join(__dirname, '../../client/dist');
+const SERVES_CLIENT   = fs.existsSync(CLIENT_DIST);
 
-app.set('io', io); // ทำให้เข้าถึง io จาก controller ได้
+export const CLIENT_ORIGINS = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
+if (IS_PROD) {
+  app.set('trust proxy', 1);
+}
+
+app.use(cors({ origin: CLIENT_ORIGINS, credentials: true }));
 app.use(express.json());
-// app.use(sessionMiddleware);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// ... other routes
-app.use('/api/auth', authRoutes);
-app.use('/api/news', newsRoutes); // Public news API
-app.use('/api/admin', adminRoutes); // 2. นำ admin routes มาใช้งาน
+app.use(session({
+  name:   'wolf.sid',
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure:   IS_PROD,
+    maxAge:   7 * 24 * 60 * 60 * 1000,
+  },
+}));
 
-// ... socket.io connection handling
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
-});
+app.use('/api/auth', rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
+}));
+
+app.use('/api/auth',  authRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/news',  newsRoutes);
+
+if (SERVES_CLIENT) {
+  app.use(express.static(CLIENT_DIST));
+
+  app.use((req, res, next) => {
+    if (req.method !== 'GET') return next();
+    if (/^\/(api|uploads|socket\.io|health)\b/.test(req.path)) return next();
+    res.sendFile(path.join(CLIENT_DIST, 'index.html'));
+  });
+}
+
+app.use(errorHandler);
+
+export default app;

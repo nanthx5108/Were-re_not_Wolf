@@ -1,5 +1,5 @@
 import { getRoom, updateRoom, updatePlayer } from './gameStore.js';
-import { ROLE_FACTION } from './constants.js';
+import { getRoleFactionMap } from './constants.js';
 import { consumeNightEffect, getActiveNightEffect } from './morningEvents.js';
 
 export function initNightActions(roomId) {
@@ -17,10 +17,6 @@ export function initNightActions(roomId) {
   return actions;
 }
 
-/**
- * คนที่ผู้พิทักษ์ห้ามเลือกคืนนี้ — ห้ามป้องกันคนเดิม 2 คืนติด
- * คืน array ว่างถ้าไม่ใช่ผู้พิทักษ์ หรือคืนก่อนไม่ได้ป้องกันใคร
- */
 export function getBlockedProtectTargets(roomId, playerId) {
   const room = getRoom(roomId);
   const player = room?.players.get(playerId);
@@ -56,10 +52,8 @@ export function submitNightAction(roomId, playerId, action) {
   } else if (player.role === 'silencer') {
     next.silencer = { playerId, targetId };
   } else if (player.role === 'bodyguard') {
-    // ห้ามป้องกันคนเดิม 2 คืนติด
     if (getBlockedProtectTargets(roomId, playerId).includes(targetId)) return null;
 
-    // เหตุการณ์ "คืนที่ปลอดภัย" — คืนนี้ผู้พิทักษ์เลือกป้องกันได้ 2 คน
     const maxTargets = getActiveNightEffect(roomId) === 'double_guard' ? 2 : 1;
     const existing = next.bodyguard?.playerId === playerId
       ? (next.bodyguard.targetIds || [next.bodyguard.targetId].filter(Boolean))
@@ -83,8 +77,6 @@ export function submitNightAction(roomId, playerId, action) {
   return next;
 }
 
-// ตัดสินผลของคืนนี้ — เป็น pure game logic ไม่แตะ DB
-// การเขียน is_alive ลง DB เป็นหน้าที่ของ phaseManager (ที่เดียวกับตอน resolve โหวต)
 export function resolveNightActions(roomId) {
   const room = getRoom(roomId);
   if (!room) return null;
@@ -111,13 +103,11 @@ export function resolveNightActions(roomId) {
 
   const selectedTargetId = topTargets.length === 1 ? topTargets[0] : null;
 
-  // ผลจากเหตุการณ์ประจำเช้า — มีผลแค่คืนเดียวแล้วถูกล้างทิ้ง
   const nightEffect = consumeNightEffect(roomId);
 
   const protectedIds = actions.bodyguard?.targetIds
     || (actions.bodyguard?.targetId ? [actions.bodyguard.targetId] : []);
 
-  // "ไฟดับทั้งหมู่บ้าน" — การป้องกันไม่มีผลจริง และไม่มีการแจ้งผู้พิทักษ์
   const protectionActive = nightEffect !== 'blackout';
   const prevented = Boolean(
     selectedTargetId && protectionActive && protectedIds.includes(selectedTargetId)
@@ -135,7 +125,6 @@ export function resolveNightActions(roomId) {
     }
   }
 
-  // Seer รู้แค่ฝ่าย ไม่ใช่บทบาท — "หมอกลงจัด" ทำให้ตรวจได้แต่ผลไม่ชัดเจน
   const seerResult = actions.seer?.targetId ? (() => {
     const target = room.players.get(actions.seer.targetId);
     if (!target) return null;
@@ -144,13 +133,11 @@ export function resolveNightActions(roomId) {
       : { targetId: target.id, faction: ROLE_FACTION[target.role] };
   })() : null;
 
-  // Silencer — เป้าหมายพิมพ์ไม่ได้ตลอดวันถัดไป (ตายคืนนี้แล้วก็ไม่ต้องปิดปาก)
   const silencedId = actions.silencer?.targetId && actions.silencer.targetId !== killedId
     ? actions.silencer.targetId
     : null;
   const silencedNickname = silencedId ? room.players.get(silencedId)?.nickname ?? null : null;
 
-  // เก็บคนที่ผู้พิทักษ์เฝ้าคืนนี้ไว้ เพื่อบล็อกไม่ให้เลือกซ้ำในคืนถัดไป
   updateRoom(roomId, {
     lastProtectedIds: protectedIds,
     silencedPlayerId: silencedId,

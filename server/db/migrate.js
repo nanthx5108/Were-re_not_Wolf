@@ -1,11 +1,3 @@
-/**
- * สร้าง/อัปเดตตารางทั้งหมดจาก db/schema.sql — รันแยกจาก server
- *
- *   npm run db:migrate          # ใช้ค่าจาก server/.env
- *
- * ใช้ connection config ชุดเดียวกับ server (db/config.js)
- * รันซ้ำได้ปลอดภัย — statement ที่ถูก apply ไปแล้วจะถูกข้าม
- */
 import mysql, { escapeId } from 'mysql2/promise';
 import { connectionConfig, dbName, describeTarget } from './config.js';
 import { runSchema } from './runSchema.js';
@@ -14,7 +6,6 @@ import { migrateLeveling } from './migrateLeveling.js';
 async function migrate() {
   console.log(`🔌 connecting to ${describeTarget()}`);
 
-  // connect แบบยังไม่เลือก database ก่อน เผื่อ database ยังไม่ถูกสร้าง
   const bootstrap = await mysql.createConnection({ ...connectionConfig });
   try {
     await bootstrap.query(
@@ -23,7 +14,6 @@ async function migrate() {
     console.log(`📦 database "${dbName}" พร้อมใช้งาน`);
   } catch (err) {
     if (err.errno !== 1044 && err.errno !== 1045) throw err;
-    // managed host บางเจ้า user ไม่มีสิทธิ์ CREATE DATABASE — ต้องสร้างจาก console ของ host เอง
     console.warn(`⚠️  ไม่มีสิทธิ์ CREATE DATABASE — ถือว่า "${dbName}" ถูกสร้างไว้บน host แล้ว`);
   } finally {
     await bootstrap.end();

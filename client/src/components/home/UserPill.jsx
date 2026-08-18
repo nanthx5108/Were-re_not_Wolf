@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import defaultAvatar from '../../assets/ui/default_avatar.png';
 import '../../styles/HomePage.css';
-import { expNeeded, levelProgress, STARTING_LEVEL } from '../../../shared/leveling.js';
+import { expNeeded, levelProgress, STARTING_LEVEL } from '../../../../shared/leveling.js';
 
 export default function UserPill({ user, onLogout, navigate }) {
   const [flyoutOpen, setFlyoutOpen] = useState(false);

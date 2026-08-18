@@ -5,7 +5,6 @@ import { initNightActions, submitNightAction, getBlockedProtectTargets } from '.
 
 let seq = 0;
 
-// สร้างห้องพร้อมผู้เล่นที่กำหนดบทบาทไว้แล้ว — คืน roomId
 function setupRoom(roles) {
   const roomId = `T${seq++}`;
   createRoom({ id: roomId, name: 'test', hostId: 'p0', maxPlayers: 8 });
@@ -21,18 +20,15 @@ test('bodyguard cannot protect the same player two nights running', (t) => {
   const roomId = setupRoom(['bodyguard', 'werewolf', 'villager', 'villager']);
   t.after(() => deleteRoom(roomId));
 
-  // คืนแรกยังไม่มีใครถูกเฝ้า จึงเลือกได้ทุกคน
   assert.deepEqual(getBlockedProtectTargets(roomId, 'p0'), []);
   assert.ok(submitNightAction(roomId, 'p0', { targetId: 'p2' }));
 
-  // จำลองว่าคืนแรก resolve แล้วบันทึกว่าเฝ้า p2 ไว้
   updateRoom(roomId, { lastProtectedIds: ['p2'] });
   initNightActions(roomId);
 
   assert.deepEqual(getBlockedProtectTargets(roomId, 'p0'), ['p2']);
   assert.equal(submitNightAction(roomId, 'p0', { targetId: 'p2' }), null, 'ป้องกันซ้ำต้องถูกปฏิเสธ');
 
-  // คนอื่นยังเลือกได้ปกติ
   assert.ok(submitNightAction(roomId, 'p0', { targetId: 'p3' }));
 });
 
@@ -42,7 +38,6 @@ test('the repeat-protect block only applies to the bodyguard', (t) => {
 
   updateRoom(roomId, { lastProtectedIds: ['p3'] });
 
-  // Seer เฝ้าไม่ได้อยู่แล้ว — ต้องไม่ติดกฎของผู้พิทักษ์
   assert.deepEqual(getBlockedProtectTargets(roomId, 'p1'), []);
   assert.ok(submitNightAction(roomId, 'p1', { targetId: 'p3' }), 'Seer ยังตรวจคนที่เคยถูกเฝ้าได้');
 });

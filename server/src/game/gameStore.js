@@ -46,6 +46,8 @@ export function addPlayerToRoom(roomId, player) {
     isAlive:     true,
     isConnected: true,
     socketId:    player.socketId,
+    isConfusedThisRound: false, // For 'confused' fortune card effect (prevents voting this round)
+    hasConfusedRecurrence: false, // For 'confused' 10% recurrence chance for next round
   });
   return room;
 }
@@ -106,7 +108,6 @@ export function serializeRoom(roomId) {
       nickname:    p.nickname,
       isAlive:     p.isAlive,
       isConnected: p.isConnected !== false,
-      // เปิดเผย role เฉพาะคนที่ตายแล้ว และเฉพาะเมื่อ host เปิด setting — คนเป็นห้ามหลุด role เด็ดขาด
       ...(room.revealRoleOnDeath === true && p.isAlive === false ? { revealedRole: p.role } : {}),
     })),
   };

@@ -1,7 +1,3 @@
-/* =========================================================
-   WE'RE NOT WOLF — GamePage layout
-   Design Theme: "Digital Occult" (consistent with Lobby)
-   ========================================================= */
 .gp-page {
   min-height: 100dvh;
   background-color: var(--bg-void);
@@ -19,7 +15,6 @@
   align-items: stretch;
 }
 
-/* พื้นบรรยากาศคืนอันดามัน — แสงจันทร์บนสุด, ความมืดขอบล่าง */
 .gp-page::before {
   content: '';
   position: fixed;
@@ -33,7 +28,6 @@
 
 .gp-page > * { position: relative; z-index: 1; }
 
-/* Frosted glass panel base */
 .gp-panel {
   position: relative;
   border-radius: var(--radius-md);
@@ -50,7 +44,6 @@
   background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
 }
 
-/* ── TOP BAR ─────────────────────────────────────────────── */
 .gp-top {
   grid-area: top;
   display: grid;
@@ -81,7 +74,6 @@
 }
 .gp-setting-btn:hover::after { opacity: 1; }
 
-/* Clock — เวลานับถอยหลังจริงของ phase + ดวงอาทิตย์/จันทร์ */
 .gp-clock {
   display: flex;
   flex-direction: column;
@@ -119,7 +111,6 @@
   color: var(--text-muted);
 }
 
-/* wrapper กลาง top bar — clock + secondary timer เรียงลงล่าง */
 .gp-clock-stack {
   display: flex;
   flex-direction: column;
@@ -127,7 +118,6 @@
   gap: 6px;
 }
 
-/* SECONDARY TIMER — conditional: โผล่เฉพาะ voting / night action (unmount เมื่อไม่ใช้) */
 .gp-sectimer {
   width: 210px;
   padding: 5px 10px;
@@ -170,7 +160,6 @@
   transition: width 0.5s linear, background 0.3s ease;
 }
 
-/* Badge DAY/NIGHT + room code */
 .gp-daybadge {
   display: inline-block;
   padding: 4px 14px;
@@ -201,7 +190,6 @@
   font-weight: 700;
 }
 
-/* ── zone placeholders (จะรื้อทีละ part) ─────────────────── */
 .gp-log    { grid-area: log; padding: var(--space-2) var(--space-4); }
 .gp-chat   { grid-area: chat; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; }
 .gp-center { grid-area: center; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; }
@@ -221,7 +209,6 @@
   min-height: 0;
 }
 
-/* ── error / game-over overlays ──────────────────────────── */
 .gp-banner {
   grid-column: 1 / -1;
   display: flex;
@@ -285,7 +272,6 @@
   transform: translateY(-1px);
 }
 
-/* ── in-game settings modal (top-left) ───────────────────── */
 .gp-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -325,7 +311,6 @@
   gap: var(--space-2);
 }
 
-/* ── LEFT chat component (gpc-) ──────────────────────────── */
 .gpc {
   display: flex;
   flex-direction: column;
@@ -393,7 +378,6 @@
 .gpc-time { font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; }
 .gpc-msg.is-dead .gpc-body { color: var(--silver); font-style: italic; }
 
-/* system = narrator เสียดสี — เต็มบรรทัด อำพัน เอียง */
 .gpc-msg.is-system {
   border-bottom: none;
   padding: var(--space-2) 0;
@@ -462,7 +446,6 @@
 .gpc-send:hover:not(:disabled) { background: rgba(79,209,197,0.24); }
 .gpc-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── RIGHT player sidebar (gps-) ─────────────────────────── */
 .gps {
   display: flex;
   flex-direction: column;
@@ -548,7 +531,6 @@
 }
 .gps-tag.is-typing { color: var(--silver); }
 
-/* role status box: การ์ดคว่ำ '?' หรือ role จริง (คนตาย + reveal เปิด) */
 .gps-role {
   width: 34px; height: 44px;
   border-radius: var(--radius-sm);
@@ -637,7 +619,6 @@
   text-transform: uppercase;
 }
 
-/* Night of Day 0 — พาเนลเตรียมตัวดู role */
 .gpz {
   width: 100%;
   max-width: 360px;
@@ -663,7 +644,6 @@
 .gpz-btn { align-self: center; }
 .gpz-count { font-family: var(--font-meta); font-size: 0.7rem; color: var(--text-muted); }
 
-/* Your Role card — default คว่ำ, แตะ toggle เปิด/ปิดได้ตลอดเกม */
 .gpr {
   width: 100%;
   max-width: 360px;
@@ -688,7 +668,6 @@
   color: var(--text-muted);
 }
 
-/* facedown — ลายทางเฉียงเป็น fallback ตอนไฟล์หลังการ์ดโหลดไม่ขึ้นเท่านั้น */
 .gpr.is-closed .gpr-inner {
   min-height: 120px;
   justify-content: center;
@@ -705,8 +684,6 @@
 }
 .gpr-hint { font-family: var(--font-body); font-size: 0.66rem; color: var(--silver-dim); }
 
-/* open */
-/* ภาพการ์ดจริง (public/roles/*.png) — สัดส่วน 1:1 ตามไฟล์ต้นฉบับ */
 .gpr-art {
   display: block;
   width: 100%;
@@ -717,7 +694,6 @@
   border-radius: var(--radius-sm);
 }
 
-/* หลังการ์ดวางในสถานะคว่ำ — ใช้สเกลเดียวกับหน้าการ์ดเพื่อไม่ให้ขนาดกระตุกตอน toggle */
 .gpr-art-back { max-width: 220px; }
 
 .gpr-identity {
@@ -748,7 +724,6 @@
   padding: 3px 12px;
 }
 
-/* ── ACTION LOG BAR (gpl-) ───────────────────────────────── */
 .gpl {
   grid-area: log;
   position: relative;
@@ -811,7 +786,6 @@
 .gpl-item-text { flex: 1; color: var(--text-secondary); }
 .gpl-item-time { font-size: 0.66rem; color: var(--text-muted); font-family: var(--font-meta); flex-shrink: 0; }
 
-/* ── responsive: พับเป็นคอลัมน์เดียวบนจอแคบ ── */
 @media (max-width: 1024px) {
   .gp-page {
     grid-template-columns: 1fr;

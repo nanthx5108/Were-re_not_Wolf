@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGame } from '../../context/Gamecontext.jsx';
+import { useGame } from '../context/Gamecontext.jsx';
 import '../styles/MorningEvent.css';
 
 // Seer รู้แค่ฝ่าย ไม่ใช่บทบาท — Fool อยู่ฝ่ายเป็นกลาง จึงอ่านว่า "ไม่ใช่หมาป่า" เหมือนชาวบ้าน

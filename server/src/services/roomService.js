@@ -28,8 +28,6 @@ export async function createRoomService({ hostNickname, roomName, userId, maxPla
       `INSERT INTO rooms (id, name, host_id, game_mode, max_players, is_private, config) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [roomId, roomName.trim(), hostId, safeGameMode, safeMaxPlayers, safeIsPrivate, JSON.stringify(safeConfig)]
     );
-    // logged-in user ใช้ userId เป็น player id (คงที่ทั่วระบบเพื่อผูก exp/level)
-    // ถ้าเคยมี player row ค้างจากห้องก่อน → ย้ายตัวตนมาห้องใหม่แทนที่จะชน PK แล้ว 500
     await conn.query(
       `INSERT INTO players (id, room_id, nickname) VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE room_id = VALUES(room_id), nickname = VALUES(nickname),
@@ -49,9 +47,6 @@ export async function createRoomService({ hostNickname, roomName, userId, maxPla
     maxPlayers: safeMaxPlayers, isPrivate: safeIsPrivate, gameMode: safeGameMode, config: safeConfig,
   });
   addPlayerToRoom(roomId, { id: hostId, nickname: hostNickname.trim() });
-  // ห้องเพิ่งสร้างผ่าน REST — host ยังไม่ได้ต่อ socket จริง จึงถือว่ายัง "ไม่ connect"
-  // จนกว่า socket room:join จะเข้ามา (handleRejoin จะเซ็ต isConnected:true ให้เอง)
-  // ไม่งั้น sweep จะเห็น host เป็นคน connect ค้างแล้วไม่ยอมลบห้องที่ถูกทิ้งตั้งแต่ยังไม่เข้า
   updatePlayer(roomId, hostId, { isConnected: false });
 
   return { roomId, playerId: hostId };
@@ -132,7 +127,6 @@ export async function joinRoomService({ roomId, nickname, userId }) {
   }
 
   const playerId = userId || uuidv4();
-  // ดู createRoomService — logged-in user ที่เคยอยู่ห้องอื่นต้องย้ายมา ไม่ใช่ชน PK แล้ว 500
   await pool.query(
     `INSERT INTO players (id, room_id, nickname) VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE room_id = VALUES(room_id), nickname = VALUES(nickname),
@@ -146,11 +140,3 @@ export async function joinRoomService({ roomId, nickname, userId }) {
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
-
-
-
-
-
-
-
-

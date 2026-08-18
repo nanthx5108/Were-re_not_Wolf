@@ -1,5 +1,5 @@
 import { getPlayersArray, updateRoom } from './gameStore.js';
-import { ROLE_FACTION } from './constants.js';
+import { getRoleFactionMap } from './constants.js';
 
 export function evaluateWinCondition(roomId) {
   const players = getPlayersArray(roomId).filter(p => p.isAlive);
@@ -15,7 +15,7 @@ export function evaluateWinCondition(roomId) {
   }
 
   const aliveWerewolves = players.filter(p => p.role === 'werewolf').length;
-  const aliveVillagers = players.filter(p => ROLE_FACTION[p.role] === 'village').length;
+  const aliveVillagers = players.filter(p => getRoleFactionMap()[p.role] === 'village').length;
 
   if (aliveWerewolves === 0) {
     return {

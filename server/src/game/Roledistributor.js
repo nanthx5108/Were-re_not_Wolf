@@ -1,5 +1,5 @@
 import { PLAYER_LIMITS, getRoles } from './constants.js';
-import { CONFIGURABLE_ROLES, buildDefaultRoleConfig } from './roomConfig.js'; // CONFIGURABLE_ROLES is now dynamic
+import { CONFIGURABLE_ROLES, buildDefaultRoleConfig } from './roomConfig.js';
 
 function shuffle(arr) {
   const a = [...arr];
@@ -10,8 +10,6 @@ function shuffle(arr) {
   return a;
 }
 
-// กาง roleConfig ({ werewolf: 2, seer: 1, ... }) เป็นรายการบทบาทตามจำนวนผู้เล่นจริง
-// ที่นั่งที่เหลือหลังหักบทบาทพิเศษจะถูกเติมด้วย villager
 export function buildRoleList(roleConfig, playerCount) {
   const ROLES = getRoles();
   const roles = [];

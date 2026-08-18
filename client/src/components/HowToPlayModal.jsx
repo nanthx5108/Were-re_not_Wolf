@@ -3,14 +3,12 @@ import { morningEventChance } from '../constants/game.js';
 import { useGameData } from '../context/GameDataContext.jsx';
 import '../styles/HowToPlay.css';
 
-// สามหัวข้อตามที่ผู้เล่นมักถาม: เล่นยังไงให้ชนะ · บทบาทมีอะไรบ้าง · เช้าจะเจออะไร
 const TABS = [
   { key: 'win',    label: 'เล่นยังไงให้ชนะ', icon: '🏆' },
   { key: 'roles',  label: 'ข้อมูลบทบาททั้งหมด', icon: '🎭' },
   { key: 'events', label: 'การสุ่มเหตุการณ์', icon: '🎲' },
 ];
 
-// ลำดับบทบาทตามความสำคัญที่ผู้เล่นควรอ่าน ไม่ใช่ตามตัวอักษร
 const ROLE_ORDER = ['werewolf', 'villager', 'seer', 'bodyguard', 'silencer', 'fool'];
 
 const PHASES_FLOW = [
@@ -37,7 +35,6 @@ export default function HowToPlayModal({ onClose }) {
   const { roles: allRoles, roleMap, morningEvents: allMorningEvents } = useGameData();
   const [tab, setTab] = useState('win');
 
-  // ปิดด้วย Esc — ผู้เล่นที่เปิดมาอ่านเฉย ๆ ไม่ควรต้องหาปุ่มปิด
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -121,7 +118,6 @@ function WinSection() {
 }
 
 function RolesSection({ allRoles, roleMap }) {
-  // Filter out villager from configurable roles for display, and sort by a predefined order
   const displayRoles = ROLE_ORDER.map(roleKey => roleMap.get(roleKey)).filter(Boolean);
 
   return (
@@ -165,7 +161,7 @@ function EventsSection({ allMorningEvents }) {
       <div className="htp-events">
         {allMorningEvents.map(ev => {
           const chance = morningEventChance(ev, allMorningEvents);
-          return ev.id !== 'quiet_morning' && ( // Don't display quiet_morning in the list
+          return ev.id !== 'quiet_morning' && (
             <article key={ev.id} className={`htp-event cv-auto-lg ${ev.conditional ? 'is-conditional' : ''}`}>
               <div className="htp-event-head">
                 <div className="htp-event-icon" aria-hidden="true">
@@ -182,7 +178,6 @@ function EventsSection({ allMorningEvents }) {
               </div>
               {chance !== null && (
                 <div className="htp-event-bar" aria-hidden="true">
-                  {/* แถบยาวตามโอกาส — เทียบกันด้วยตาได้เร็วกว่าอ่านตัวเลข */}
                   <span style={{ width: `${Math.min(100, chance * 4)}%` }} />
                 </div>
               )}

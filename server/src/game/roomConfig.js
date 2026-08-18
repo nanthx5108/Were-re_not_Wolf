@@ -2,18 +2,13 @@ import { PLAYER_LIMITS, getRoleFactionMap, getRoles } from './constants.js';
 import { getActiveRoles } from '../services/gameDataService.js';
 import { getSetting } from '../services/gameSettingsService.js';
 
-// บทบาทที่ host กำหนดจำนวนเองได้ — ที่เหลือเติมเป็น villager อัตโนมัติ
-// เพิ่ม role ใหม่ (เช่น silencer) = เพิ่มชื่อในนี้ + ROLE_FACTION แล้ว validation ตามมาเอง
 export const CONFIGURABLE_ROLES = Object.freeze(getActiveRoles().filter(r => r.name_en !== getRoles().VILLAGER).map(r => r.name_en));
 
-// 2 โหมดเกม
 export const GAME_MODES = Object.freeze({ CLASSIC: 'classic', CHAOS: 'chaos' });
 export function isValidGameMode(mode) {
   return mode === GAME_MODES.CLASSIC || mode === GAME_MODES.CHAOS;
 }
 
-// โหมดโกลาหล: เวลาแต่ละ phase คงที่ (host ตั้งไม่ได้) — night 25 / day 90 / voting 25
-// floor 15 วิ กันไว้เผื่ออนาคตปรับค่าพวกนี้แล้วเผลอตั้งต่ำจนเล่นไม่ได้
 export const CHAOS_MIN_DURATION = 15;
 export const CHAOS_PHASE_DURATIONS = Object.freeze({
   night:  Math.max(CHAOS_MIN_DURATION, getSetting('duration.chaos.night', 25)),
@@ -27,14 +22,12 @@ export const DEFAULT_PHASE_DURATIONS = Object.freeze({
   voting: getSetting('duration.default.voting', 30),
 });
 
-// ขอบเขตเวลาแต่ละ phase (วินาที) — กัน host ตั้งจนเกมเล่นไม่ได้
 export const DURATION_LIMITS = Object.freeze({
   night:  { min: 15, max: 180 },
   day:    { min: 30, max: 600 },
   voting: { min: 15, max: 300 },
 });
 
-// ค่าเริ่มต้นของจำนวน role อิงตารางเดิม เพื่อให้ห้องที่ไม่ตั้ง config ได้สมดุลเท่าของเก่า
 export function buildDefaultRoleConfig(maxPlayers) {
   const config = {};
   const roles = getRoles();
@@ -44,11 +37,9 @@ export function buildDefaultRoleConfig(maxPlayers) {
   if (activeRoleNames.has(roles.WEREWOLF)) {
     config[roles.WEREWOLF] = 1;
   } else {
-    // Fallback if werewolf is not active, though it should always be.
     config[roles.WEREWOLF] = 1;
   }
 
-  // Set other configurable roles to 0 by default, host can add them.
   for (const roleName of CONFIGURABLE_ROLES) {
     if (roleName !== roles.WEREWOLF) config[roleName] = 0;
   }
@@ -64,10 +55,6 @@ export function buildDefaultRoomConfig(maxPlayers) {
   };
 }
 
-/**
- * ตรวจและทำให้ config ที่รับมาจาก client อยู่ในรูปที่เชื่อถือได้
- * คืน { config } เมื่อผ่าน หรือ { error } เมื่อไม่ผ่าน — ห้าม throw เพื่อให้ controller ตอบ 400 ได้ตรงๆ
- */
 export function normalizeRoomConfig(input, maxPlayers) {
   const defaults = buildDefaultRoomConfig(maxPlayers);
   if (input == null) return { config: defaults };
@@ -129,16 +116,11 @@ export function normalizeRoomConfig(input, maxPlayers) {
     phaseDurations[phase] = n;
   }
 
-  // เปิดเผย role เมื่อผู้เล่นตาย — host toggle, default ปิด (เก็บใน room config เหมือน role/เวลา)
   const revealRoleOnDeath = input.revealRoleOnDeath === true;
 
   return { config: { roleConfig, phaseDurations, revealRoleOnDeath } };
 }
 
-/**
- * ตรวจ config กับจำนวนผู้เล่นที่มีอยู่จริงตอนกดเริ่มเกม
- * (config ตั้งไว้ตาม maxPlayers แต่คนเข้าจริงอาจน้อยกว่า) — คืน error string หรือ null
- */
 export function validateConfigForPlayerCount(roleConfig, playerCount) {
   const specialTotal = sumRoles(roleConfig);
   if (specialTotal > playerCount) {
@@ -151,7 +133,6 @@ function sumRoles(roleConfig) {
   return CONFIGURABLE_ROLES.reduce((sum, role) => sum + (roleConfig[role] || 0), 0);
 }
 
-// หมาป่าต้องน้อยกว่าฝ่ายชาวบ้าน ไม่งั้นเกมจบทันทีที่เริ่ม (win condition: wolves >= villagers)
 function checkFactionBalance(roleConfig, playerCount) {
   const ROLE_FACTION = getRoleFactionMap();
   const wolves = roleConfig.werewolf || 0;
@@ -183,18 +164,12 @@ function shuffled(arr) {
   return a;
 }
 
-/**
- * สุ่ม roleConfig สำหรับโหมดโกลาหล — คำนวณตอนกดเริ่มเกมด้วยจำนวนผู้เล่นจริง
- * กติกาบังคับ: หมาป่า ≥ 1 และ ≤ ⌊playerCount / 4⌋ (แต่อย่างน้อย 1 เสมอ)
- * ที่เหลือสุ่มบทบาทพิเศษของฝ่ายบ้าน/fool โดยคงให้ฝ่ายบ้านมากกว่าหมาป่าเสมอ (ผ่าน validate เดิม)
- */
 export function buildChaosRoleConfig(playerCount) {
   const config = { werewolf: 0, seer: 0, bodyguard: 0, silencer: 0, fool: 0 };
 
   const maxWolves = Math.max(1, Math.floor(playerCount / 4));
   config.werewolf = randInt(1, maxWolves);
 
-  // สุ่มเพิ่มบทบาทพิเศษทีละใบ (แต่ละใบมีได้ 0–1) ตราบใดที่ยังไม่ทำให้ config ใช้ไม่ได้
   for (const role of shuffled(['seer', 'bodyguard', 'silencer', 'fool'])) {
     if (Math.random() < 0.6) {
       const trial = { ...config, [role]: 1 };
@@ -202,7 +177,6 @@ export function buildChaosRoleConfig(playerCount) {
     }
   }
 
-  // กันเหนียว: ถ้าด้วยความบังเอิญยังใช้ไม่ได้ ให้ถอยไปใช้ preset มาตรฐานของขนาดห้องนั้น
   if (validateConfigForPlayerCount(config, playerCount)) {
     return buildDefaultRoleConfig(playerCount);
   }

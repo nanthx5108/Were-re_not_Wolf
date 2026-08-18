@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useGame } from '../../context/Gamecontext.jsx';
+import { useGame } from '../context/Gamecontext.jsx';
 import { useSound } from '../context/SoundContext.jsx';
 import { useGameData } from '../context/GameDataContext.jsx';
 import '../styles/NightAction.css';

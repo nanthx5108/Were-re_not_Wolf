@@ -4,12 +4,6 @@ import { fileURLToPath } from 'url';
 
 const schemaPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'schema.sql');
 
-/**
- * error ที่แปลว่า "statement นี้ถูก apply ไปแล้ว" — ข้ามได้ ไม่ใช่ความล้มเหลว
- * นี่คือสิ่งที่ทำให้ schema.sql รันซ้ำได้ทุกครั้งที่ server start โดยไม่ต้องพึ่ง
- * `ADD COLUMN IF NOT EXISTS` / `CREATE INDEX IF NOT EXISTS` ซึ่งเป็น syntax ของ MariaDB
- * และเป็น syntax error บน MySQL 8
- */
 const ALREADY_APPLIED = new Set([
   1007, // ER_DB_CREATE_EXISTS
   1050, // ER_TABLE_EXISTS_ERROR
@@ -33,10 +27,6 @@ function extractTableName(statement) {
   return null;
 }
 
-/**
- * แยก schema.sql เป็น statement ทีละอัน (mysql2 ส่งทีละ statement ได้แม่นกว่ายัดก้อนเดียว
- * เพราะเราต้องดู error code ของแต่ละ statement)
- */
 function splitStatements(sql) {
   const statements = [];
   let current = '';
@@ -91,10 +81,6 @@ function splitStatements(sql) {
   return statements;
 }
 
-/**
- * รัน schema.sql กับ connection/pool ที่เลือก database ไว้แล้ว
- * ใช้ร่วมกันระหว่างตอน server boot (connection.js) และ `npm run db:migrate`
- */
 export async function runSchema(connection, recoveredTables = new Set()) {
   const sql = fs.readFileSync(schemaPath, 'utf8');
   const statements = splitStatements(sql);
@@ -131,7 +117,6 @@ export async function runSchema(connection, recoveredTables = new Set()) {
   }
 
   try {
-    // One-time script to add the initial admin
     const [userRows] = await connection.query("SELECT id FROM users WHERE email = 'blaztx5108@gmail.com' LIMIT 1");
     if (userRows.length > 0) {
       await connection.query("INSERT IGNORE INTO admins (user_id) VALUES (?)", [userRows[0].id]);

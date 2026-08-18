@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../src/context/AuthContext.jsx';
 import { STARTING_LEVEL } from '../../shared/leveling.js';
 import bgHome from '../src/assets/bgHome.jpg';
 import Reveal from '../src/components/Reveal.jsx';
@@ -71,8 +71,6 @@ export default function ViewProfilePage() {
           </div>
 
           <div className="view-profile-content">
-            {/* แต่ละแถวซ่อนไว้ก่อนแล้วค่อยไล่โผล่ทีละแถว — หน้านี้เป็นข้อมูลอ่านอย่างเดียว
-                (ไม่ใช่ฟอร์มที่ต้องกรอก) จึงซ่อนแล้วค่อยแสดงได้โดยไม่กระทบการใช้งาน */}
             <Reveal as="div" className="view-profile-field" delay={0}>
               <div className="view-profile-field-label">ชื่อบัญชี</div>
               <div className="view-profile-field-value">{user?.username || 'ยังไม่ได้ระบุ'}</div>

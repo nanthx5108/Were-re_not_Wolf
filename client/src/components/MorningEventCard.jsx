@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGame } from '../../context/Gamecontext.jsx';
+import { useGame } from '../context/Gamecontext.jsx';
 import '../styles/MorningEventCard.css';
 
 const cardVariants = {

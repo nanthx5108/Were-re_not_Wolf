@@ -8,10 +8,6 @@ const pool = mysql.createPool({
   database: dbName,
 });
 
-/**
- * managed host บางเจ้าสร้าง database มาให้แล้ว และ user มักไม่มีสิทธิ์ CREATE DATABASE
- * → ถ้าโดนปฏิเสธสิทธิ์ ให้เดินต่อ แล้วปล่อยให้ pool เป็นคนบอกเองถ้า database ไม่มีจริง
- */
 async function ensureDatabaseExists() {
   const connection = await mysql.createConnection({ ...connectionConfig });
 
@@ -20,7 +16,7 @@ async function ensureDatabaseExists() {
       `CREATE DATABASE IF NOT EXISTS ${escapeId(dbName)} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
     );
   } catch (err) {
-    const accessDenied = err.errno === 1044 || err.errno === 1045; // ER_DBACCESS_DENIED_ERROR / ER_ACCESS_DENIED_ERROR
+    const accessDenied = err.errno === 1044 || err.errno === 1045;
     if (!accessDenied) throw err;
     console.warn(`⚠️  ไม่มีสิทธิ์ CREATE DATABASE — ถือว่า "${dbName}" ถูกสร้างไว้บน host แล้ว`);
   } finally {

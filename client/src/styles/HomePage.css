@@ -355,6 +355,21 @@
   transition: opacity 200ms var(--ease);
 }
 
+.home-logo-image {
+  width: 100%;
+  max-width: 850px;
+  height: 200px;
+  display: inline-block;
+}
+
+/* โลโก้หน้าโหลด (logo_loading.png) — แยก style จาก .home-logo-image (Logo-Main) โดยเฉพาะ */
+.logo-loading-image {
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  display: inline-block;
+}
+
 .home-hero-copy {
   margin: var(--space-4) auto 0;
   max-width: 720px;
@@ -977,7 +992,13 @@
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.86rem;
+  white-space: nowrap;
   transition: color var(--ease), border-color var(--ease), background var(--ease), transform var(--ease);
+}
+.join-back-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 .join-back-btn:hover {
   border-color: rgba(255,255,255,0.5);
@@ -1003,6 +1024,8 @@
 .join-search-wrap svg {
   position: absolute;
   left: 12px;
+  width: 16px;
+  height: 16px;
   color: var(--text-muted);
   pointer-events: none;
 }
@@ -2062,10 +2085,6 @@
   .wolf-easter-egg.is-visible { transform: translateX(-50%); }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Keyboard focus — ลูกเล่นส่วนใหญ่ผูกกับ hover
-   คน Tab ด้วยคีย์บอร์ดต้องเห็นชัดว่าโฟกัสอยู่ตรงไหน
-   ═══════════════════════════════════════════════════════════ */
 .home-page button:focus-visible,
 .home-page a:focus-visible,
 .home-page input:focus-visible,

@@ -1,16 +1,42 @@
 import test, { mock } from 'node:test';
 import assert from 'node:assert/strict';
 
-// phaseManager แตะ DB ตอน resolve — เทสต์ตรงนี้สนใจ phase กับ exp ไม่ใช่ persistence จริง
-// userRows คือแถวที่ SELECT ... FROM users จะคืนมา (ว่าง = ทุกคนเป็น guest)
 let userRows = [];
 
 mock.module('../../db/connection.js', {
-  exports: {
-    default: {
-      query: async sql =>
-        /FROM users/i.test(sql) ? [userRows, []] : [[], []],
-    },
+  defaultExport: {
+    query: async sql =>
+      /FROM users/i.test(sql) ? [userRows, []] : [[], []],
+  },
+});
+
+// morningEvents.js / roomConfig.js import gameSettingsService.js ซึ่ง import
+// db/connection.js อีกทีแบบ transitive — mock.module ของ node:test ไม่ intercept
+// การ import ทางอ้อมแบบนี้ ต้อง mock ตรงจุดที่ import จริงด้วย
+mock.module('../services/gameSettingsService.js', {
+  namedExports: {
+    getSetting: (key, fallback) => fallback,
+    refreshSettings: async () => {},
+  },
+});
+
+// constants.js อ่าน role list ผ่าน gameDataService.js (โหลดจาก DB จริง) — ใน
+// เทสต์ไม่มี DB จึงได้ [] เสมอ ทำให้ getRoleFactionMap() ว่างเปล่า และ win
+// condition คำนวณผิด (เห็น aliveVillagers = 0 ทุกครั้ง) ต้อง mock ให้เป็น
+// role list จริงตาม CLAUDE.md
+mock.module('../services/gameDataService.js', {
+  namedExports: {
+    getActiveRoles: () => [
+      { name_en: 'villager', faction: 'village', night_action: false },
+      { name_en: 'werewolf', faction: 'werewolf', night_action: true },
+      { name_en: 'seer', faction: 'village', night_action: true },
+      { name_en: 'bodyguard', faction: 'village', night_action: true },
+      { name_en: 'silencer', faction: 'village', night_action: true },
+      { name_en: 'fool', faction: 'neutral', night_action: false },
+    ],
+    getActiveFortuneCards: () => [],
+    getMorningEvents: () => [],
+    refreshGameData: async () => {},
   },
 });
 
@@ -28,7 +54,6 @@ function makeIo() {
   return {
     emitted,
     privateEmits,
-    // ผูก socket ปลอมให้ผู้เล่นคนหนึ่ง เพื่อดักข้อความที่ส่งถึงเจ้าตัวโดยตรง
     attachSocket(socketId) {
       sockets.set(socketId, {
         emit: (event, data) => privateEmits.push({ socketId, event, data }),
@@ -41,7 +66,6 @@ function makeIo() {
   };
 }
 
-// ตั้งห้องที่กำลังโหวตอยู่ พร้อมบทบาทตามที่ระบุ
 function seedVotingRoom(roomId, roles) {
   createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 8 });
 
@@ -57,13 +81,11 @@ function seedVotingRoom(roomId, roles) {
 
 test('voting phase resolves and advances to results without crashing', async t => {
   const roomId = 'room-vote-advance';
-  // เนรเทศชาวบ้าน 1 คน แล้วเกมยังไม่จบ (wolf 1 < villager 2) — ต้องไปต่อที่ results
   seedVotingRoom(roomId, ['werewolf', 'villager', 'villager', 'villager']);
   t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); });
 
   const { io, emitted } = makeIo();
 
-  // p1..p3 โหวต p3 ออก
   castVote(roomId, 'p1', 'p3');
   castVote(roomId, 'p2', 'p3');
   castVote(roomId, 'p0', 'p3');
@@ -125,7 +147,6 @@ test('ending a game awards exp and pushes the new level back to the player', asy
   seedVotingRoom(roomId, ['werewolf', 'villager', 'villager', 'villager']);
   t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); userRows = []; });
 
-  // p1 อยู่ Lv.0 exp 4 — Lv.0 ต้องการ 5 exp ดังนั้นเกมนี้ทำให้เลื่อนเป็น Lv.1 พอดี
   userRows = [{ id: 'p1', level: 0, exp: 4, games_played: 4 }];
 
   const harness = makeIo();
@@ -141,8 +162,8 @@ test('ending a game awards exp and pushes the new level back to the player', asy
   assert.ok(progress, 'ต้องส่ง player:progress กลับให้ผู้เล่นที่ล็อกอิน');
   assert.equal(progress.socketId, 'sock-p1', 'ต้องส่งถึงเจ้าตัวเท่านั้น');
   assert.deepEqual(progress.data, {
-    level:       1,   // 4 + 1 = 5 ครบเกณฑ์ Lv.0 → เลื่อนขั้น
-    exp:         0,   // exp ที่เหลือหลังหักค่าเลื่อนขั้น
+    level:       1,
+    exp:         0,
     expNeeded:   7,   // เกณฑ์ของ Lv.1
     gamesPlayed: 5,
     leveledUp:   true,
@@ -154,7 +175,6 @@ test('guests in the room get no exp and no progress event', async t => {
   seedVotingRoom(roomId, ['werewolf', 'villager', 'villager', 'villager']);
   t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); userRows = []; });
 
-  // ไม่มีใครอยู่ในตาราง users เลย — ทุกคนเป็น guest
   userRows = [];
 
   const harness = makeIo();

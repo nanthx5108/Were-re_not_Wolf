@@ -504,6 +504,7 @@ export async function updateGameSetting(req, res) {
     );
 
     res.json({ message: `อัปเดตการตั้งค่า ${key} สำเร็จ` });
+    refreshSettings(); // Refresh cached settings
     // No need to refresh game data for settings
     logAdminAction(
       req.user.id,

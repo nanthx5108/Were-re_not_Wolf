@@ -2,7 +2,7 @@ import React from 'react';
 import { IconTrophy } from '../ui/Icons.jsx';
 import defaultAvatar from '../../assets/ui/default_avatar.png';
 import '../../styles/HomePage.css';
-import { levelProgress } from '../../../shared/leveling.js';
+import { levelProgress } from '../../../../shared/leveling.js';
 
 const RANK_CLASS = ['is-gold', 'is-silver', 'is-bronze'];
 

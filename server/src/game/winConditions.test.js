@@ -1,13 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mock } from 'node:test';
 import { createRoom, addPlayerToRoom, deleteRoom } from './gameStore.js';
 import { evaluateWinCondition } from './winConditions.js';
 
-test('werewolf wins when no village players remain alive', () => {
+test('werewolf wins when no village players remain alive', async () => {
   const roomId = 'test-room-1';
   const room = createRoom({ id: roomId, name: 'Test', hostId: 'p1' });
   addPlayerToRoom(roomId, { id: 'p1', nickname: 'Alice' });
   addPlayerToRoom(roomId, { id: 'p2', nickname: 'Bob' });
+
+  mock.method(await import('./constants.js'), 'getRoleFactionMap', () => ({
+    werewolf: 'werewolf',
+  }));
 
   room.players.get('p1').role = 'werewolf';
   room.players.get('p2').role = 'werewolf';

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../src/context/AuthContext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/ProfilePage.css';
 
@@ -59,7 +59,6 @@ function IconEdit() {
   );
 }
 
-/* Reusable confirm dialog — carved wood, same visual language as the rest of the page */
 function ConfirmModal({ open, title, message, confirmLabel = 'ยืนยัน', cancelLabel = 'ยกเลิก', danger, onConfirm, onCancel }) {
   if (!open) return null;
   return (
@@ -81,16 +80,11 @@ function ConfirmModal({ open, title, message, confirmLabel = 'ยืนยัน
   );
 }
 
-/* แสดงวันเกิดแบบอ่านง่าย — "15 พฤษภาคม 2000" */
 function formatBirthdate(day, month, year) {
   if (!day || !month || !year) return '';
   return `${day} ${THAI_MONTHS[month - 1]} ${year}`;
 }
 
-/**
- * แถวข้อมูลหนึ่งช่อง — ปกติโชว์ค่าเฉย ๆ (readView)
- * คลิกที่ช่อง → ปุ่มดินสอโผล่เฉพาะช่องนั้น · กดดินสอ → สลับเป็นช่องแก้ไข (editView)
- */
 function ProfileField({
   name, label, labelFor, aside,
   active, onActivate,
@@ -112,7 +106,6 @@ function ProfileField({
           <span className={`profile-readvalue ${readView ? '' : 'is-empty'}`}>
             {readView || 'ยังไม่ได้ตั้ง'}
           </span>
-          {/* ซ่อนไว้ก่อน โผล่เฉพาะตอนช่องนี้ถูกคลิก */}
           {active && (
             <button
               type="button"
@@ -132,7 +125,6 @@ function ProfileField({
   );
 }
 
-/* Days remaining until the account name can be changed again */
 function useUsernameCooldown(lastChangedAt) {
   return useMemo(() => {
     if (!lastChangedAt) return { locked: false, daysLeft: 0 };
@@ -168,9 +160,7 @@ export default function ProfilePage() {
 
   const [modal, setModal] = useState(null); // 'edit-username' | 'link-email' | 'reset' | null
 
-  // ช่องที่ผู้ใช้คลิกล่าสุด — ปุ่มดินสอโผล่เฉพาะช่องนี้ช่องเดียว
   const [activeField, setActiveField] = useState(null);
-  // ช่องที่ปลดล็อกให้แก้ไขแล้ว (username ยังต้องผ่าน modal ยืนยันก่อน)
   const [unlocked, setUnlocked] = useState({});
   const unlock = (name) => setUnlocked(prev => ({ ...prev, [name]: true }));
 
@@ -232,7 +222,6 @@ export default function ProfilePage() {
     setAvatarFile(null);
     setError('');
     setModal(null);
-    // กลับไปเป็นโหมดอ่านอย่างเดียวทุกช่อง ไม่งั้นช่องที่เคยปลดล็อกจะยังเปิดค้าง
     setUnlocked({});
     setActiveField(null);
   }
@@ -322,7 +311,6 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            {/* ชื่อในเกม */}
             <ProfileField
               name="displayName"
               label="ชื่อที่แสดงในเกม"
@@ -347,7 +335,6 @@ export default function ProfilePage() {
               }
             />
 
-            {/* ชื่อบัญชี — ต้องยืนยันก่อนแก้ และมีคูลดาวน์ */}
             <ProfileField
               name="username"
               label="ชื่อบัญชี (ใช้ล็อกอิน)"
@@ -375,7 +362,6 @@ export default function ProfilePage() {
               }
             />
 
-            {/* วันเดือนปีเกิด */}
             <ProfileField
               name="birthdate"
               label="วันเดือนปีเกิด"
@@ -420,7 +406,6 @@ export default function ProfilePage() {
               )}
             />
 
-            {/* อีเมล */}
             <ProfileField
               name="email"
               label="อีเมล"
@@ -477,7 +462,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ดูรูปโปรไฟล์เต็ม ๆ — มีปุ่มเปลี่ยนรูปอยู่ในนี้อีกทาง */}
       {viewerOpen && (
         <div className="profile-viewer-overlay" onClick={() => setViewerOpen(false)}>
           <div className="profile-viewer" onClick={e => e.stopPropagation()}>

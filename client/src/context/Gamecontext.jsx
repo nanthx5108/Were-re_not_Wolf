@@ -2,8 +2,8 @@ import React, {
   createContext, useContext, useReducer,
   useEffect, useCallback, useMemo,
 } from 'react';
-import { socket } from '../src/socket/socket.jsx';
-import { useToast } from './ToastContext.jsx';
+import { socket } from '../socket/socket.jsx';
+import { useToast } from '../components/ToastContext.jsx';
 import { soundManager } from '../sound/soundManager.js';
 
 export const SOCKET_EVENTS = Object.freeze({
@@ -50,8 +50,6 @@ export const SOCKET_EVENTS = Object.freeze({
   ROOM_CLOSED:          'room:closed',
 });
 
-// เก็บ identity ไว้ใน sessionStorage เพื่อให้รีเฟรชแล้วกลับเข้าเกมได้
-// ใช้ session ไม่ใช่ local เพราะแยกตามแท็บ — เปิดหลายแท็บทดสอบพร้อมกันได้โดยไม่ทับกัน
 const SESSION_KEY = 'wnw:session';
 
 export function saveSession(session) {
@@ -102,7 +100,6 @@ const initialState = {
 };
 
 let _logSeq = 0;
-// สร้างรายการ log บรรทัดเดียว น้ำเสียง narrator เสียดสี — id กันซ้ำด้วย seq ของตัวเอง
 function pushLog(log, icon, text) {
   const entry = { id: `log-${Date.now()}-${_logSeq++}`, icon, text, at: new Date().toISOString() };
   return [...log, entry].slice(-40);
@@ -115,7 +112,6 @@ function gameReducer(state, action) {
       return { ...state, playerId: action.playerId, nickname: action.nickname };
 
     case 'ROOM_CLOSED':
-      // เจ้าของห้องปิดห้อง — ล้าง room state แล้วตั้ง flag ให้ component เด้งกลับหน้าแรก
       return { ...state, room: null, gameResult: null, roomClosed: true };
 
     case 'SOCKET_CONNECTED':
@@ -129,7 +125,7 @@ function gameReducer(state, action) {
         ...state,
         room:   action.room,
         myRole: action.room.myRole ?? state.myRole,
-        roomClosed: false,   // เข้าห้องใหม่แล้ว — เคลียร์ flag ปิดห้องรอบก่อน
+        roomClosed: false,
       };
 
     case 'PLAYERS_UPDATED':
@@ -144,8 +140,6 @@ function gameReducer(state, action) {
         room: state.room ? { ...state.room, hostId: action.newHostId } : state.room,
       };
 
-    // config ที่ server validate แล้ว — ทุกคนในห้องได้รับเหมือนกัน รวมทั้ง host เอง
-    // แผงตั้งค่าจึงวาดจาก state นี้ตัวเดียว ไม่มี local state ให้ drift
     case 'CONFIG_UPDATED':
       return {
         ...state,
@@ -164,8 +158,6 @@ function gameReducer(state, action) {
         actionLog: action.message.isWhisper ? state.actionLog : pushLog(state.actionLog, '💬', `${action.message.nickname}: ${action.message.content}`),
       };
 
-    // แชทย้อนหลังของห้องวิญญาณ — ขอตอนเพิ่งตาย จะได้เห็นว่าคนที่ตายก่อนหน้าคุยอะไรกันไว้
-    // เรียงใหม่ตามเวลาเสมอ ไม่งั้นข้อความเก่าจะไปต่อท้ายของใหม่
     case 'DEAD_HISTORY': {
       const known = new Set(state.messages.map(m => m.id));
       const merged = [...state.messages, ...action.messages.filter(m => !known.has(m.id))];
@@ -183,7 +175,7 @@ function gameReducer(state, action) {
       return {
         ...state,
         myRole: action.myRole,
-        teammates: action.teammates ?? [],   // มีเฉพาะหมาป่า — server ไม่ส่ง field นี้ให้คนอื่น
+        teammates: action.teammates ?? [],
         room: state.room ? {
           ...state.room,
           status:          'in_progress',
@@ -210,20 +202,18 @@ function gameReducer(state, action) {
           phaseDurationMs: action.durationMs ?? null,
           round:           action.round,
         } : state.room,
-        typingIds:  [],   // ขึ้น phase ใหม่ = เริ่มนับ typing ใหม่ กันค้างจาก phase ก่อน
+        typingIds:  [],
         votes:      action.phase === 'voting' ? { voteMap: {}, counts: {} } : null,
         voteResult: action.phase === 'results' ? state.voteResult : null,
         wolfTargets:   action.phase === 'night' ? {} : state.wolfTargets,
         seerResult:    action.phase === 'night' ? null : state.seerResult,
         myNightAction: action.phase === 'night' ? null : state.myNightAction,
         privateNote:   action.phase === 'night' ? null : state.privateNote,
-        // การปิดปากมีผลแค่วันเดียว — พอขึ้นคืนใหม่ก็พูดได้ (ตรงกับที่ server เคลียร์)
         fortuneInfo:   action.phase === 'night' ? null : state.fortuneInfo,
         earlyInfo:     action.phase === 'night' ? null : state.earlyInfo,
         realtimeVoteCounts: null, // Clear vote stream when phase changes
-        myFortuneCard: action.phase === 'night' ? null : state.myFortuneCard, // การ์ดโชคมีผลแค่วันเดียว
+        myFortuneCard: action.phase === 'night' ? null : state.myFortuneCard,
         silencedNote:  action.phase === 'night' ? null : state.silencedNote,
-        // morningEvent คงไว้ข้ามคืน — NightAction ใช้เช็ค effect เช่น คืนที่ปลอดภัย (เลือกป้องกัน 2 คน)
       };
 
     case 'VOTE_UPDATE':
@@ -254,7 +244,6 @@ function gameReducer(state, action) {
     case 'NIGHT_ACTION_ACK':
       return { ...state, myNightAction: action.payload, nightResult: null };
 
-    // มาจาก server เฉพาะเมื่อเราเป็นหมาป่า — เป้าหมายของเพื่อนร่วมทีม
     case 'WOLF_TARGET_UPDATE':
       return {
         ...state,
@@ -279,7 +268,6 @@ function gameReducer(state, action) {
     case 'SEER_RESULT':
       return { ...state, seerResult: action.payload };
 
-    // ผู้พิทักษ์เท่านั้นที่ได้รับ — คนที่เพิ่งเฝ้าไปเมื่อคืน เลือกซ้ำไม่ได้
     case 'BLOCKED_TARGETS':
       return { ...state, blockedTargets: action.payload.targetIds || [] };
 
@@ -316,7 +304,6 @@ function gameReducer(state, action) {
     case 'FORTUNE_REALTIME_VOTE_COUNT':
       return { ...state, realtimeVoteCounts: action.payload.counts };
 
-    // กลับเข้าเกมหลังรีเฟรช/เน็ตหลุด — server ส่ง state ส่วนตัวมาให้ครบชุด
     case 'GAME_RESUMED':
       return {
         ...state,
@@ -367,7 +354,6 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.ROOM_HOST_CHANGED]:    ({ newHostId }) => dispatch({ type: 'HOST_CHANGED', newHostId }),
       [SOCKET_EVENTS.ROOM_CONFIG_UPDATED]:  (config)        => dispatch({ type: 'CONFIG_UPDATED', ...config }),
       [SOCKET_EVENTS.CHAT_MESSAGE]: (message) => {
-        // Play sound for received messages, but not for own messages or system messages.
         const session = loadSession();
         if (
           message.channel !== 'system' &&
@@ -403,7 +389,6 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.GAME_ENDED]:           (payload) => dispatch({ type: 'GAME_ENDED', ...payload }),
       [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
       [SOCKET_EVENTS.VOTE_RESULT]: (data) => dispatch({ type: 'VOTE_RESULT', ...data }),
-      // เจ้าของห้องปิดห้อง → ล้าง session แล้วตั้ง flag ให้ Lobby เด้งกลับหน้าแรก
       [SOCKET_EVENTS.ROOM_CLOSED]: () => { clearSession(); dispatch({ type: 'ROOM_CLOSED' }); },
     };
 
@@ -428,8 +413,6 @@ export function GameProvider({ children }) {
     dispatch({ type: 'RESET' });
   }, []);
 
-  // รีเฟรชหน้ากลางเกม / เน็ตหลุดแล้ว socket.io ต่อกลับได้ → ยิง room:join ซ้ำด้วย identity เดิม
-  // server เห็นว่า playerId อยู่ในห้องอยู่แล้ว จึงคืน state ให้แทนที่จะปฏิเสธว่า "เกมเริ่มไปแล้ว"
   useEffect(() => {
     const session = loadSession();
     if (!session?.roomId || !session?.playerId) return;
@@ -455,7 +438,6 @@ export function GameProvider({ children }) {
   const clearCensorNote = useCallback(() => dispatch({ type: 'CLEAR_CENSOR_NOTE' }), []);
   const loadDeadHistory = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_DEAD_HISTORY), []);
 
-  // ตายหรือยัง — อ่านจาก players ที่ server ส่งมา ไม่ให้ component แต่ละตัวไปคำนวณเอง
   const isDead = useMemo(() => Boolean(
     state.room?.status === 'in_progress' &&
     state.room.players?.find(p => p.id === state.playerId)?.isAlive === false
@@ -463,12 +445,13 @@ export function GameProvider({ children }) {
 
   const contextValue = useMemo(() => ({
     ...state,
+    players: state.room?.players ?? [],
     isDead,
     setIdentity, joinRoom, leaveRoom,
     sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase, requestExtraTime,
     castVote, submitNightAction, updateRoomConfig,
     clearCensorNote, loadDeadHistory,
-  }), [state, isDead, setIdentity, joinRoom, leaveRoom, sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase, requestExtraTime, castVote, submitNightAction, updateRoomConfig, clearCensorNote, loadDeadHistory]);
+  }), [state, isDead, setIdentity, joinRoom, leaveRoom, sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase, requestExtraTime, castVote, submitNightAction, updateRoomConfig, clearCensorNote, loadDeadHistory, state.room?.players]);
 
   return (
     <GameContext.Provider value={contextValue}>

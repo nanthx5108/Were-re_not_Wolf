@@ -1,3 +1,5 @@
+import { getRoom } from './gameStore.js';
+
 const voteStore = new Map();
 
 export function initVoting(roomId) {
@@ -7,6 +9,10 @@ export function initVoting(roomId) {
 export function castVote(roomId, voterId, targetId) {
   const roomVotes = voteStore.get(roomId);
   if (!roomVotes) return null;
+  const player = getRoom(roomId)?.players.get(voterId);
+  if (player?.isConfusedThisRound) {
+    return null;
+  }
   roomVotes.set(voterId, targetId);
   return getVoteData(roomId);
 }

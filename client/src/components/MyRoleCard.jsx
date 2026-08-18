@@ -6,8 +6,6 @@ import { useGame } from '../context/Gamecontext.jsx';
 import { useSound } from '../context/SoundContext.jsx';
 import '../styles/MyRoleCard.css';
 
-// บทบาทของเจ้าเอง — server ส่ง myRole มาให้เฉพาะเจ้าของ socket เท่านั้น
-// การ์ดคว่ำเป็น default (กันคนชะโงกดูจอ) แตะเพื่อเปิด/ปิดดูได้ตลอดเกม
 export default function MyRoleCard() {
   const { myRole, teammates } = useGame();
   const { roleMap } = useGameData();
@@ -18,15 +16,13 @@ export default function MyRoleCard() {
   const [backFailed, setBackFailed] = useState(false);
 
   useEffect(() => {
-    if (myRole && !open) { // Play sound only when card is initially revealed (myRole changes) and not yet opened
+    if (myRole && !open) {
       sound.playSfx('/audio/sfx_card_draw.wav');
     }
   }, [myRole, sound, open]);
 
   const roleInfo = roleMap.get(myRole);
 
-  // ถ้าไม่มี roleInfo (เช่น role ที่ไม่รู้จัก หรือยังไม่ได้รับจาก server)
-  // หรือยังไม่ถึง night_zero ก็ไม่แสดงการ์ด
   if (!myRole) return null;
 
   function toggle() {
@@ -45,7 +41,6 @@ export default function MyRoleCard() {
       aria-label={open ? `การ์ด ${roleInfo?.name_th}, แตะเพื่อคว่ำ` : 'การ์ดบทบาท, แตะเพื่อเปิดดู'}
     >
       <div className={`gpr-card ${open ? 'is-flipped' : ''}`}>
-        {/* Back Face */}
         <div className="gpr-face gpr-face-back">
           {!backFailed ? (
             <img
@@ -62,13 +57,12 @@ export default function MyRoleCard() {
           <div className="gpr-hint">แตะเพื่อเปิดดู</div>
         </div>
 
-        {/* Front Face */}
         <div className="gpr-face gpr-face-front">
           {roleInfo?.card_image && !artFailed ? (
             <img
               className="gpr-art"
-              src={roleInfo.card_image}
-              alt={`การ์ด${roleInfo.name_th}`}
+              src={roleInfo?.card_image}
+              alt={`การ์ด${roleInfo?.name_th}`}
               onError={() => setArtFailed(true)}
             />
           ) : null}

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../src/context/AuthContext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
-import { useToast } from '../src/context/ToastContext.jsx';
+import { useToast } from '../src/components/ToastContext.jsx';
 import '../src/styles/AdminPage.css';
 
 const BG_IMAGE = bgHome;
@@ -20,7 +20,6 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-// Reusable Confirm Modal (similar to ProfilePage's)
 function ConfirmModal({ open, title, message, confirmLabel = 'ยืนยัน', cancelLabel = 'ยกเลิก', danger, onConfirm, onCancel }) {
   if (!open) return null;
   return (
@@ -42,7 +41,6 @@ function ConfirmModal({ open, title, message, confirmLabel = 'ยืนยัน
   );
 }
 
-// User Edit Modal
 function UserEditModal({ user, open, onClose, onSave, saving, error }) {
   const [formData, setFormData] = useState({});
 
@@ -111,7 +109,6 @@ function UserEditModal({ user, open, onClose, onSave, saving, error }) {
   );
 }
 
-// Ban User Modal
 function BanUserModal({ user, open, onClose, onSave, saving, error }) {
   const [duration, setDuration] = useState('1d');
   const [reason, setReason] = useState('');
@@ -172,7 +169,6 @@ function BanUserModal({ user, open, onClose, onSave, saving, error }) {
   );
 }
 
-// News Edit/Create Modal
 const NEWS_TAGS = ['อัปเดต', 'กิจกรรม', 'ประกาศ', 'แพทช์', 'ชุมชน'];
 
 function NewsEditModal({ news, open, onClose, onSave, saving, error }) {
@@ -238,7 +234,6 @@ function NewsEditModal({ news, open, onClose, onSave, saving, error }) {
   );
 }
 
-// Role Edit/Create Modal
 const FACTIONS = ['village', 'werewolf', 'neutral'];
 
 function RoleEditModal({ role, open, onClose, onSave, saving, error }) {
@@ -331,7 +326,6 @@ function RoleEditModal({ role, open, onClose, onSave, saving, error }) {
   );
 }
 
-// Fortune Card Edit/Create Modal
 const CARD_TYPES = ['good', 'bad'];
 
 function FortuneCardEditModal({ card, open, onClose, onSave, saving, error }) {
@@ -686,6 +680,9 @@ function GameStatsPanel({ stats }) {
       <div className="admin-stat-card">
         <span className="stat-label">เฉลี่ยผู้เล่น/ห้อง</span>
         <span className="stat-value">{(stats.totalPlayersInRooms / stats.totalActiveRooms).toFixed(1) || 'N/A'}</span>
+        <span className="stat-value">
+          {stats.totalActiveRooms > 0 ? (stats.totalPlayersInRooms / stats.totalActiveRooms).toFixed(1) : 'N/A'}
+        </span>
       </div>
     </div>
   );
@@ -1054,12 +1051,11 @@ export default function AdminPage() {
   const fetchGameSettings = useCallback(async () => {
     if (!user?.isAdmin || activeTab !== 'settings') return;
     setApiLoading(true);
-    setApiLoading(true);
     try {
-      const res = await fetch('/api/admin/stats');
+      const res = await fetch('/api/admin/settings');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch game stats');
-      setGameStats(data);
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch game settings');
+      setGameSettings(data.settings || []);
     } catch (err) {
       setApiError(err.message);
     } finally {
@@ -1090,7 +1086,13 @@ export default function AdminPage() {
 
 
   useEffect(() => {
-    if (activeTab === 'users') fetchUsers(); else if (activeTab === 'rooms') fetchRooms(); else if (activeTab === 'logs') fetchAdminLogs(); else if (activeTab === 'stats') fetchGameStats(); else if (activeTab === 'news') fetchNewsAdmin(); else if (activeTab === 'roles') fetchRolesAdmin(); else if (activeTab === 'settings') fetchGameSettings(); else if (activeTab === 'cards') fetchFortuneCardsAdmin();
+    if (activeTab === 'users') fetchUsers();
+    else if (activeTab === 'rooms') fetchRooms();
+    else if (activeTab === 'logs') fetchAdminLogs();
+    else if (activeTab === 'news') fetchNewsAdmin();
+    else if (activeTab === 'roles') fetchRolesAdmin();
+    else if (activeTab === 'cards') fetchFortuneCardsAdmin();
+    // Stats and Settings have their own useEffects triggered by activeTab
   }, [activeTab, fetchUsers, fetchRooms]);
 
   // --- User Management Actions ---
@@ -1369,11 +1371,21 @@ export default function AdminPage() {
 
   const handleConfirmDeleteFortuneCard = async () => {
     if (!fortuneCardToDelete) return;
-    // Similar to deleteRole, implement the API call and refresh logic
-    toast.info(`กำลังลบการ์ด "${fortuneCardToDelete.name_th}"...`);
-    // ... API call logic here ...
-    setFortuneCardToDelete(null);
-    fetchFortuneCardsAdmin();
+    setApiLoading(true);
+    setApiError('');
+    try {
+      const res = await fetch(`/api/admin/cards/${fortuneCardToDelete.id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'ลบการ์ดไม่สำเร็จ');
+      toast.success(`ลบการ์ด "${fortuneCardToDelete.name_th}" สำเร็จ`);
+      setFortuneCardToDelete(null);
+      fetchFortuneCardsAdmin();
+    } catch (err) {
+      setApiError(err.message);
+      toast.error(err.message);
+    } finally {
+      setApiLoading(false);
+    }
   };
 
   // --- Room Management Actions ---
@@ -1384,7 +1396,7 @@ export default function AdminPage() {
   const handleConfirmCloseRoom = async () => {
     if (!roomToClose) return;
 
-    setApiLoading(true); // Show loading for the whole page during action
+    setApiLoading(true);
     setApiError('');
     try {
       const res = await fetch(`/api/admin/rooms/${roomToClose.id}`, {
@@ -1394,7 +1406,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error(result.error || 'ปิดห้องไม่สำเร็จ');
       toast.success(`ห้อง "${roomToClose.name}" ถูกปิดแล้ว`);
       setRoomToClose(null);
-      fetchRooms(); // Refresh data after closing room
+      fetchRooms();
     } catch (err) {
       setApiError(err.message);
       toast.error(err.message);
@@ -1408,7 +1420,6 @@ export default function AdminPage() {
   };
 
   if (loading || !user || !user.isAdmin) {
-    // แสดงหน้าโหลด หรือว่างเปล่าระหว่างรอตรวจสอบสิทธิ์
     return (
       <div className="admin-page" style={{ backgroundImage: `url(${BG_IMAGE})` }}>
         <div className="admin-overlay" />
@@ -1416,6 +1427,16 @@ export default function AdminPage() {
       </div>
     );
   }
+
+  useEffect(() => { if (activeTab === 'users') fetchUsers(); }, [activeTab, fetchUsers, userPagination.page, debouncedUserSearch]);
+  useEffect(() => { if (activeTab === 'rooms') fetchRooms(); }, [activeTab, fetchRooms, roomPagination.page, debouncedRoomSearch]);
+  useEffect(() => { if (activeTab === 'logs') fetchAdminLogs(); }, [activeTab, fetchAdminLogs, logPagination.page, debouncedLogSearch]);
+  useEffect(() => { if (activeTab === 'news') fetchNewsAdmin(); }, [activeTab, fetchNewsAdmin, newsPagination.page, debouncedNewsSearch]);
+  useEffect(() => { if (activeTab === 'roles') fetchRolesAdmin(); }, [activeTab, fetchRolesAdmin, rolesPagination.page, debouncedRolesSearch]);
+  useEffect(() => { if (activeTab === 'cards') fetchFortuneCardsAdmin(); }, [activeTab, fetchFortuneCardsAdmin, fortuneCardsPagination.page, debouncedFortuneCardsSearch]);
+  useEffect(() => { if (activeTab === 'stats') fetchGameStats(); }, [activeTab, fetchGameStats]);
+  useEffect(() => { if (activeTab === 'settings') fetchGameSettings(); }, [activeTab, fetchGameSettings]);
+
 
   return (
     <div className="admin-page" style={{ backgroundImage: `url(${BG_IMAGE})` }}>
@@ -1595,7 +1616,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* User Edit Modal */}
       <UserEditModal
         user={editingUser}
         open={!!editingUser}
@@ -1605,7 +1625,6 @@ export default function AdminPage() {
         error={userEditError}
       />
 
-      {/* User Ban Modal */}
       <BanUserModal
         user={banningUser}
         open={!!banningUser}
@@ -1615,7 +1634,6 @@ export default function AdminPage() {
         error={banError}
       />
 
-      {/* User Delete Confirmation Modal */}
       <ConfirmModal
         open={!!userToDelete}
         title="ยืนยันการลบผู้ใช้?"
@@ -1632,7 +1650,6 @@ export default function AdminPage() {
         onCancel={handleCancelDeleteUser}
       />
 
-      {/* User Unban Confirmation Modal */}
       <ConfirmModal
         open={!!unbanningUser}
         title="ยืนยันการยกเลิกแบน?"
@@ -1642,17 +1659,15 @@ export default function AdminPage() {
         onCancel={() => setUnbanningUser(null)}
       />
 
-      {/* News Edit/Create Modal */}
       <NewsEditModal
         news={editingNews}
         open={!!editingNews}
         onClose={() => setEditingNews(null)}
         onSave={handleSaveNews}
-        saving={apiLoading} // Use general apiLoading for news saving
+        saving={apiLoading}
         error={apiError}
       />
 
-      {/* News Delete Confirmation Modal */}
       <ConfirmModal
         open={!!newsToDelete}
         title="ยืนยันการลบข่าวสาร?"
@@ -1663,7 +1678,6 @@ export default function AdminPage() {
         onCancel={() => setNewsToDelete(null)}
       />
 
-      {/* Role Edit/Create Modal */}
       <RoleEditModal
         role={editingRole}
         open={!!editingRole}
@@ -1673,7 +1687,6 @@ export default function AdminPage() {
         error={apiError}
       />
 
-      {/* Role Delete Confirmation Modal */}
       <ConfirmModal
         open={!!roleToDelete}
         title="ยืนยันการลบบทบาท?"
@@ -1684,7 +1697,6 @@ export default function AdminPage() {
         onCancel={() => setRoleToDelete(null)}
       />
 
-      {/* Fortune Card Edit/Create Modal */}
       <FortuneCardEditModal
         card={editingFortuneCard}
         open={!!editingFortuneCard}
@@ -1694,7 +1706,6 @@ export default function AdminPage() {
         error={apiError}
       />
 
-      {/* Fortune Card Delete Confirmation Modal */}
       <ConfirmModal
         open={!!fortuneCardToDelete}
         title="ยืนยันการลบการ์ด?"
@@ -1704,7 +1715,6 @@ export default function AdminPage() {
         onConfirm={handleConfirmDeleteFortuneCard}
         onCancel={() => setFortuneCardToDelete(null)}
       />
-      {/* Room Close Confirmation Modal */}
       <ConfirmModal
         open={!!roomToClose}
         title="ยืนยันการปิดห้อง?"

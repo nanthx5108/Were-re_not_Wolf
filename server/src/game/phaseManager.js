@@ -5,7 +5,7 @@ import {
 } from './gameStore.js';
 import { PHASES, CHANNELS } from './constants.js';
 import {
-  resolveVotes, clearVoting, initVoting,
+  resolveVotes, clearVoting, initVoting, getVoteData,
 } from './voteManager.js';
 import { initNightActions, resolveNightActions } from './nightActions.js';
 import { evaluateWinCondition, endGame } from './winConditions.js'; 
@@ -23,10 +23,8 @@ import {
 } from './highlightService.js';
 import { applyExp, expNeeded, EXP_PER_GAME } from '../../../shared/leveling.js';
 
-// RESULTS เป็นแค่หน้าสรุปสั้นๆ — ไม่เปิดให้ host ตั้ง จึงคงที่
 export const RESULTS_DURATION_MS = 10_000;
 
-// เวลาของ night/day/voting มาจาก config ของห้อง (วินาที) — DEFAULT_PHASE_DURATIONS เป็น fallback
 export function getPhaseDurationMs(roomId, phase) {
   if (phase === PHASES.RESULTS) return RESULTS_DURATION_MS;
 
@@ -67,8 +65,6 @@ export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
     );
   }, duration);
 
-  // --- MAGIC_EYES card effect ---
-  // Stream vote counts to players with the card during the last 5 seconds of voting.
   if (phase === PHASES.VOTING && duration > 5000) {
     const magicEyesStreamer = setTimeout(() => {
       const room = getRoom(roomId);
@@ -82,7 +78,6 @@ export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
       if (playersWithCard.length > 0) {
         const streamInterval = setInterval(() => {
           const currentRoom = getRoom(roomId);
-          // Stop if phase changed or room is gone
           if (!currentRoom || currentRoom.phase !== PHASES.VOTING) {
             clearInterval(streamInterval);
             streamIntervals.delete(roomId);
@@ -95,10 +90,10 @@ export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
               s.emit('fortune:realtime_vote_count', { counts: currentRoom.votes.counts || {} });
             }
           }
-        }, 800); // Stream every 800ms
+        }, 800);
         streamIntervals.set(roomId, streamInterval);
       }
-    }, duration - 5000); // Start 5 seconds before the end
+    }, duration - 5000);
     timers.set(roomId, { timerId, endsAt, magicEyesTimeout: magicEyesStreamer });
   } else {
     timers.set(roomId, { timerId, endsAt });
@@ -106,8 +101,6 @@ export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
   return endsAt;
 }
 
-// กัน advancePhase ทำงานซ้อนกัน — ถูกเรียกได้จาก 3 ทาง (timer หมด, โหวตครบ, host skip)
-// ระหว่างที่ resolve กำลัง await DB ถ้าอีกทางเรียกเข้ามาจะ resolve ซ้ำสองรอบ
 const advancingRooms = new Set();
 
 export async function advancePhase(io, roomId) {
@@ -135,10 +128,10 @@ async function _advancePhase(io, roomId) {
 
   if (room.phase === PHASES.VOTING) {
     const { eliminatedRole } = await _resolveVotingAndBroadcast(io, roomId);
-    const room = getRoom(roomId); // Re-fetch room state after voting resolution
+    const updatedRoom = getRoom(roomId);
 
-    if (room.lastEliminatedId) {
-      const eliminatedPlayer = room.players.get(room.lastEliminatedId);
+    if (updatedRoom.lastEliminatedId) {
+      const eliminatedPlayer = updatedRoom.players.get(updatedRoom.lastEliminatedId);
       if (eliminatedPlayer) {
         if (eliminatedRole === 'fool') {
           addFoolWinHighlight(roomId, { foolPlayer: eliminatedPlayer });
@@ -147,7 +140,6 @@ async function _advancePhase(io, roomId) {
       }
     }
 
-    // Fool ชนะทันทีเมื่อถูกโหวตเนรเทศ (ไม่ใช่ถูกฆ่าตอนกลางคืน)
     if (eliminatedRole === 'fool') {
       return _endGameAndBroadcast(io, roomId, {
         winner: 'fool',
@@ -163,7 +155,6 @@ async function _advancePhase(io, roomId) {
 
   if (nextPhase === PHASES.NIGHT) {
     initNightActions(roomId);
-    // การปิดปากมีผลแค่วันเดียว — พอขึ้นคืนใหม่ก็พูดได้ตามปกติ
     updateRoom(roomId, { silencedPlayerId: null, usedOpportunist: new Set(), usedWhispers: new Set(), usedExtraTime: new Set() });
   }
 
@@ -177,12 +168,30 @@ async function _advancePhase(io, roomId) {
 
   updateRoom(roomId, { phase: nextPhase, round });
 
-  // เหตุการณ์ประจำเช้า — สุ่มทุกครั้งที่เข้าสู่ Day Phase
   const morning = nextPhase === PHASES.DAY ? rollMorningEvent(roomId) : null;
 
   if (nextPhase === PHASES.DAY) {
-    // System 3: Fortune Cards Distribution
-    // This happens after the morning event is rolled, as the event might affect luck.
+    // At the start of DAY, reset confused status from previous round
+    // and check for 'confused' recurrence from previous round
+    for (const player of getPlayersArray(roomId)) {
+      if (player.isAlive) {
+        let confusedThisRound = false;
+        let hasConfusedRecurrence = player.hasConfusedRecurrence || false;
+
+        if (hasConfusedRecurrence && Math.random() < 0.1) { // 10% chance to recur
+          confusedThisRound = true;
+          const s = player.socketId ? io.sockets.sockets.get(player.socketId) : null;
+          if (s) s.emit('fortune:confused_recurrence', { message: 'คุณยังคงสับสนกับตัวเองอยู่' });
+          hasConfusedRecurrence = false; // Recurrence chance is consumed whether it triggers or not
+        } else if (hasConfusedRecurrence) {
+          hasConfusedRecurrence = false; // Recurrence chance is consumed if it doesn't trigger
+        }
+        updatePlayer(roomId, player.id, { isConfusedThisRound: confusedThisRound, hasConfusedRecurrence: hasConfusedRecurrence });
+      } else {
+        updatePlayer(roomId, player.id, { isConfusedThisRound: false, hasConfusedRecurrence: false });
+      }
+    }
+
     const alivePlayers = getPlayersArray(roomId).filter(p => p.isAlive);
     const luckBias = getActiveLuckBias(roomId);
     const drawnCards = new Map();
@@ -194,12 +203,22 @@ async function _advancePhase(io, roomId) {
       if (playerSocket) {
         playerSocket.emit('fortune:card_drawn', { card });
       }
+
+      // Apply server-side effects for drawn cards
+      if (card.id === 'confused') {
+        updatePlayer(roomId, player.id, { isConfusedThisRound: true, hasConfusedRecurrence: true });
+      } else {
+        // If a player draws a non-confused card, any existing recurrence chance is cleared
+        // (unless it already triggered this round, in which case it was cleared above)
+        if (!player.isConfusedThisRound) { // Only clear if not already confused by recurrence this round
+          updatePlayer(roomId, player.id, { hasConfusedRecurrence: false });
+        }
+      }
     }
     updateRoom(roomId, { fortuneCards: drawnCards });
-    consumeLuckBias(roomId); // Use the bias and then consume it for this round.
+    consumeLuckBias(roomId);
   }
 
-  // เหตุการณ์ที่ปรับเวลาแชท (เหมายัน / คืนนี้ยาวนาน) คิดจากเวลา day ที่ host ตั้งไว้ ไม่ใช่ค่าคงที่
   const dayDuration = morning?.event.dayTimerMod
     ? morning.event.dayTimerMod(getPhaseDurationMs(roomId, PHASES.DAY))
     : undefined;
@@ -210,7 +229,7 @@ async function _advancePhase(io, roomId) {
   io.to(roomId).emit('phase:changed', {
     phase:   nextPhase,
     endsAt,
-    durationMs,   // client ใช้วาดแถบเวลา — ห้ามให้ client เดาเอง เพราะ host ตั้งเวลาได้และ event ปรับเวลาได้อีก
+    durationMs,
     round,
     message: PHASE_MESSAGES[nextPhase],
   });
@@ -229,7 +248,6 @@ async function _advancePhase(io, roomId) {
   if (morning) {
     _broadcastMorningEvent(io, roomId, morning, round);
   } else if (nextPhase === PHASES.DAY) {
-    // เช้าเงียบ — ไม่มีป้ายขึ้นกลางจอ บอกในแชทพอ ผู้เล่นจะได้รู้ว่าไม่ได้พลาดอะไรไป
     io.to(roomId).emit('chat:message', {
       id:      `sys-quiet-${Date.now()}`,
       channel: CHANNELS.SYSTEM,
@@ -239,7 +257,6 @@ async function _advancePhase(io, roomId) {
   }
 }
 
-// บอกผู้พิทักษ์ว่าคืนนี้ห้ามเลือกใคร (คนที่เพิ่งเฝ้าไปเมื่อคืน) — ส่งเฉพาะเจ้าตัว
 export function sendBlockedProtectTargets(io, roomId) {
   const room = getRoom(roomId);
   if (!room) return;
@@ -251,7 +268,6 @@ export function sendBlockedProtectTargets(io, roomId) {
   }
 }
 
-// แจ้งคนที่ถูก Silencer ปิดปาก — ส่งเฉพาะเจ้าตัว ไม่ประกาศให้ทั้งห้องรู้ว่าใครโดน
 function _notifySilenced(io, roomId, result) {
   if (!result?.silencedId) return;
   const target = getRoom(roomId)?.players.get(result.silencedId);
@@ -271,12 +287,11 @@ function _broadcastMorningEvent(io, roomId, morning, round) {
     icon:  event.icon,
     title: event.title,
     narrator: event.narrator,
-    effect:   event.effect || null,   // ผลต่อเกมแบบตรงไปตรงมา — narrator เล่าอ้อม ๆ ผู้เล่นใหม่จะเดาไม่ออก
+    effect:   event.effect || null,
     announcement,
     round,
   });
 
-  // ในแชทเอาผลขึ้นก่อนคำบรรยาย คนที่พลาดป้ายกลางจอจะได้ยังรู้ว่าเกิดอะไรขึ้นกับเกม
   const chatText = [
     `${event.icon} ${event.title} — ${event.effect || 'ไม่มีผลต่อเกม'}`,
     announcement,
@@ -317,9 +332,7 @@ export function getTimeRemaining(roomId) {
   return Math.max(0, Math.ceil((entry.endsAt - Date.now()) / 1000));
 }
 
-// เรียกได้จากนอก phaseManager (เช่น มีคนออกกลางเกมจนฝ่ายใดฝ่ายหนึ่งชนะ)
 export async function endGameIfDecided(io, roomId) {
-  const room = getRoom(roomId);
   const room = getRoom(roomId);
   if (!room || room.status !== 'in_progress') return false;
 
@@ -337,7 +350,6 @@ async function _endGameAndBroadcast(io, roomId, win) {
   endGame(roomId, win.winner, win.message);
   await pool.query(`UPDATE rooms SET status = 'finished' WHERE id = ?`, [roomId]);
 
-  // เกมจบแล้ว บทบาทไม่ใช่ความลับอีกต่อไป — เปิดให้ดูทั้งหมด
   const reveal = players.map(p => ({
     id: p.id, nickname: p.nickname, role: p.role, isAlive: p.isAlive,
   }));
@@ -358,15 +370,12 @@ async function _endGameAndBroadcast(io, roomId, win) {
   await _awardGameCompletion(io, players);
 }
 
-// เล่นจบ 1 เกม = +1 exp ให้ทุกคนในห้อง แล้วเลื่อนเลเวลถ้า exp ถึงเกณฑ์
-// เลเวลคำนวณฝั่ง server เท่านั้น — client แค่วาดแถบตามที่ได้รับมา
 async function _awardGameCompletion(io, players) {
   if (!players.length) return;
 
   const playerIds = players.map(p => p.id);
 
   try {
-    // guest มี playerId เป็น uuid ที่ไม่มีใน users — query นี้จึงคัดเหลือแต่คนที่ล็อกอิน
     const [users] = await pool.query(
       `SELECT id, level, exp, games_played FROM users WHERE id IN (${playerIds.map(() => '?').join(',')})`,
       playerIds
@@ -379,7 +388,6 @@ async function _awardGameCompletion(io, players) {
         [level, exp, user.id]
       );
 
-      // ส่งค่าใหม่กลับให้เจ้าตัวทันที — ไม่งั้นแถบ exp จะค้างค่าเก่าจนกว่าจะรีโหลดหน้า
       const socketId = players.find(p => p.id === user.id)?.socketId;
       const s = socketId ? io.sockets.sockets.get(socketId) : null;
       if (s) {
@@ -397,8 +405,6 @@ async function _awardGameCompletion(io, players) {
   }
 }
 
-// ── ห้องร้าง ────────────────────────────────────────────────────────────────
-// ทุกคนหลุดหมดระหว่างเกม — รอสักพักเผื่อกลับมา ถ้าไม่กลับก็ทิ้งห้อง
 const ABANDON_GRACE_MS = 5 * 60_000;
 const abandonTimers = new Map();
 
@@ -423,7 +429,6 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
   if (!result) return null;
   const room = getRoom(roomId);
 
-  // --- Highlight: Perfect Save ---
   if (result.prevented && result.selectedTargetId) {
     const protectedPlayer = room.players.get(result.selectedTargetId);
     const bodyguard = room.nightActions?.bodyguard?.playerId
@@ -432,10 +437,8 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
     addSaveHighlight(roomId, { bodyguard, protectedPlayer });
   }
 
-  // --- GOOD_TO_KNOW card effect ---
   const playersWithCard = getPlayersArray(roomId).filter(p => {
     const card = room.fortuneCards?.get(p.id);
-    // Card effect only applies if the player is alive to see it.
     return p.isAlive && card?.id === 'good_to_know';
   });
 
@@ -469,7 +472,6 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
     }
   }
 
-  // --- Highlight: The Reveal ---
   if (result.seerId && result.seerResult?.faction === 'werewolf') {
     const seer = room.players.get(result.seerId);
     const revealedWolf = room.players.get(result.seerResult.targetId);
@@ -500,18 +502,17 @@ async function _resolveVotingAndBroadcast(io, roomId) {
 
   const { eliminatedId, tally, wasTie } = resolveVotes(roomId, aliveIds);
 
-  // --- Highlight: Unanimous Vote ---
   if (!wasTie && eliminatedId && tally[eliminatedId] === alivePlayers.length) {
     const eliminatedPlayer = alivePlayers.find(p => p.id === eliminatedId);
     addUnanimousVoteHighlight(roomId, { eliminatedPlayer });
   }
   
-  // --- Highlight: The Betrayal ---
-  const room = getRoom(roomId); // Get the current room state
+  const room = getRoom(roomId);
   const eliminatedPlayer = eliminatedId ? room.players.get(eliminatedId) : null;
   if (eliminatedPlayer && eliminatedPlayer.role === 'werewolf') {
     const betrayingWerewolves = [];
-    for (const [voterId, votedTargetId] of Object.entries(room.votes.voteMap || {})) {
+    const { voteMap } = getVoteData(roomId);
+    for (const [voterId, votedTargetId] of Object.entries(voteMap)) {
       const voter = room.players.get(voterId);
       if (voter && voter.role === 'werewolf' && votedTargetId === eliminatedId && voterId !== eliminatedId) {
         betrayingWerewolves.push(voter.id);
@@ -520,21 +521,18 @@ async function _resolveVotingAndBroadcast(io, roomId) {
     addBetrayalHighlight(roomId, { eliminatedPlayer, betrayingWerewolves });
   }
   
-  // --- BROKEN_HOME card effect ---
   const playersWithCard = getPlayersArray(roomId).filter(p => {
     const card = room.fortuneCards?.get(p.id);
     return p.isAlive && card?.id === 'broken_home';
   });
 
   if (playersWithCard.length > 0) {
-    // 1. Find top 2 voted players
     const sortedTally = Object.entries(tally)
       .map(([targetId, voters]) => ({ targetId, voteCount: voters.length }))
       .sort((a, b) => b.voteCount - a.voteCount);
 
     const topVotedIds = sortedTally.slice(0, 2).map(item => item.targetId);
 
-    // 2. Find who they voted for
     const voteInfo = [];
     const voteMap = room.votes.voteMap || {};
     for (const voterId of topVotedIds) {
@@ -548,11 +546,10 @@ async function _resolveVotingAndBroadcast(io, roomId) {
         voterId: voter.id,
         voterNickname: voter.nickname,
         targetId: target?.id || null,
-        targetNickname: target?.nickname || '???', // They might not have voted
+        targetNickname: target?.nickname || '???',
       });
     }
 
-    // 3. Send private info to players with the card
     if (voteInfo.length > 0) {
       for (const player of playersWithCard) {
         const s = player.socketId ? io.sockets.sockets.get(player.socketId) : null;

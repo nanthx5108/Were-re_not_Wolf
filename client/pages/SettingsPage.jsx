@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSound } from '../context/SoundContext.jsx';
+import { useSound } from '../src/context/SoundContext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/SettingsPage.css';
 

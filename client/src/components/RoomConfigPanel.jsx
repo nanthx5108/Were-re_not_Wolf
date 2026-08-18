@@ -2,21 +2,12 @@ import React from 'react';
 import { CONFIGURABLE_ROLES, DURATION_LIMITS, validateRoleConfig } from '../constants/game.js';
 import '../styles/RoomConfig.css';
 
-/**
- * แผงตั้งค่าห้อง — บทบาทและเวลาแต่ละช่วง
- * host แก้ได้ (editable) คนอื่นเห็นอย่างเดียว
- * ไม่มี state ของตัวเอง: ค่าที่แสดงมาจาก room ที่ server ส่งมา เปลี่ยนแล้วยิงกลับไปที่ server เลย
- * จึงไม่มีทางที่หน้าจอ host กับผู้เล่นคนอื่นจะไม่ตรงกัน
- *
- * section = 'roles' | 'timing' | 'all' — หน้า Lobby แบ่งเป็นสองแท็บ จึงขอทีละส่วนได้
- */
 export default function RoomConfigPanel({
   roleConfig, phaseDurations, revealRoleOnDeath = false, maxPlayers, playerCount, editable, onChange,
   section = 'all',
 }) {
   if (!roleConfig || !phaseDurations) return null;
 
-  // ทุก onChange ต้องแนบ config ครบทุก field ไม่งั้นค่าที่ไม่ได้แตะจะถูก server เซ็ตกลับเป็น default
   function emit(patch) {
     onChange({ roleConfig, phaseDurations, revealRoleOnDeath, ...patch });
   }
@@ -25,7 +16,6 @@ export default function RoomConfigPanel({
   const villagerSeats = Math.max(0, maxPlayers - specialTotal);
   const configError = validateRoleConfig(roleConfig, maxPlayers);
 
-  // config ตั้งตามขนาดห้อง แต่คนเข้าจริงอาจน้อยกว่า — server จะบล็อกตอนกดเริ่ม
   const notEnoughPlayers = specialTotal > playerCount;
 
   function adjustRole(key, delta) {
@@ -97,7 +87,6 @@ export default function RoomConfigPanel({
         <div className="roomcfg-durations">
           {Object.entries(DURATION_LIMITS).map(([phase, limit], i) => {
             const value = phaseDurations[phase];
-            // ตำแหน่ง % ของหัวสไลเดอร์ — ใช้ระบายรางฝั่งซ้ายให้เป็นสีอำพัน
             const pct = ((value - limit.min) / (limit.max - limit.min)) * 100;
             return (
               <div key={phase} className="roomcfg-duration" style={{ '--row-i': i }}>

@@ -3,7 +3,16 @@ import assert from 'node:assert/strict';
 
 // chat:send เขียนข้อความลง DB — เทสต์ตรงนี้สนใจว่าข้อความวิ่งไปหาใคร ไม่ใช่ persistence
 mock.module('../../db/connection.js', {
-  exports: { default: { query: async () => [[], []] } },
+  defaultExport: { query: async () => [[], []] },
+});
+
+// roomMaintenance.js (import โดย socketHandlers.js) import gameSettingsService.js
+// ซึ่ง import db/connection.js อีกทีแบบ transitive — ต้อง mock ตรงจุดนี้ด้วย
+mock.module('../services/gameSettingsService.js', {
+  namedExports: {
+    getSetting: (key, fallback) => fallback,
+    refreshSettings: async () => {},
+  },
 });
 
 const { registerSocketHandlers } = await import('./socketHandlers.js');
@@ -84,6 +93,7 @@ function makeSocket(roomId, playerId) {
       emit: (event, data) => emits.push({ event, data }),
       join:  () => {},
       leave: () => {},
+      use:   () => {}, // socketHandlers.js ผูก rate-limit middleware ผ่าน socket.use()
     },
   };
 }

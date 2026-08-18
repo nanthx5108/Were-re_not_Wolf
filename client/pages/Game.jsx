@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useGame } from '../context/Gamecontext.jsx';
-import { useSound } from '../context/SoundContext.jsx';
+import { useGame } from '../src/context/Gamecontext.jsx';
+import { useSound } from '../src/context/SoundContext.jsx';
 import ChatBox from '../src/components/ChatBox.jsx';
 import PlayerSidebar from '../src/components/PlayerSidebar.jsx';
 import ActionLogBar from '../src/components/ActionLogBar.jsx';
@@ -25,9 +25,8 @@ const ROLE_LABEL = {
   fool:      '🃏 Fool',
 };
 
-// map phase → บรรยากาศกลางวัน/คืนของ clock + badge (ผูกกับ phase จริง ไม่ใช่เวลาสมมติ)
 const PHASE_LOOK = {
-  night_zero: { night: true, orb: '🌘', mood: 'เตรียมตัว', badge: 'NIGHT', roundWord: 'คืนที่' },
+  night_zero: { night: true, orb: '🌘', mood: 'เตรียมตัว', badge: 'NIGHT', roundWord: null }, // Changed roundWord
   night:   { night: true,  orb: '🌙', mood: 'กลางคืน',  badge: 'NIGHT', roundWord: 'คืนที่' },
   day:     { night: false, orb: '☀️', mood: 'กลางวัน',  badge: 'DAY',   roundWord: 'วันที่' },
   voting:  { night: false, orb: '☀️', mood: 'ลงคะแนน',  badge: 'DAY',   roundWord: 'วันที่' },
@@ -41,7 +40,6 @@ function fmtClock(sec) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-// clock บน top bar — นับถอยหลังตามเวลาจริงของ phase (phaseEndsAt มาจาก server)
 function PhaseClock({ phase, phaseEndsAt, round }) {
   const [remaining, setRemaining] = useState(0);
   const look = PHASE_LOOK[phase] || PHASE_LOOK.lobby;
@@ -62,16 +60,13 @@ function PhaseClock({ phase, phaseEndsAt, round }) {
         <span className="gp-clock-orb" aria-hidden="true">{look.orb}</span>
         <span className="gp-clock-time">{phaseEndsAt ? fmtClock(remaining) : '--:--'}</span>
       </div>
-      <span className="gp-clock-label">{look.mood} · {look.roundWord} {round ?? 1}</span>
+      <span className="gp-clock-label">{look.mood} {look.roundWord && `· ${look.roundWord} ${round ?? 1}`}</span> {/* Conditional roundWord */}
     </div>
   );
 }
 
-// role ที่มี night action — ใช้ตัดสินว่าจะโผล่ secondary timer ตอนกลางคืนไหม
 const NIGHT_ACTION_ROLES = ['werewolf', 'seer', 'bodyguard', 'silencer'];
 
-// secondary timer — conditional: นับถอยหลังเวลาเฉพาะกิจ (โหวต / ใช้สกิล)
-// ใช้ phaseEndsAt เดียวกับ clock แต่เน้นย้ำเป็นกล่องแยกพร้อม label + progress
 function SecondaryTimer({ phaseEndsAt, phaseDurationMs, label, color }) {
   const [remaining, setRemaining] = useState(0);
 
@@ -100,7 +95,6 @@ function SecondaryTimer({ phaseEndsAt, phaseDurationMs, label, color }) {
   );
 }
 
-// คืนที่ 0 — พาเนลกลางจอ: ยืนยันว่าดู role แล้ว + ความคืบหน้าของทั้งห้อง
 function NightZeroPanel() {
   const { nightZero, markReady } = useGame();
   const [ready, setReady] = useState(false);
@@ -194,7 +188,6 @@ export default function Game() {
   const isResults = room.phase === 'results';
   const look     = PHASE_LOOK[room.phase] || PHASE_LOOK.lobby;
 
-  // secondary timer โผล่เฉพาะ 2 กรณี (ตาม spec): ช่วงโหวต / คืนที่เรามีสกิลให้ใช้
   const showVoteTimer  = isVoting && !isDead;
   const canNightAct    = isNight && !isDead && NIGHT_ACTION_ROLES.includes(myRole) && !myNightAction;
 
@@ -204,7 +197,6 @@ export default function Game() {
       <EarlyInfoToast />
       <FortuneEffects card={myFortuneCard} messages={messages} />
 
-      {/* ── TOP BAR ─────────────────────────────────────────── */}
       <header className="gp-top gp-panel">
         <div className="gp-top-left">
           <button
@@ -213,7 +205,6 @@ export default function Game() {
             aria-label="ตั้งค่า"
             title="ตั้งค่า"
           >
-            {/* grid icon */}
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <rect x="2"  y="2"  width="6" height="6" rx="1.4" fill="currentColor"/>
               <rect x="12" y="2"  width="6" height="6" rx="1.4" fill="currentColor"/>
@@ -267,10 +258,8 @@ export default function Game() {
         </section>
       )}
 
-      {/* ── ACTION LOG BAR ──────────────────────────────────── */}
       <ActionLogBar />
 
-      {/* ── LEFT: Chat ──────────────────────────────────────── */}
       <aside className="gp-chat">
         <NightAction />
         {isVoting && <VotingPanel players={players} playerId={playerId} votes={votes} onVote={castVote} myFortuneCard={myFortuneCard} realtimeVoteCounts={realtimeVoteCounts} phaseEndsAt={room.phaseEndsAt} />}
@@ -284,11 +273,9 @@ export default function Game() {
         <ChatBox showWerewolfChannel clientEffect={myFortuneCard?.clientEffect} players={players} playerId={playerId} />
       </aside>
 
-      {/* ── CENTER: character stage + your role ─────────────── */}
       <main className="gp-center">
         {isNightZero && <NightZeroPanel />}
 
-        {/* ช่องตัวละคร — เว้นไว้รอระบบแต่งตัว (customize) จริง */}
         <div className="gpch gp-panel">
           <div className="gpch-frame">
             <span className="gpch-silhouette" aria-hidden="true">🧍</span>
@@ -305,7 +292,6 @@ export default function Game() {
         )}
       </main>
 
-      {/* ── RIGHT: player sidebar (dynamic priority list) ───── */}
       <PlayerSidebar
         players={players}
         playerId={playerId}
@@ -316,7 +302,6 @@ export default function Game() {
 
       <FortuneCard card={myFortuneCard} />
 
-      {/* ── in-game settings modal ──────────────────────────── */}
       {settingsOpen && (
         <div className="gp-modal-backdrop" onClick={() => setSettingsOpen(false)}>
           <div className="gp-modal gp-panel" onClick={(e) => e.stopPropagation()}>

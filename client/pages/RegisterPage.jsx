@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../src/context/AuthContext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/Auth.css';
 
@@ -67,7 +67,6 @@ export default function RegisterPage() {
       <div className="auth-fog" />
 
       <div className="auth-card sketch-border">
-        {/* Logo */}
         <div className="auth-logo">
           <span className="auth-logo-wolf">WE'RE</span>
           <span className="auth-logo-not"> not </span>

@@ -1,37 +1,15 @@
 import { getRoom, updateRoom, getPlayersArray } from './gameStore.js';
 import { getSetting } from '../services/gameSettingsService.js';
 
-// fallback ตอนไม่มี event ไหน eligible เลย — ต้องเป็นใบที่ "ไม่มีผลต่อเกม" เสมอ
-// (เดิมเป็น full_moon แต่ตอนนี้ full_moon ให้ผลดีกับผู้เล่นแล้ว จะกลายเป็นแจกของฟรี)
 export const DEFAULT_EVENT_ID = 'quiet_morning';
 
-// ─── Event catalog ───────────────────────────────────────────────────────────
-// เพิ่ม event ใหม่ = เพิ่ม object ใหม่ในนี้ ไม่ต้องแก้ logic กลาง
-//
-// ฟิลด์ของแต่ละ event:
-//   id, icon, title, narrator  — ข้อมูลแสดงผล
-//   effect                     — ผลต่อเกมเป็นภาษาบ้าน ๆ (narrator เล่าเป็นนิทาน อ่านแล้วเดาผลไม่ออก)
-//                                ข้อความนี้ขึ้นกลางจอตอนเช้า และใช้เป็นคำอธิบายในหน้า Lobby ด้วย
-//   baseWeight                 — น้ำหนักพื้นฐานในการสุ่ม
-//   cooldownDays               — จำนวนวันที่ห้ามเกิดซ้ำหลังเกิดแล้ว
-//   minAlive                   — จำนวนผู้เล่นมีชีวิตขั้นต่ำ (optional)
-//   requires(ctx)              — เงื่อนไข trigger เพิ่มเติม (optional)
-//   weightMultiplier(ctx)      — ตัวคูณน้ำหนักตามสถานะคืนก่อน (optional, default 1)
-//   nightEffect                — ผลที่มีต่อคืนถัดไป: 'blackout' | 'fog' | 'double_guard'
-//   luckBias                   — ปรับน้ำหนักการสุ่มการ์ดโชค (System 3) เฉพาะรอบนั้น (optional)
-//   dayTimerMod(ms)            — ปรับเวลาแชท Day Phase (optional)
-//   buildAnnouncement(ctx)     — ข้อความประกาศเพิ่มเติมต่อท้าย narrator (optional)
-//   buildPrivateNote(ctx)      — ข้อความส่วนตัวถึงผู้เล่นคนเดียว (optional)
-// เช้าที่ไม่มีอะไรเกิดขึ้น — เป็นตัวเลือกหนึ่งในการสุ่มเหมือน event อื่น ๆ
-// ต่างกันแค่ตอนถูกเลือกแล้วจะไม่มีป้ายขึ้นกลางจอ (rollMorningEvent คืน null)
-// มีไว้เพื่อไม่ให้ผู้เล่นชินว่า "เช้าไหนก็ต้องมีอะไรสักอย่าง" — ความเงียบก็เป็นข้อมูลอย่างหนึ่ง
 export const NO_EVENT = Object.freeze({
   id: 'quiet_morning',
   icon: '—',
   title: 'เช้าที่เงียบสงบ',
   effect: 'ไม่มีเหตุการณ์เกิดขึ้นเลย เกมดำเนินไปตามปกติ',
   baseWeight: 20,
-  card_image: null, // เหตุการณ์นี้ไม่มีภาพการ์ดแสดงผล
+  card_image: null,
 });
 
 export const MORNING_EVENTS = [
@@ -50,7 +28,7 @@ export const MORNING_EVENTS = [
     card_image: '/events/blackout.png',
   },
   {
-    id: 'fog', // B2
+    id: 'fog',
     icon: '🌫️',
     title: 'หมอกลงจัด',
     narrator: 'หมอกทะเลหนาจนมองไม่เห็นปลายจมูกตัวเอง... ตาทิพย์แค่ไหน คืนนี้ก็เห็นแค่เงาราง ๆ',
@@ -61,7 +39,7 @@ export const MORNING_EVENTS = [
     card_image: '/events/fog.png',
   },
   {
-    id: 'boat_return', // B3
+    id: 'boat_return',
     icon: '🛡️',
     title: 'คืนที่ปลอดภัย',
     narrator: 'คืนนี้ทุกบ้านปิดประตูแน่นหนากว่าเคย... ผู้พิทักษ์เลยมีแรงพอจะเฝ้าได้ถึงสองหลัง',
@@ -73,7 +51,7 @@ export const MORNING_EVENTS = [
     card_image: '/events/boat_return.png',
   },
   {
-    id: 'high_tide', // B4
+    id: 'high_tide',
     icon: '⏳',
     title: 'เหมายัน',
     narrator: 'กลางวันสั้นที่สุดของปี พระอาทิตย์ลาไปก่อนใครจะทันพูดจบประโยค',
@@ -84,7 +62,7 @@ export const MORNING_EVENTS = [
     card_image: '/events/high_tide.png',
   },
   {
-    id: 'distant_howl', // A1
+    id: 'distant_howl',
     icon: '🐺',
     title: 'เปิดเผยจำนวน',
     narrator: 'เสียงหอนลอยมาตามลม... นับดูสิว่ากี่ตัว เผื่อจะได้นอนหลับสนิทขึ้น (หรือไม่)',
@@ -98,7 +76,7 @@ export const MORNING_EVENTS = [
     card_image: '/events/distant_howl.png',
   },
   {
-    id: 'circling_crow', // A2
+    id: 'circling_crow',
     icon: '🐦‍⬛',
     title: 'ร่องรอยเมื่อคืน',
     narrator: 'อีกาบินวนเหนือหมู่บ้านทั้งคืน มันเห็นทุกอย่าง... แต่บอกได้แค่ตัวเลข',
@@ -116,8 +94,6 @@ export const MORNING_EVENTS = [
     narrator: 'จันทร์เต็มดวงลอยเด่นเหนือทะเล ผู้เฒ่าว่าคืนแบบนี้ดวงของทุกคนจะดีกว่าปกติ... หรือแกก็แค่อยากปลอบใจ ใครจะรู้',
     effect: 'วันนี้เป็นวันที่โชคดี — โอกาสได้รับการ์ดโชคดีสูงกว่าปกติ',
     baseWeight: getSetting('morning_event.full_moon.weight', 8),
-    // System 3 (การ์ดโชค) อ่านค่านี้ผ่าน consumeLuckBias()/getActiveLuckBias()
-    // ถ้า System 3 ยังไม่ถูก implement ค่านี้จะถูกตั้งแล้วไม่มีใครอ่าน — ไม่กระทบเกม
     luckBias: { goodChance: getSetting('morning_event.full_moon.good_chance', 0.7) },
     card_image: '/events/full_moon.png',
   },
@@ -132,8 +108,6 @@ export const MORNING_EVENTS = [
     card_image: '/events/bonfire.png',
   },
 ];
-
-// ─── Selection ───────────────────────────────────────────────────────────────
 
 export function buildEventContext(roomId) {
   const room = getRoom(roomId);
@@ -185,7 +159,6 @@ export function weightedPick(events, ctx, rng = Math.random) {
   return weighted[weighted.length - 1].event;
 }
 
-// สุ่ม event ประจำเช้าของห้อง บันทึกลง history และตั้ง night effect ของคืนถัดไป
 export function rollMorningEvent(roomId, rng = Math.random) {
   const ctx = buildEventContext(roomId);
   if (!ctx) return null;
@@ -202,7 +175,6 @@ export function rollMorningEvent(roomId, rng = Math.random) {
     activeLuckBias:    event.luckBias || null,
   });
 
-  // เช้าเงียบ — ยังบันทึกลง history (เพื่อให้ cooldown ของอันอื่นเดินต่อ) แต่ไม่มีอะไรจะประกาศ
   if (event.id === NO_EVENT.id) return null;
 
   return {
@@ -212,7 +184,6 @@ export function rollMorningEvent(roomId, rng = Math.random) {
   };
 }
 
-// อ่านแล้วล้าง night effect (เรียกตอน resolve คืนนั้น เพื่อให้มีผลแค่คืนเดียว)
 export function consumeNightEffect(roomId) {
   const room = getRoom(roomId);
   if (!room) return null;
@@ -225,10 +196,6 @@ export function getActiveNightEffect(roomId) {
   return getRoom(roomId)?.activeNightEffect || null;
 }
 
-// ─── Luck bias (hook สำหรับ System 3 การ์ดโชค) ───────────────────────────────
-// จันทร์เต็มดวงตั้งค่านี้ไว้ตอนเช้า → ระบบการ์ดโชคเรียกอ่านตอนแจกการ์ดของรอบนั้น
-// ตอนนี้ยังไม่มีใครเรียก (System 3 ยังไม่ถูก implement) — เป็น placeholder ที่พร้อมเสียบ
-// มีผลแค่รอบเดียว: consume แล้วหาย ; รอบถัดไป rollMorningEvent เขียนทับเป็น null อยู่แล้ว
 export function getActiveLuckBias(roomId) {
   return getRoom(roomId)?.activeLuckBias || null;
 }

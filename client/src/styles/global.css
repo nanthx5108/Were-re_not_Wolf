@@ -1,51 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Jolly+Lodger&family=Special+Elite&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Sriracha&family=Trirong:wght@400;600;700&display=swap');
 
-/* =========================================================
-   WE'RE NOT WOLF — Global Design System
-   Deep night blue + Lantern amber / Moonlit southern village
-   Premium mystery · 40% sarcasm · modern gothic
-
-   พาเลตต์มาจาก Claude Design "Main Menu v2" (accent #E8A94B)
-   accent เป็นตัวเดียวที่กำหนดสีเน้นทั้งเว็บ — ทุกที่อ้าง --accent-rgb
-   ผ่าน rgba() ไม่มีเลข RGB ลอย ๆ กระจายอยู่ในไฟล์อื่นอีก
-   ========================================================= */
-
 :root {
-  /* ── Accent channel — เปลี่ยนค่าเดียวนี้ = เปลี่ยนสีเน้นทั้งเว็บ ── */
   --accent-rgb:     232, 169, 75;   /* #E8A94B */
 
-  /* ── Core backgrounds — ไล่จากฟ้าคืนอมเขียวลงไปหาดำ ── */
   --bg-void:        #070c11;   /* deepest bg */
   --bg-base:        #0a0f14;   /* page bg */
   --bg-elevated:    #0d131a;   /* cards, panels */
   --bg-overlay:     #17212b;   /* hover states, modals */
   --bg-input:       #0b1218;   /* form inputs */
 
-  /* ── Borders — อมอุ่นเล็กน้อย ให้เข้ากับแสงตะเกียง ไม่ใช่ขาวเทาเฉย ── */
   --border-subtle:  rgba(232,200,150,0.09);
   --border-default: rgba(232,200,150,0.16);
   --border-strong:  rgba(232,200,150,0.26);
 
-  /* ── Primary accent — lantern amber ──
-     ชื่อ token ยังเป็น gold-* ตามเดิม เพื่อไม่ต้องแก้ทุกไฟล์ที่อ้างถึง */
-  --gold-bright:    #f0ba60;   /* accentStrong — amber ผสมขาว 14% */
-  --gold-mid:       #e8a94b;   /* accent */
-  --gold-dim:       #cf8a2c;   /* accentDeep — amber ผสมดำ 26% */
+  --gold-bright:    #f0ba60;
+  --gold-mid:       #e8a94b;
+  --gold-dim:       #cf8a2c;
   --gold-glow:      rgba(var(--accent-rgb), 0.36);
   --gold-glow-soft: rgba(var(--accent-rgb), 0.13);
-  --on-accent:      #231603;   /* ตัวอักษร/ไอคอนบนพื้น accent — น้ำตาลเข้ม ไม่ใช่ดำสนิท */
+  --on-accent:      #231603;
 
-  /* ── Semantic palette (สีเสริม) ──
-     4 ตระกูลนี้ "ไม่ใช่" สีเน้นของแบรนด์ — ทองยังเป็นตัวเดียวที่ใช้กับ CTA/exp/level
-     สี่ตัวนี้มีไว้สื่อ "ความหมาย" ของสถานะ/หมวดหมู่ ไม่ใช่ไว้ตกแต่ง
-       teal      → เปิด/สาธารณะ/แพทช์      (น้ำทะเลอันดามัน)
-       rust      → ปิด/เข้าไม่ได้/ส่วนตัว   (สนิมอิฐ)
-       sage      → มีชีวิต/ปกติ/กิจกรรม     (ใบไม้)
-       dustypink → ชุมชน/คน                (ไม่ใช่ม่วง — ห้ามใช้ม่วงในเกมนี้) */
   --teal-bright:      #4fd1c5;
   --teal-mid:         #2a9d9e;
   --teal-dim:         #1a5f60;
-  --on-teal:          #04231f;   /* ตัวอักษรบนพื้นเขียวทะเล — คู่กับ --on-accent ของฝั่งทอง */
+  --on-teal:          #04231f;
 
   --rust-bright:      #c76b45;
   --rust-mid:         #a8543f;
@@ -59,53 +37,41 @@
   --dustypink-mid:    #a8666a;
   --dustypink-dim:    #6e4448;
 
-  /* ── Secondary accent — moonlight silver (แสงจันทร์/หมอก ไม่ใช่ปุ่ม) ── */
   --silver:         #9fbcd0;
   --silver-dim:     #6c808d;
 
-  /* ── Atmosphere accent — Andaman bioluminescent teal ── */
-  /* Used ONLY for ambient/decorative elements (fog tint, edge glow, ocean hints) */
-  /* Never used on buttons — primary hierarchy stays gold, this stays background-only */
   --teal-glow:      #1a7a7b;
   --teal-glow-soft: rgba(26,122,123,0.10);
   --teal-glow-dim:  rgba(26,122,123,0.05);
 
-  /* ── Text ── */
   --text-primary:   #eef2f4;
   --text-secondary: #b7c2c9;
   --text-muted:     #8b97a0;
-  --text-gold:      #c9b48c;   /* ข้อความน้ำเสียงอำพัน — dev note, eyebrow */
+  --text-gold:      #c9b48c;
 
-  /* ── Phase colours ──
-     ใช้กับแถบเวลาและป้ายชื่อ phase — ต้องแยกออกจากกันได้ แต่ยังอยู่ตระกูลเดียวกัน
-     (desaturated, ค่าความสว่างใกล้กัน) ไม่ใช่สีรุ้งสด ๆ ที่หลุดออกนอกธีม */
-  --phase-night:    #9fbcd0;   /* จันทร์ส่อง — เงินอมฟ้า */
-  --phase-day:      #e8a94b;   /* อำพัน — สีเดียวกับ accent หลัก */
-  --phase-voting:   #c05a4e;   /* ถ่านแดง — ความกดดัน */
-  --phase-results:  #5fa36a;   /* เขียวหมู่บ้าน — สงบลงแล้ว */
+  --phase-night:    #9fbcd0;
+  --phase-day:      #e8a94b;
+  --phase-voting:   #c05a4e;
+  --phase-results:  #5fa36a;
   --phase-lobby:    #6c808d;
 
-  /* ── Semantic ── */
   --danger:         #8b2020;
   --danger-soft:    rgba(139,32,32,0.15);
   --success:        #2a6644;
   --success-soft:   rgba(42,102,68,0.15);
-  --warning:        #d9a441;   /* เตือน (ไม่ใช่ error) — เช่นรหัสผ่านความแข็งแรงปานกลาง */
+  --warning:        #d9a441;
 
-  /* ── สีฝ่ายในเกม — ใช้ทั้งการ์ดบทบาท ป้ายผู้เล่น และหน้าวิธีเล่น ── */
-  --faction-village: #6ecf8a;   /* ฝ่ายหมู่บ้าน */
-  --faction-wolf:    #e57373;   /* ฝ่ายหมาป่า */
-  --faction-neutral: #c98a8a;   /* เป็นกลาง (คนโง่) — ห้ามใช้ม่วงในเกมนี้ */
+  --faction-village: #6ecf8a;
+  --faction-wolf:    #e57373;
+  --faction-neutral: #c98a8a;
 
-  /* ── Typography — 3-tier system ── */
-  --font-logo:      'Jolly Lodger', 'Trirong', serif;   /* main title / big display text — Jolly Lodger has no Thai glyphs, Trirong covers Thai characters that also use this token (e.g. how-to-play modal title) */
+  --font-logo:      'Jolly Lodger', 'Trirong', serif;
   --font-display:   'Sriracha', 'Noto Sans Thai', 'Inter', sans-serif; /* main font — buttons, panel/section titles */
   --font-meta:      'Special Elite', 'Courier Prime', monospace; /* labels, meta, dev notes */
   --font-handwritten: 'Special Elite', 'Courier Prime', monospace; /* button titles — rough hand-inked feel */
-  --font-body:      'Sriracha', 'Noto Sans Thai', 'Inter', sans-serif; /* buttons, body, Thai text — loopless, playful, flowing */
+  --font-body:      'Sriracha', 'Noto Sans Thai', 'Inter', sans-serif;
   --font-thai:      'Sriracha', 'Noto Sans Thai', sans-serif;
 
-  /* ── Spacing ── */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -115,23 +81,19 @@
   --space-7: 48px;
   --space-8: 64px;
 
-  /* ── Radii ── */
   --radius-sm:  6px;
   --radius-md:  10px;
   --radius-lg:  16px;
   --radius-xl:  24px;
 
-  /* ── Shadows ── */
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
   --shadow-md:   0 4px 16px rgba(0,0,0,0.45);
   --shadow-lg:   0 12px 40px rgba(0,0,0,0.55);
   --shadow-gold: 0 0 24px rgba(var(--accent-rgb),0.20);
 
-  /* ── Transitions ── */
   --ease:    200ms ease;
   --ease-md: 320ms ease;
 
-  /* ── Legacy aliases (for components that use old vars) ── */
   --color-bg:        var(--bg-base);
   --color-bg-2:      var(--bg-elevated);
   --color-surface:   var(--bg-elevated);
@@ -144,8 +106,6 @@
   --color-disabled:  var(--text-muted);
   --color-danger:    var(--danger);
   --color-success:   #4CAF50;
-  /* สองตัวนี้เคยถูกใช้ใน Auth.css / PlayerCard.css แต่ไม่เคยมีนิยาม
-     → var() แก้ค่าไม่ได้ ทำให้ property นั้นตายทั้งบรรทัด (แถบรหัสผ่านหาย / ป้ายไม่มีขอบ) */
   --color-warning:   var(--warning);
   --color-village:   var(--faction-village);
   --font-mono:       'JetBrains Mono', monospace;
@@ -153,7 +113,6 @@
   --transition:      var(--ease);
 }
 
-/* ── Reset ── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -174,7 +133,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Headings ── */
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   letter-spacing: 0.02em;
@@ -182,7 +140,6 @@ h1, h2, h3, h4 {
   color: var(--text-primary);
 }
 
-/* ── Links ── */
 a {
   color: var(--gold-mid);
   text-decoration: none;
@@ -190,7 +147,6 @@ a {
 }
 a:hover { color: var(--gold-bright); }
 
-/* ── Buttons base ── */
 button {
   font-family: var(--font-body);
   cursor: pointer;
@@ -203,7 +159,6 @@ button:disabled {
   opacity: 0.38;
 }
 
-/* ── Inputs base ── */
 input, select, textarea {
   font-family: var(--font-body);
   background: var(--bg-input);
@@ -222,7 +177,6 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.10);
 }
 
-/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-void); }
 ::-webkit-scrollbar-thumb {
@@ -233,10 +187,6 @@ input:focus, select:focus, textarea:focus {
   background: var(--silver-dim);
 }
 
-/* ── Signature: เส้นกรอบมือวาด + เรืองขาว (ใช้ร่วมทุกหน้า) ──
-   filter #sketch-edge ประกาศครั้งเดียวใน App.jsx
-   .sketch-border      = มี filter ทำให้เส้นไม่เป๊ะตรง — แพงตอน repaint ใช้กับ element ที่ render ครั้งเดียว
-   .sketch-border-lite = ไม่มี filter ใช้เงาซ้อนแทน — สำหรับ list ที่ render ซ้ำ ๆ */
 .sketch-border {
   position: relative;
   border: 1.5px solid rgba(255,255,255,0.28);
@@ -257,15 +207,6 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 10px rgba(255,255,255,0.3);
 }
 
-/* ── Reveal on scroll: ซ่อนไว้ก่อน แล้ว pop ขึ้นตอนเลื่อนมาเจอ ──
-   ใช้ transition ไม่ใช่ animation เพื่อให้ prefers-reduced-motion ที่ตั้งไว้ท้ายไฟล์
-   บีบเวลาเหลือ ~0 แล้วเนื้อหายังโผล่ครบ ไม่ค้างซ่อน
-
-   content-visibility: auto คือของจริงที่ลดการกินสเปค — เบราว์เซอร์ข้ามงาน
-   layout/paint/render ของเนื้อหาข้างในทั้งก้อนทันทีที่กล่องนี้พ้นจอ (ไม่ว่าจะยังไม่เคย
-   เลื่อนมาเจอ หรือเคยโผล่แล้วแต่เลื่อนผ่านไปแล้วก็ตาม) แยกกันคนละกลไกกับ opacity/transform
-   ด้านบนที่คุมแค่การ "โผล่ให้เห็น" — ทำงานคู่กันได้เพราะเช็คจากตำแหน่งจริงบนจอ ไม่ใช่ state เดียวกัน
-   contain-intrinsic-size กันเลย์เอาต์กระโดดตอนสลับสถานะ (auto = จำขนาดจริงหลัง reflow แรก) */
 .reveal {
   content-visibility: auto;
   opacity: 0;
@@ -280,22 +221,15 @@ input:focus, select:focus, textarea:focus {
   transform: translateY(0) scale(1);
 }
 
-/* ── ลดการกินสเปคของแถวใน list ที่ยาว ๆ (ห้อง, ทำเนียบคะแนน, รายชื่อผู้เล่น, กติกา) ──
-   ต่างจาก .reveal ตรงที่ไม่มี opacity/transform ของตัวเอง — ใช้กับแถวที่มี
-   hover/interaction เป็นของตัวเองอยู่แล้ว ไม่อยากให้ opacity เริ่มที่ 0 ไปชนกัน
-   content-visibility: auto ให้เบราว์เซอร์ข้าม layout/paint ตอนแถวนั้นเลื่อนพ้นจอ
-   (ไม่ว่าจะอยู่ในหน้าปกติหรือในกล่อง overflow-y: auto ก็ได้ผลเหมือนกัน) */
 .cv-auto {
   content-visibility: auto;
   contain-intrinsic-size: auto 48px;
 }
-/* การ์ดที่มีข้อความหลายบรรทัด (บทบาท/เหตุการณ์ใน "วิธีการเล่น") สูงกว่าแถวลิสต์ทั่วไปมาก */
 .cv-auto-lg {
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
 }
 
-/* ── Utilities ── */
 .sr-only {
   position: absolute;
   width: 1px; height: 1px;
@@ -306,7 +240,6 @@ input:focus, select:focus, textarea:focus {
   border: 0;
 }
 
-/* ── Animations ── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -336,7 +269,6 @@ input:focus, select:focus, textarea:focus {
 .fade-in  { animation: fadeUp 240ms ease both; }
 .fade-in-slow { animation: fadeUp 400ms ease both; }
 
-/* ── Entrance sequence: page → logo → buttons → news ── */
 @keyframes entrancePageFade {
   from { opacity: 0; }
   to   { opacity: 1; }

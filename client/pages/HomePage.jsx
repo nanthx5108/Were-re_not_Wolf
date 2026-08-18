@@ -1,20 +1,21 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../context/Gamecontext.jsx';
+import { useGame } from '../src/context/Gamecontext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
-import { useSound } from '../context/SoundContext.jsx';
-import logoImage from '../src/assets/logo/logo_main.png';
+import { useSound } from '../src/context/SoundContext.jsx';
+import logoLoadingImage from '../src/assets/logo/logo_loading.png';
+import logoMainImage from '../src/assets/logo/Logo-Main.png';
 import defaultAvatar from '../src/assets/ui/default_avatar.png';
 import AuthModal from '../src/components/AuthModal.jsx';
 import HowToPlayModal from '../src/components/HowToPlayModal.jsx';
 import Reveal from '../src/components/Reveal.jsx';
 import { expNeeded, levelProgress, STARTING_LEVEL } from '../../shared/leveling.js';
-import { // IconAdmin is added here
+import {
   IconCreate, IconJoin, IconBook, IconSettings, IconArrow, IconPin, IconLock, IconClock,
   IconLogin, IconRegister, IconDiscord, IconFacebook, IconGlobe, IconSearch, IconHouse, IconGroup, IconBlock, IconTrophy,
 } from '../src/components/ui/Icons.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../src/context/AuthContext.jsx';
 import '../src/styles/HomePage.css';
 import StarsLayer from '../src/components/home/StarsLayer.jsx';
 import FirefliesLayer from '../src/components/home/FirefliesLayer.jsx';
@@ -89,7 +90,7 @@ export default function HomePage() {
   }, []);
 
   const [mode, setMode] = useState(null);
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState(user?.displayName || user?.username || '');
   const [roomName, setRoomName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(8);
@@ -200,8 +201,6 @@ export default function HomePage() {
           maxPlayers,
           isPrivate,
           gameMode,
-          // ไม่ส่ง config มาด้วย — server ใส่ค่าเริ่มต้นตามขนาดห้องให้ แล้ว host ไปปรับใน Lobby
-          // (โหมดโกลาหลข้ามการปรับ role/เวลา — server สุ่ม + fix เวลาให้ตอนกดเริ่มเกม)
         }),
       });
       const data = await res.json();
@@ -286,7 +285,7 @@ export default function HomePage() {
   }
 
   function reset() {
-    setMode(null); setError(null); setNickname('');
+    setMode(null); setError(null); setNickname(user?.displayName || user?.username || '');
     setRoomName(''); setRoomCode('');
     setJoinStep('browse'); setSelectedRoom(null);
     setRoomSearch(''); setRoomFilter('all');
@@ -314,11 +313,8 @@ export default function HomePage() {
   const isJoinBrowse = mode === 'join' && joinStep === 'browse';
 
   return (
-    /* reducedMotion="user" ให้ motion เคารพการตั้งค่าลดการเคลื่อนไหวของ OS เอง
-       (@media prefers-reduced-motion ใน global.css คุมได้แค่ CSS ไม่ถึง animation ที่เป็น JS) */
+
     <MotionConfig reducedMotion="user">
-    {/* mode="wait" — จอโหลดต้องเฟดออกให้จบก่อน หน้าแรกถึงเริ่มเข้า
-        เดิมเป็น early-return จึงตัดหายทันทีไม่มี exit */}
     <AnimatePresence mode="wait">
     {isLoading ? (
       <motion.div
@@ -327,7 +323,7 @@ export default function HomePage() {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
       >
-        <img src={logoImage} alt="We're Not Wolf" className="home-logo-image is-loading" />
+        <img src={logoLoadingImage} alt="We're Not Wolf" className="logo-loading-image" />
         <div className="loading-spinner" />
       </motion.div>
     ) : (
@@ -340,10 +336,6 @@ export default function HomePage() {
       transition={{ duration: 0.7, ease: 'easeOut' }}
       style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}
     >
-      {/* SVG filter #sketch-edge ย้ายไปประกาศครั้งเดียวใน App.jsx แล้ว */}
-
-      {/* ม่านทึบชั้นเดียว วางเหนือรูปพื้นหลังแต่ใต้ชั้นบรรยากาศ —
-          กดฉากเกาะให้จมลงเพื่อให้ panel/ปุ่มลอยเด่นขึ้นมา ปรับค่าเดียวจบ */}
       <div className="home-darken-layer" aria-hidden="true" />
       <div className="home-overlay" />
       <StarsLayer />
@@ -385,18 +377,14 @@ export default function HomePage() {
 
         <div className={`home-grid ${isJoinBrowse ? 'is-join-browse' : ''}`}>
 
-          {/* จอแรก: โลโก้ + เมนู สูงเต็มจอพอดี กระดานด้านล่างจึงเริ่มพ้นขอบจอเสมอ */}
-          {/* container ของลำดับ entrance — ลูกทุกตัวรับ "visible" ต่อจากนี้ */}
           <motion.div className="home-hero" initial="hidden" animate="visible">
-            {/* สองชั้น: motion คุม entrance (y+opacity) · div ชั้นในคง proximity fade เดิมไว้
-                ถ้ารวมเป็นชั้นเดียว inline style ของ motion จะทับ opacity ของคลาสจน fade ตาย */}
             {!isJoinBrowse && (
               <motion.div variants={logoVariants}>
                 <div
                   ref={logoRef}
                   className={`home-header ${logoHiddenByCursor ? 'is-hidden-by-cursor' : ''}`}
                 >
-                  <img src={logoImage} alt="We're Not Wolf" className="home-logo-image" />
+                  <img src={logoMainImage} alt="We're Not Wolf" className="home-logo-image" />
                 <div className="title-ornament">
                     <span className="title-ornament-line" />
                     <span className="title-ornament-mark" />
@@ -406,10 +394,8 @@ export default function HomePage() {
               </motion.div>
             )}
 
-            {/* แถวเดียวกัน: เมนูหลัก (ซ้าย) + กระดานข่าว (ขวา) */}
             <div className="home-hero-row">
             <div className="home-left">
-            {/* stagger อยู่ที่แม่ ปุ่มลูกไม่ต้องรู้ลำดับตัวเอง */}
             {!mode && (
               <motion.div className="menu-panel" variants={menuPanelVariants}>
                 <MenuBtn
@@ -438,7 +424,7 @@ export default function HomePage() {
                   hint="เสียงและการแสดงผล"
                   onClick={() => navigate('/settings')}
                   onHover={playHoverSfx}
-                )}
+                />
               </motion.div>
             )}
 
@@ -446,7 +432,7 @@ export default function HomePage() {
               <form onSubmit={handleCreate} className="home-form sketch-border fade-in">
                 <h2 className="form-title">สร้างห้องใหม่</h2>
                 {error && <ErrorBox msg={error} />}
-                <Field label="ชื่อของคุณ" id="nick" value={nickname}
+                <Field label="ชื่อของคุณ" id="nick" value={nickname} readOnly={!!user}
                   onChange={e => setNickname(e.target.value)} max={32} autoFocus />
                 <Field label="ชื่อห้อง" id="room" value={roomName}
                   onChange={e => setRoomName(e.target.value)} max={64} />
@@ -495,12 +481,6 @@ export default function HomePage() {
                     </span>
                   </label>
                 </div>
-
-                <p className="form-note">
-                  {gameMode === 'chaos'
-                    ? 'โหมดโกลาหล: ระบบสุ่มบทบาทให้ตอนเริ่มเกม และใช้เวลาคงที่ (กลางคืน 25 วิ · คุย 90 วิ · โหวต 25 วิ)'
-                    : 'บทบาทและเวลาแต่ละช่วงตั้งได้ในห้องรอก่อนเริ่มเกม'}
-                </p>
 
                 <div className="btn-row">
                   <button type="submit" className="btn-primary sketch-border"
@@ -664,7 +644,7 @@ export default function HomePage() {
                       </span>
                       <span className="join-selected-name">{selectedRoom?.name}</span>
                     </div>
-                    <Field label="ชื่อของคุณ" id="nick2" value={nickname}
+                    <Field label="ชื่อของคุณ" id="nick2" value={nickname} readOnly={!!user}
                       onChange={e => setNickname(e.target.value)} max={32} autoFocus />
 
                     <div className="btn-row">
@@ -681,7 +661,6 @@ export default function HomePage() {
 
             </div>
 
-            {/* กระดานข่าว — อยู่ในจอแรก แถวเดียวกับปุ่มหลัก */}
             {!isJoinBrowse && (
               <motion.div
                 className="home-news"
@@ -711,7 +690,6 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* กระดานคะแนน — อยู่ล่างจอแรก ซ่อนไว้จนกว่าผู้ใช้จะเลื่อนลงมาเจอ */}
           {!isJoinBrowse && (
             <Reveal className="home-below">
               <Leaderboard players={topPlayers} loading={loadingTop} />
@@ -720,7 +698,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Footer — กลับไปเป็น footer ปกติ ไม่ซ่อนรอเลื่อนแล้ว (ของเดิมก่อน Reveal) */}
       <footer className="home-footer">
         <div className="home-footer-left">
           <span className="version">v1.0.2</span>

@@ -1,27 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bgHome from '../src/assets/bgHome.jpg';
 import Reveal from '../src/components/Reveal.jsx';
 import '../src/styles/Newspage.css';
-
-const ALL_NEWS = [
-  {
-    id: 1,
-    tag: 'อัปเดต',
-    title: 'อัปเดตเวอร์ชัน 1.2.0',
-    desc: 'เพิ่มระบบรายงานผู้เล่น และปรับสมดุลเกม หมาป่าบ่นว่าโดนเพิ่มความยากอีกแล้ว',
-    date: '24/06/2026',
-    devNote: 'เราไม่ได้ buff หมาป่าเพิ่มเติม... อย่างเป็นทางการ',
-  },
-  {
-    id: 2,
-    tag: 'อัปเดต',
-    title: 'เพิ่มระบบ Silencer',
-    desc: 'Role ใหม่ Silencer ฝ่ายหมู่บ้าน สามารถปิดปากผู้เล่น 1 คนในวันถัดไปได้',
-    date: '06/07/2026',
-    devNote: 'บางทีความเงียบคือคำตอบที่ดีที่สุด',
-  },
-];
 
 const TAG_COLORS = {
   'อัปเดต': 'tag-update',
@@ -35,9 +16,28 @@ export default function NewsPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('ทั้งหมด');
   const [hovered, setHovered] = useState(null);
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const tags = ['ทั้งหมด', ...new Set(ALL_NEWS.map(n => n.tag))];
-  const filtered = filter === 'ทั้งหมด' ? ALL_NEWS : ALL_NEWS.filter(n => n.tag === filter);
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchNews() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/news'); // Fetch all news for the dedicated page
+        const data = await res.json();
+        if (!cancelled && res.ok) setNews(data.news || []);
+      } catch (err) { setError(err.message || 'ไม่สามารถโหลดข่าวสารได้'); }
+      finally { if (!cancelled) setLoading(false); }
+    }
+    fetchNews();
+    return () => { cancelled = true; };
+  }, []);
+
+  const tags = ['ทั้งหมด', ...new Set(news.map(n => n.tag))];
+  const filtered = filter === 'ทั้งหมด' ? news : news.filter(n => n.tag === filter);
 
   return (
     <div className="news-page" style={{ backgroundImage: bgHome ? `url(${bgHome})` : undefined }}>
@@ -45,7 +45,6 @@ export default function NewsPage() {
       <div className="news-fog" />
 
       <div className="news-container">
-        {/* Topbar */}
         <div className="news-topbar">
           <button className="news-back-btn" onClick={() => navigate('/')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -77,11 +76,12 @@ export default function NewsPage() {
           ))}
         </div>
 
+        {loading && <p className="news-loading">กำลังโหลดข่าวสาร...</p>}
+        {error && <p className="news-error">{error}</p>}
         <div className="news-grid">
           {filtered.map((news, i) => (
             <Reveal
               key={news.id}
-              /* หน่วงไล่ทีละใบ แต่ตัดที่ใบที่ 6 — ถ้าปล่อยไปเรื่อย ๆ ใบท้าย ๆ จะรอนานเกิน */
               delay={Math.min(i, 5) * 70}
               className={`news-card ${hovered === news.id ? 'is-hovered' : ''}`}
               onMouseEnter={() => setHovered(news.id)}
@@ -105,13 +105,12 @@ export default function NewsPage() {
               )}
 
               <div className="news-card-footer">
-                <span className="news-card-date">{news.date}</span>
+                <span className="news-card-date">{new Date(news.created_at).toLocaleDateString('th-TH')}</span>
               </div>
             </Reveal>
           ))}
         </div>
 
-        {/* Narrator footer */}
         <div className="news-narrator">
           <span>ข่าวสารการอัพเดตทั้งหมด</span>
         </div>

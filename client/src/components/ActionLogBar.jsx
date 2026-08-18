@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGame } from '../../context/Gamecontext.jsx';
+import { useGame } from '../context/Gamecontext.jsx';
 
 // แถบ narrator เสียดสี — แสดงเหตุการณ์ล่าสุดบรรทัดเดียว กดเพื่อกางดูย้อนหลัง
 // entry สังเคราะห์ฝั่ง client จาก socket event ที่มีอยู่ (night/vote/morning/silence)

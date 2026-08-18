@@ -75,7 +75,6 @@ test('silencer is configurable and defaults to zero', () => {
 });
 
 test('silencer counts as a villager for the balance check', () => {
-  // 4 คน: หมาป่า 1, silencer 1, ที่เหลือชาวบ้าน 2 → ฝ่ายชาวบ้าน 3 คน ผ่านสบาย
   assert.equal(
     normalizeRoomConfig({ roleConfig: { werewolf: 1, seer: 0, bodyguard: 0, silencer: 1, fool: 0 } }, 4).error,
     undefined
@@ -88,7 +87,6 @@ test('rejects durations outside the allowed range', () => {
 });
 
 test('blocks starting when configured roles need more players than actually joined', () => {
-  // ตั้งไว้สำหรับห้อง 8 คน แต่เข้าจริงแค่ 4
   const roleConfig = { werewolf: 2, seer: 1, bodyguard: 1, fool: 1 };
 
   assert.equal(validateConfigForPlayerCount(roleConfig, 8), null);
@@ -104,7 +102,6 @@ test('buildRoleList fills the remaining seats with villagers', () => {
 });
 
 test('chaos role config always validates and obeys the wolf cap', () => {
-  // สุ่มหลายรอบต่อจำนวนผู้เล่นแต่ละค่า — ทุกครั้งต้องผ่าน validate และหมาป่าไม่เกิน 1/4
   for (let playerCount = 4; playerCount <= 8; playerCount++) {
     const maxWolves = Math.max(1, Math.floor(playerCount / 4));
     for (let i = 0; i < 200; i++) {

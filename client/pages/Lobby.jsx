@@ -1,36 +1,16 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useGame } from '../context/Gamecontext.jsx';
+import { useGame } from '../src/context/Gamecontext.jsx';
 import ChatBox    from '../src/components/ChatBox.jsx';
+import { useGameData } from '../src/context/GameDataContext.jsx'; // Import useGameData
 import HowToPlayModal from '../src/components/HowToPlayModal.jsx';
 import RoomConfigPanel from '../src/components/RoomConfigPanel.jsx';
-import { MORNING_EVENT_INFO } from '../src/constants/game.js';
 import bgHome from '../src/assets/bgHome.jpg';
-import '../src/styles/GamePage.css';   /* ChatBox ใช้คลาส .gpc-* จากไฟล์นี้ */
+import '../src/styles/GamePage.css';
 import '../src/styles/Lobby.css';
-
-// --- Role Card Images ---
-import villagerImg from '../src/assets/cards/roles/villager.png';
-import werewolfImg from '../src/assets/cards/roles/werewolf.png';
-import seerImg from '../src/assets/cards/roles/seer.png';
-import bodyguardImg from '../src/assets/cards/roles/guardian.png';
-import silencerImg from '../src/assets/cards/roles/silencer.png';
-import foolImg from '../src/assets/cards/roles/fool.png';
-
-// --- Morning Event Card Images ---
-import blackoutImg from '../src/assets/cards/morning/blackout.png';
-import fogImg from '../src/assets/cards/morning/fog.png';
-import safeNightImg from '../src/assets/cards/morning/boat_return.png';
-import shortDayImg from '../src/assets/cards/morning/high_tide.png';
-import wolfCountImg from '../src/assets/cards/morning/distant_howl.png';
-import skillCountImg from '../src/assets/cards/morning/circling_crow.png';
-import fullMoonImg from '../src/assets/cards/morning/full_moon.png';
-import longNightImg from '../src/assets/cards/morning/long_night.png';
 
 const MIN_PLAYERS = 4;
 
-// กติกาโดยย่อ แยกเป็น 2 เรื่อง: เล่นยังไง / ชนะยังไง — รายละเอียดความสามารถของ role
-// ย้ายไปหัวข้อ "บทบาทภายในเกม" (GAME_ROLES) ด้านล่างแทน ไม่ปนกันเหมือนเดิม
 const HOW_TO_PLAY = [
   'เกมแบ่งเป็นรอบกลางคืนกับกลางวันสลับกัน',
   'กลางคืน: ผู้เล่นที่มีความสามารถพิเศษใช้ความสามารถของตัวเองอย่างลับ ๆ พร้อมกัน',
@@ -43,37 +23,6 @@ const WIN_CONDITIONS = [
   'Fool ชนะทันที ถ้าโดนโหวตออกจากเกาะ (แต่ถ้าถูกหมาป่าฆ่าตอนกลางคืนไม่นับ)',
 ];
 
-// บทบาททั้ง 6 ตัว (ครบจริง ไม่ใช่แค่ 4 ตัวที่มีความสามารถ) — ไอคอนชุดเดียวกับ ROLE_INFO
-const GAME_ROLES = [
-  { icon: '🐺',   name: 'หมาป่า',    text: 'แต่ละคืนร่วมกันเลือกฆ่าผู้เล่น 1 คนอย่างลับ ๆ และเห็นทีมกันเอง' },
-  { icon: '🔮',   name: 'Seer',      text: 'ตรวจผู้เล่น 1 คนได้ทุกคืน รู้แค่ว่าเขาอยู่ฝ่ายไหน' },
-  { icon: '🛡️',   name: 'Bodyguard', text: 'ปกป้องผู้เล่น 1 คนจากการถูกฆ่าได้ทุกคืน ห้ามเฝ้าคนเดิม 2 คืนติด' },
-  { icon: '🤐',   name: 'Silencer',  text: 'ปิดปากผู้เล่น 1 คน ทำให้เขาพิมพ์อะไรไม่ได้เลยตลอดวันถัดไป' },
-  { icon: '🃏',   name: 'Fool',      text: 'ไม่มีความสามารถพิเศษ (เงื่อนไขชนะดูในหัวข้อกติกาโดยย่อด้านบน)' },
-  { icon: '🧑‍🌾', name: 'ชาวบ้าน',   text: 'ไม่มีความสามารถพิเศษ ใช้การสังเกตและพูดคุยเท่านั้น' },
-];
-
-const ROLE_IMAGE_MAP = {
-  '🐺': werewolfImg,
-  '🔮': seerImg,
-  '🛡️': bodyguardImg,
-  '🤐': silencerImg,
-  '🃏': foolImg,
-  '🧑‍🌾': villagerImg,
-};
-
-const MORNING_EVENT_IMAGE_MAP = {
-  '🕯️': blackoutImg,
-  '🌫️': fogImg,
-  '🛡️': safeNightImg,
-  '⏳': shortDayImg,
-  '🐺': wolfCountImg,
-  '🐦‍⬛': skillCountImg,
-  '🌙': fullMoonImg,
-  '🔥': longNightImg,
-};
-
-/* ── หิ่งห้อยลอยเหนือฉากหลัง — ชุดเดียวกับหน้าแรก ให้สองหน้าเป็นเกาะเดียวกัน ── */
 function FirefliesLayer() {
   const flies = useMemo(() =>
     Array.from({ length: 9 }, (_, i) => ({
@@ -102,8 +51,6 @@ function initialOf(name = '') {
   return name.trim().charAt(0).toUpperCase() || '?';
 }
 
-/* หมุดไม้สี่มุม — signature ของทั้งเว็บ ตอกป้ายไม้ไว้กับผนัง */
-/* หัวข้อป้าย — เส้นคั่นสองข้างเป็นของจริง ไม่ใช่ขีดที่พิมพ์ในข้อความ */
 function PlaqueTitle({ children }) {
   return (
     <h2 className="panel-title">
@@ -114,7 +61,6 @@ function PlaqueTitle({ children }) {
   );
 }
 
-/* ── แถวผู้เล่นในคอลัมน์ขวา ── */
 function IslanderRow({ player, isMe, isHost, index }) {
   const offline = player.isConnected === false;
   return (
@@ -144,6 +90,7 @@ export default function Lobby() {
     leaveRoom, startGame, clearError, updateRoomConfig,
   } = useGame();
 
+  const { roles, morningEvents } = useGameData(); // Get roles and morningEvents from context
   const [cfgTab,   setCfgTab]   = useState('roles');   // บทบาท / เวลา
   const [mainTab,  setMainTab]  = useState('chat');    // ช่องแชท / กติกา
   const [copied,   setCopied]   = useState(false);
@@ -154,7 +101,6 @@ export default function Lobby() {
     if (!playerId || !nickname) navigate('/', { replace: true });
   }, [playerId, nickname, navigate]);
 
-  // เจ้าของห้องปิดห้อง — เด้งผู้เล่นที่เหลือกลับหน้าแรก
   useEffect(() => {
     if (roomClosed) navigate('/', { replace: true });
   }, [roomClosed, navigate]);
@@ -172,16 +118,13 @@ export default function Lobby() {
     navigate('/', { replace: true });
   }
 
-  // คัดลอกรหัสห้องไปชวนเพื่อน — ขึ้น "คัดลอกแล้ว" 1.6 วิแล้วกลับเป็นเดิม
   async function copyRoomId() {
     try {
       await navigator.clipboard.writeText(room.id);
       setCopied(true);
       clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* เบราว์เซอร์ไม่ให้สิทธิ์ — ผู้เล่นยังลากเลือกรหัสเองได้ */
-    }
+    } catch { /* silent */ }
   }
 
   if (!room) {
@@ -240,7 +183,6 @@ export default function Lobby() {
 
       <main className="lobby-grid">
 
-        {/* ── ซ้าย: ตั้งค่าห้อง ── */}
         <section className="lobby-panel lobby-config">
           <div className="panel-head">
             <PlaqueTitle>{isChaos ? 'โหมดโกลาหล' : 'ตั้งค่าห้อง'}</PlaqueTitle>
@@ -248,7 +190,6 @@ export default function Lobby() {
           </div>
 
           {isChaos ? (
-            /* โหมดโกลาหล: ไม่มีการตั้งค่า role/เวลา — ระบบสุ่ม + fix ให้ ปิดหน้าตั้งค่าไปเลย */
             <div className="lobby-panel-body custom-scrollbar lobby-chaos-note">
               <p className="chaos-lead">บทบาทถูกสุ่มอัตโนมัติตอนกดเริ่มเกม ไม่มีใครตั้งเองได้</p>
               <ul className="chaos-facts">
@@ -287,7 +228,6 @@ export default function Lobby() {
           )}
         </section>
 
-        {/* ── กลาง: แชท / กติกา ── */}
         <section className="lobby-panel lobby-center">
           <div className="panel-head is-split">
             <div className="lobby-tabs" role="tablist" aria-label="ช่องกลาง">
@@ -338,17 +278,14 @@ export default function Lobby() {
 
               <h3 className="lobby-subhead">บทบาทภายในเกม</h3>
               <ul className="events-list">
-                {GAME_ROLES.map((role, i) => (
-                  <li key={role.name} className="events-item cv-auto" style={{ '--row-i': i }}>
-                    {ROLE_IMAGE_MAP[role.icon] ? (
-                      <img src={ROLE_IMAGE_MAP[role.icon]} alt="" className="events-icon is-image" />
+                {roles.map((role, i) => ( // Use roles from useGameData
+                  <li key={role.id} className="events-item cv-auto" style={{ '--row-i': i }}>
+                    {role.card_image ? ( // Use role.card_image
+                      <img src={role.card_image} alt={role.name_th} className="events-icon is-image" />
                     ) : (
                       <span className="events-icon" aria-hidden="true">{role.icon}</span>
                     )}
-                    <span className="events-text">
-                      <strong className="events-title">{role.name}</strong>
-                      <span className="events-effect">{role.text}</span>
-                    </span>
+                    <span className="events-text"><strong className="events-title">{role.name_th}</strong><span className="events-effect">{role.description_th.split('.')[0]}.</span></span>
                   </li>
                 ))}
               </ul>
@@ -362,11 +299,11 @@ export default function Lobby() {
                 บางเหตุการณ์เปลี่ยนกติกาของคืนถัดไป บางอย่างเปลี่ยนเวลาพูดคุย และบางอย่างก็ไม่มีผลอะไรเลย
                 เหตุการณ์ที่เพิ่งออกจะไม่ออกซ้ำติด ๆ กัน
               </p>
-              <ul className="events-list">
-                {MORNING_EVENT_INFO.map((ev, i) => (
-                  <li key={ev.id} className="events-item cv-auto" style={{ '--row-i': i }}>
-                    {MORNING_EVENT_IMAGE_MAP[ev.icon] ? (
-                      <img src={MORNING_EVENT_IMAGE_MAP[ev.icon]} alt="" className="events-icon is-image" />
+              <ul className="events-list"> {/* Use morningEvents from useGameData */}
+                {morningEvents.map((ev, i) => (
+                  <li key={ev.id} className="events-item cv-auto" style={{ '--row-i': i }}> {/* Use ev.id for key */}
+                    {ev.card_image ? ( // Use ev.card_image
+                      <img src={ev.card_image} alt={ev.title} className="events-icon is-image" />
                     ) : (
                       <span className="events-icon" aria-hidden="true">{ev.icon}</span>
                     )}
@@ -381,7 +318,6 @@ export default function Lobby() {
           )}
         </section>
 
-        {/* ── ขวา: รายชื่อผู้เล่น ── */}
         <aside className="lobby-panel lobby-players">
           <div className="panel-head">
             <PlaqueTitle>ผู้เล่น</PlaqueTitle>

@@ -33,7 +33,6 @@ test('level 1 needs 7 games, not 5', () => {
 });
 
 test('backfilling replays the whole curve and can jump several levels', () => {
-  // 5 เกมแรก → Lv.1, อีก 7 เกม → Lv.2 รวม 12 เกมพอดี
   assert.deepEqual(levelFromGamesPlayed(5),  { level: 1, exp: 0 });
   assert.deepEqual(levelFromGamesPlayed(11), { level: 1, exp: 6 });
   assert.deepEqual(levelFromGamesPlayed(12), { level: 2, exp: 0 });

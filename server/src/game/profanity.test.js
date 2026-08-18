@@ -27,7 +27,6 @@ test('leaves clean messages untouched', () => {
 });
 
 test('does not censor innocent words that merely contain a bad substring', () => {
-  // 'class' มี 'ass', 'grape' มี 'rape' — คำที่จับด้วยขอบเขตคำต้องไม่โดน
   const { clean, censored } = censorProfanity('the class is passing, cocktail at 5');
 
   assert.equal(censored, false);

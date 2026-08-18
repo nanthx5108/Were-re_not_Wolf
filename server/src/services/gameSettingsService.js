@@ -22,12 +22,6 @@ export async function refreshSettings() {
   await loadSettings();
 }
 
-/**
- * Retrieves a setting value by its key.
- * @param {string} key The key of the setting.
- * @param {*} defaultValue The default value to return if the key is not found.
- * @returns {*} The setting value, coerced to its correct type.
- */
 export function getSetting(key, defaultValue) {
   if (!settingsCache.has(key)) {
     return defaultValue;
@@ -51,5 +45,4 @@ export function getSetting(key, defaultValue) {
   }
 }
 
-// Initial load on startup
 loadSettings();
