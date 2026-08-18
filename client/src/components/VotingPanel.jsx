@@ -1,4 +1,5 @@
 import React from 'react';
+import SoundManager from '../sound/SoundManager.js';
 
 export default function VotingPanel({ players = [], playerId, votes, onVote }) {
   const alivePlayers = players.filter(p => p.isAlive);
@@ -63,7 +64,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote }) {
                   <span style={s.voteCount}>{voteCount} votes</span>
                 )}
                 <button
-                  onClick={() => !alreadyVoted && onVote(p.id)}
+                  onClick={() => { if (alreadyVoted) return; try { SoundManager.playSfx('/assets/sounds/sfx/sfx_vote.wav'); } catch (e) { /* ignore */ } onVote(p.id); }}
                   disabled={alreadyVoted}
                   style={{
                     ...s.voteBtn,
