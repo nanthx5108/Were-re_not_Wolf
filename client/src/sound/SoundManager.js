@@ -18,13 +18,27 @@ class SoundManager {
 
   init() { Howler.volume(this.settings.master); Howler.mute(this.settings.muted); }
 
+  _buildSrcCandidates(src) {
+    // prefer optimized OGG/MP3 in public/assets/sounds/optimized, fall back to original
+    try {
+      const url = new URL(src, window.location.origin).pathname;
+      const base = url.split('/').pop();
+      const name = base.replace(/\.[^.]+$/, '');
+      const optimized = `/assets/sounds/optimized/${name}.ogg`;
+      return [optimized, src];
+    } catch (e) {
+      return [src];
+    }
+  }
+
   playBgm(key, src, { loop = true, volume = 1.0, fade = 800 } = {}) {
     if (this.currentBgmKey === key) return;
     if (this.bgm) {
       try { this.bgm.fade(this.bgm.volume(), 0, fade); } catch {}
       setTimeout(() => { try { this.bgm.stop(); } catch {} }, fade);
     }
-    this.bgm = new Howl({ src: [src], loop, volume: volume * this.settings.music, html5: true });
+    const candidates = this._buildSrcCandidates(src);
+    this.bgm = new Howl({ src: candidates, loop, volume: volume * this.settings.music, html5: true });
     this.currentBgmKey = key;
     this.bgm.play();
   }
@@ -32,8 +46,9 @@ class SoundManager {
   stopBgm() { if (this.bgm) { try { this.bgm.stop(); } catch {} this.bgm = null; this.currentBgmKey = null; } }
 
   playSfx(src, { volume = 1.0 } = {}) {
-    // lightweight one-shot SFX
-    const h = new Howl({ src: [src], volume: volume * this.settings.sfx, html5: true });
+    // lightweight one-shot SFX — try optimized first
+    const candidates = this._buildSrcCandidates(src);
+    const h = new Howl({ src: candidates, volume: volume * this.settings.sfx, html5: false });
     h.play();
   }
 
