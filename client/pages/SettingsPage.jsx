@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bgHome from '../src/assets/bgHome.png';
+import SoundManager from '../src/sound/SoundManager.js';
 import '../src/styles/SettingsPage.css';
 
 const BG_IMAGE = bgHome;
@@ -48,11 +49,12 @@ export default function SettingsPage() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
       setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 1800);
-    } catch {
-      // localStorage unavailable — silently ignore
+        try { SoundManager.playSfx('/assets/sounds/sfx/sfx_save_confirm.wav', { volume: 0.9 }); } catch (e) {}
+        setTimeout(() => setShowSaved(false), 1800);
+      } catch {
+        // localStorage unavailable — silently ignore
+      }
     }
-  }
 
   return (
     <div className="settings-page" style={{ backgroundImage: BG_IMAGE ? `url(${BG_IMAGE})` : undefined }}>

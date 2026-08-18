@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useGame } from '../../context/Gamecontext.jsx';
+import SoundManager from '../sound/SoundManager.js';
 
 const ROLE_PROMPTS = {
   werewolf:  'เลือกเหยื่อของคืนนี้',
@@ -67,6 +68,17 @@ export default function NightAction() {
     : Boolean(myNightAction);
 
   function handlePick(targetId) {
+    // play role-specific feedback
+    try {
+      const roleSfx = {
+        werewolf: '/assets/sounds/sfx/sfx_werewolf_howl.wav',
+        seer: '/assets/sounds/sfx/sfx_role_seer.wav',
+        bodyguard: '/assets/sounds/sfx/sfx_role_guardian.wav',
+        silencer: '/assets/sounds/sfx/sfx_role_silencer.wav',
+      }[myRole];
+      if (roleSfx) SoundManager.playSfx(roleSfx, { volume: 0.9 });
+    } catch (e) {}
+
     submitNightAction(targetId);
     setChosenIds((ids) => (ids.includes(targetId) ? ids : [...ids, targetId].slice(0, maxTargets)));
   }

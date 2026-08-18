@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PHASE_DURATIONS_SEC, PHASE_CONFIG } from '../constants/game.js';
+import SoundManager from '../sound/SoundManager.js';
 
 export default function PhaseTimer({ phase, phaseEndsAt, phaseDurationMs, round }) {
   const [remaining, setRemaining] = useState(0);
 
+  const prevRef = useRef(null);
   useEffect(() => {
     if (!phaseEndsAt) { setRemaining(0); return; }
 
@@ -16,6 +18,16 @@ export default function PhaseTimer({ phase, phaseEndsAt, phaseDurationMs, round 
     const id = setInterval(tick, 500);
     return () => clearInterval(id);
   }, [phaseEndsAt]);
+
+  // play countdown tick when remaining decreases and is in urgent window
+  useEffect(() => {
+    const prev = prevRef.current;
+    if (prev == null) { prevRef.current = remaining; return; }
+    if (remaining < prev && remaining > 0 && remaining <= 10) {
+      try { SoundManager.playSfx('/assets/sounds/sfx/sfx_countdown_tick.wav', { volume: 0.6 }); } catch (e) {}
+    }
+    prevRef.current = remaining;
+  }, [remaining]);
 
   const cfg = PHASE_CONFIG[phase] || PHASE_CONFIG.lobby;
 

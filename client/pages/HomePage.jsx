@@ -195,7 +195,9 @@ function IconBlock() {
 }
 
 const BGM_SRC = null;
-const HOVER_SFX_SRC = null;
+const HOVER_SFX_SRC = '/assets/sounds/sfx/sfx_ui_hover.wav';
+import SoundManager from '../src/sound/SoundManager.js';
+
 
 /* ── Main Component ── */
 export default function HomePage() {
@@ -223,11 +225,7 @@ export default function HomePage() {
   }, []);
 
   function playHoverSfx() {
-    if (!HOVER_SFX_SRC) return;
-    if (!hoverSfxRef.current) hoverSfxRef.current = new Audio(HOVER_SFX_SRC);
-    const sfx = hoverSfxRef.current.cloneNode();
-    sfx.volume = 0.4;
-    sfx.play().catch(() => {});
+    try { SoundManager.playSfx('/assets/sounds/sfx/sfx_ui_hover.wav', { volume: 0.4 }); } catch (e) {}
   }
 
   const [mode, setMode] = useState(null);
@@ -296,6 +294,7 @@ export default function HomePage() {
       if (!res.ok) throw new Error(data.error || 'สร้างห้องไม่สำเร็จ');
       setIdentity(data.playerId, nickname.trim());
       joinRoom(data.roomId, data.playerId, nickname.trim());
+      try { SoundManager.playSfx('/assets/sounds/sfx/sfx_room_created.wav', { volume: 0.9 }); } catch (e) {}
       navigate(`/lobby/${data.roomId}`);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
@@ -316,6 +315,7 @@ export default function HomePage() {
       if (!res.ok) throw new Error(data.error || 'เข้าร่วมห้องไม่สำเร็จ');
       setIdentity(data.playerId, nickname.trim());
       joinRoom(data.roomId, data.playerId, nickname.trim());
+      try { SoundManager.playSfx('/assets/sounds/sfx/sfx_room_created.wav', { volume: 0.8 }); } catch (e) {}
       navigate(`/lobby/${data.roomId}`);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
