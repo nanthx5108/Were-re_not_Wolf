@@ -32,18 +32,13 @@ export default function Lobby() {
     if (!playerId || !nickname) navigate('/', { replace: true });
   }, [playerId, nickname, navigate]);
 
+import SoundManager from '../src/sound/SoundManager';
+
   // Play lobby BGM while on the Lobby page; stop on unmount
   useEffect(() => {
-    let mounted = true;
-    let sm = null;
-    // dynamic import so bundlers handle it in ESM
-    import('../src/sound/SoundManager.js')
-      .then(m => { if (!mounted) return; sm = m.default; sm.playBgm('lobby', '/assets/sounds/bgm/bgm_lobby.wav', { loop: true, volume: 0.6 }); })
-      .catch(() => {});
-    return () => {
-      mounted = false;
-      try { if (sm) sm.stopBgm(); else { import('../src/sound/SoundManager.js').then(m => m.default.stopBgm()).catch(() => {}); } } catch {}
-    };
+    // static import for consistent bundling
+    SoundManager.playBgm('lobby', '/assets/sounds/bgm/bgm_lobby.wav', { loop: true, volume: 0.6 });
+    return () => { try { SoundManager.stopBgm(); } catch {} };
   }, []);
 
   useEffect(() => {
