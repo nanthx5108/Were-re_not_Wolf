@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/Gamecontext.jsx';
-import bgHome from '../src/assets/bgHome.png';
+import bgHome from '../src/assets/bgHome.optimized.jpg';
 import { useAuth } from '../context/AuthContext.jsx';
 import AuthModal from '../src/components/AuthModal.jsx';
 import {
