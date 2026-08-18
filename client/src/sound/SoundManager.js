@@ -1,6 +1,6 @@
 import { Howl, Howler } from 'howler';
 
-const DEFAULTS = { master: 0.9, music: 0.5, sfx: 0.7, muted: false }; // slightly lower defaults for a less intrusive audio experience
+const DEFAULTS = { master: 0.85, music: 0.45, sfx: 0.6, muted: false }; // tuned quieter defaults for pleasant UX
 
 class SoundManager {
   constructor() {
@@ -31,7 +31,7 @@ class SoundManager {
     }
   }
 
-  playBgm(key, src, { loop = true, volume = 1.0, fade = 800 } = {}) {
+  playBgm(key, src, { loop = true, volume = 1.0, fade = 600 } = {}) {
     if (this.currentBgmKey === key) return;
     if (this.bgm) {
       try { this.bgm.fade(this.bgm.volume(), 0, fade); } catch {}
