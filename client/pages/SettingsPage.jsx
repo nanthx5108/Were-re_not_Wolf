@@ -5,8 +5,7 @@ import SoundManager from '../src/sound/SoundManager.js';
 import '../src/styles/SettingsPage.css';
 
 const BG_IMAGE = bgHome;
-const STORAGE_KEY = 'wnw_audio_settings';
-
+// Settings are persisted by SoundManager; page reads/writes percent (0-100)
 const DEFAULT_SETTINGS = {
   master: 80,
   sfx: 80,
@@ -14,11 +13,15 @@ const DEFAULT_SETTINGS = {
   muted: false,
 };
 
-function loadSettings() {
+function loadSettingsFromSoundManager() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const sm = SoundManager.getSettings();
+    return {
+      master: Math.round((sm.master ?? 1.0) * 100),
+      sfx: Math.round((sm.sfx ?? 0.8) * 100),
+      music: Math.round((sm.music ?? 0.6) * 100),
+      muted: !!sm.muted,
+    };
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -34,7 +37,7 @@ function IconBack() {
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const [settings, setSettings] = useState(loadSettings);
+  const [settings, setSettings] = useState(loadSettingsFromSoundManager);
   const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
@@ -42,17 +45,27 @@ export default function SettingsPage() {
   }, []);
 
   function updateValue(key, value) {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  }
+      setSettings(prev => {
+        const next = { ...prev, [key]: value };
+        // apply immediately to SoundManager (convert percent -> 0..1)
+        try {
+          if (key === 'master') SoundManager.setMaster(Number(value) / 100);
+          if (key === 'music') SoundManager.setMusic(Number(value) / 100);
+          if (key === 'sfx') SoundManager.setSfx(Number(value) / 100);
+          if (key === 'muted') SoundManager.mute(!!value);
+        } catch (e) {}
+        return next;
+      });
+    }
 
-  function handleSave() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      setShowSaved(true);
+    function handleSave() {
+      try {
+        // SoundManager already persisted settings; show saved UI
+        setShowSaved(true);
         try { SoundManager.playSfx('/assets/sounds/sfx/sfx_save_confirm.wav', { volume: 0.9 }); } catch (e) {}
         setTimeout(() => setShowSaved(false), 1800);
       } catch {
-        // localStorage unavailable — silently ignore
+        // ignore
       }
     }
 

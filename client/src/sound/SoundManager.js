@@ -41,6 +41,8 @@ class SoundManager {
   setMusic(v) { this.settings.music = Number(v); if (this.bgm) this.bgm.volume(this.settings.music); this._saveSettings(); }
   setSfx(v) { this.settings.sfx = Number(v); this._saveSettings(); }
   mute(m) { this.settings.muted = !!m; Howler.mute(this.settings.muted); this._saveSettings(); }
+  // expose read-only copy of settings for UI
+  getSettings() { return { ...this.settings }; }
 }
 
 export default new SoundManager();
