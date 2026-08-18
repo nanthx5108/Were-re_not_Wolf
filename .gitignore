@@ -6,3 +6,4 @@ build/
 *.log
 server/uploads/avatars/*
 !server/uploads/avatars/.gitkeep
+/server/db/data/
