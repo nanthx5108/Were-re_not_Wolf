@@ -898,9 +898,9 @@ export default function HomePage() {
 }
 
 /* ── Sub-components ── */
-function NewsRow({ news }) {
+const NewsRow = React.forwardRef(function NewsRow({ news }, ref) {
   return (
-    <div className="home-news-item">
+    <div ref={ref} className="home-news-item">
       <div className="home-news-item-meta">
         <span className="home-news-item-tag">{news.tag}</span>
         <span className="home-news-item-date"><IconClock />{news.date}</span>
@@ -909,11 +909,11 @@ function NewsRow({ news }) {
       <div className="home-news-item-desc">{news.desc}</div>
     </div>
   );
-}
+});
 
-function MenuBtn({ title, sub, onClick, primary = false, icon, onHover }) {
+const MenuBtn = React.forwardRef(function MenuBtn({ title, sub, onClick, primary = false, icon, onHover }, ref) {
   return (
-    <button type="button" onClick={onClick} disabled={!onClick}
+    <button ref={ref} type="button" onClick={onClick} disabled={!onClick}
       onMouseEnter={onHover}
       className={`menu-btn ${primary ? 'is-primary' : ''}`}>
       {primary && <span className="menu-btn-corner menu-btn-corner-tl" aria-hidden="true" />}
@@ -926,19 +926,19 @@ function MenuBtn({ title, sub, onClick, primary = false, icon, onHover }) {
       <span className="menu-arrow"><IconArrow /></span>
     </button>
   );
-}
+});
 
-function Field({ label, id, value, onChange, placeholder, max, autoFocus, extraClassName = '' }) {
+const Field = React.forwardRef(function Field({ label, id, value, onChange, placeholder, max, autoFocus, extraClassName = '' }, ref) {
   return (
     <div className="field-col">
       <label htmlFor={id} className="field-label">{label}</label>
-      <input id={id} value={value} onChange={onChange}
+      <input ref={ref} id={id} value={value} onChange={onChange}
         placeholder={placeholder} maxLength={max} autoFocus={autoFocus}
         className={`field-input ${extraClassName}`} />
     </div>
   );
-}
+});
 
-function ErrorBox({ msg }) {
-  return <div className="error-box">{msg}</div>;
-}
+const ErrorBox = React.forwardRef(function ErrorBox({ msg }, ref) {
+  return <div ref={ref} className="error-box">{msg}</div>;
+});
