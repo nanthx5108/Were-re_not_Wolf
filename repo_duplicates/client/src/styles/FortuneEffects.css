@@ -1,0 +1,90 @@
+/* Global Fortune Card Effects */
+
+/* For UI_BLUR ('blurry_vision' card) */
+body.effect-blur .gp-page {
+  filter: blur(var(--effect-blur-amount, 4px));
+  transition: filter 0.4s ease-in-out;
+}
+
+/* For SCREEN_SHAKE_ON_MESSAGE ('panic' card) */
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+body.effect-shake .gp-page {
+  /* `both` ensures the final state (transform: none) is applied after animation */
+  animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* For MOUSE_JITTER ('wobbly_walk' card) */
+body.effect-hide-cursor,
+body.effect-hide-cursor * {
+  cursor: none !important;
+}
+
+body.effect-hide-cursor::after {
+  content: '';
+  position: fixed;
+  top: var(--cursor-y, -100px);
+  left: var(--cursor-x, -100px);
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid black;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+  transition: top 40ms linear, left 40ms linear;
+}
+
+/* For UI_FLICKER ('forgot_refuel' card) */
+@keyframes flicker-continuous {
+  0%   { opacity: 1; }
+  20%  { opacity: 0.85; }
+  25%  { opacity: 0.95; }
+  40%  { opacity: 0.8; }
+  45%  { opacity: 1; }
+  60%  { opacity: 0.9; }
+  65%  { opacity: 0.98; }
+  80%  { opacity: 0.88; }
+  100% { opacity: 1; }
+}
+body.effect-flicker .gp-page {
+  animation: flicker-continuous 1.5s linear infinite;
+}
+
+/* For UI_DARKEN ('sleepless' card) */
+/* More performant than animating filter: brightness() on the whole page.
+   We animate the opacity of a pseudo-element overlay instead. */
+body.effect-darken::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
+  z-index: 99; /* Above game, below modals */
+  opacity: 0;
+}
+@keyframes darken-overlay {
+  to { opacity: 0.7; }
+}
+body.effect-darken.speed-slow::after {
+  animation: darken-overlay 60s linear forwards;
+}
+
+/* For SHUFFLE_UI_ELEMENTS ('insane' card) */
+@keyframes shuffle-jump {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(10px, -5px) rotate(2deg); }
+  50% { transform: translate(-8px, 12px) rotate(-3deg); }
+  75% { transform: translate(5px, 5px) rotate(1deg); }
+}
+/* Target the specific components mentioned in the card definition */
+body.effect-shuffling .gpr, /* MyRoleCard */
+body.effect-shuffling .voting-panel {
+  animation: shuffle-jump 0.4s cubic-bezier(.36,.07,.19,.97);
+}
