@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { GameProvider } from './context/Gamecontext.jsx';
 import { GameDataProvider } from './context/GameDataContext.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'; // เพิ่ม useAuth
-import { ToastProvider } from './components/ToastContext.jsx';
 import ToastContainer from './components/ToastContainer.jsx'; // เพิ่ม import ToastContainer
 
 import HomePage     from '../pages/HomePage.jsx';
@@ -54,42 +53,40 @@ function AppShell() {
   }, [user]);
 
   return (
-    <ToastProvider>
-      <GameProvider>
-        <GameDataProvider>
-          <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-            <filter id="sketch-edge">
-              <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" result="noise" seed="3" />
-              <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
-            </filter>
-          </svg>
-          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <Routes>
-              <Route path="/"              element={<HomePage />} />
-              <Route path="/login"         element={<LoginPage />} />
-              <Route path="/register"      element={<RegisterPage />} />
-              <Route path="/lobby/:roomId" element={<Lobby />} />
-              <Route path="/game/:roomId"  element={<Game />} />
-              <Route path="/customize"    element={<CustomizePage />} />
-              <Route path="/settings"     element={<SettingsPage />} />
-              <Route path="/news"         element={<NewsPage />} />
-              <Route path="/profile"      element={<ProfilePage />} />
-              <Route path="/profile/view" element={<ViewProfilePage />} />
-              <Route path="/profile/settings" element={<Navigate to="/profile" replace />} />
-              <Route path="/admin" element={user?.isAdmin ? <AdminPage /> : <Navigate to="/" replace />} />
-              <Route path="*"             element={<Navigate to="/" replace />} />
-            </Routes>
-            <MorningEventCard />
-            {showAdminModal && <AdminActivationModal onClose={() => setShowAdminModal(false)} />}
-            {showAdminWindow && user?.isAdmin && (
-              <AdminFloatingWindow onClose={() => setShowAdminWindow(false)}>
-                <AdminPage />
-              </AdminFloatingWindow>
-            )}
-          </BrowserRouter>
-          <ToastContainer /> {/* เพิ่ม ToastContainer ที่นี่ */}
-        </GameDataProvider>
-      </GameProvider>
-    </ToastProvider>
+    <GameProvider>
+      <GameDataProvider>
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+          <filter id="sketch-edge">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" result="noise" seed="3" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+          </filter>
+        </svg>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Routes>
+            <Route path="/"              element={<HomePage />} />
+            <Route path="/login"         element={<LoginPage />} />
+            <Route path="/register"      element={<RegisterPage />} />
+            <Route path="/lobby/:roomId" element={<Lobby />} />
+            <Route path="/game/:roomId"  element={<Game />} />
+            <Route path="/customize"    element={<CustomizePage />} />
+            <Route path="/settings"     element={<SettingsPage />} />
+            <Route path="/news"         element={<NewsPage />} />
+            <Route path="/profile"      element={<ProfilePage />} />
+            <Route path="/profile/view" element={<ViewProfilePage />} />
+            <Route path="/profile/settings" element={<Navigate to="/profile" replace />} />
+            <Route path="/admin" element={user?.isAdmin ? <AdminPage /> : <Navigate to="/" replace />} />
+            <Route path="*"             element={<Navigate to="/" replace />} />
+          </Routes>
+          <MorningEventCard />
+          {showAdminModal && <AdminActivationModal onClose={() => setShowAdminModal(false)} />}
+          {showAdminWindow && user?.isAdmin && (
+            <AdminFloatingWindow onClose={() => setShowAdminWindow(false)}>
+              <AdminPage />
+            </AdminFloatingWindow>
+          )}
+        </BrowserRouter>
+        <ToastContainer /> {/* เพิ่ม ToastContainer ที่นี่ */}
+      </GameDataProvider>
+    </GameProvider>
   );
 }
