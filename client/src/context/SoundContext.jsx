@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import { soundManager } from '../sound/soundManager';
+import soundManager from '../sound/soundManager';
 
 const SoundContext = createContext(soundManager);
 

@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import { socket } from '../socket/socket.jsx';
 import { useToast } from '../components/ToastContext.jsx';
-import { soundManager } from '../sound/soundManager.js';
+import soundManager from '../sound/soundManager.js';
 
 export const SOCKET_EVENTS = Object.freeze({
   ROOM_JOIN:            'room:join',

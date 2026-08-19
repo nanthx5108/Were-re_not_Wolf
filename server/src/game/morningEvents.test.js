@@ -5,6 +5,7 @@ import {
   MORNING_EVENTS, DEFAULT_EVENT_ID,
   buildEventContext, getEligibleEvents, weightedPick,
   rollMorningEvent, consumeNightEffect, getActiveNightEffect,
+  getActiveLuckBias,
 } from './morningEvents.js';
 
 function setupRoom(roomId, { players = 6, round = 1, nightResult = {} } = {}) {

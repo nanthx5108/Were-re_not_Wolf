@@ -17,14 +17,15 @@ export async function getAllUsers(req, res) {
   try {
     let countQuery = 'SELECT COUNT(*) as total FROM users';
     let dataQuery = `
-      SELECT u.id, u.username, u.displayName, u.email, u.level, u.exp, u.gamesPlayed, u.created_at, u.banned_until, a.user_id IS NOT NULL AS isAdmin
+      SELECT u.id, u.username, u.display_name AS displayName, u.email, u.level, u.exp,
+             u.games_played AS gamesPlayed, u.created_at, u.banned_until, a.user_id IS NOT NULL AS isAdmin
       FROM users u
       LEFT JOIN admins a ON u.id = a.user_id`;
     const params = [];
     const countParams = [];
 
     if (search) {
-      const searchQuery = ' WHERE username LIKE ? OR displayName LIKE ? OR email LIKE ?';
+      const searchQuery = ' WHERE username LIKE ? OR display_name LIKE ? OR email LIKE ?';
       countQuery += searchQuery;
       dataQuery += searchQuery;
       const searchTerm = `%${search}%`;
@@ -62,7 +63,7 @@ export async function updateUser(req, res) {
 
   try {
     const fieldsToUpdate = {};
-    if (displayName !== undefined) fieldsToUpdate.displayName = displayName;
+    if (displayName !== undefined) fieldsToUpdate.display_name = displayName;
     if (email !== undefined) fieldsToUpdate.email = email;
     if (level !== undefined) fieldsToUpdate.level = level;
     if (exp !== undefined) fieldsToUpdate.exp = exp;
@@ -86,7 +87,7 @@ export async function updateUser(req, res) {
       return res.status(400).json({ error: 'ไม่มีข้อมูลให้อัปเดต' });
     }
 
-    const [[updatedUser]] = await pool.query('SELECT username, displayName FROM users WHERE id = ?', [id]);
+    const [[updatedUser]] = await pool.query('SELECT username, display_name AS displayName FROM users WHERE id = ?', [id]);
 
     res.json({ message: 'อัปเดตข้อมูลผู้ใช้สำเร็จ' });
     logAdminAction(

@@ -15,7 +15,9 @@ import SettingsPage from '../pages/SettingsPage.jsx';
 import NewsPage from '../pages/NewsPage.jsx';
 import ProfilePage from '../pages/ProfilePage.jsx';
 import ViewProfilePage from '../pages/ViewProfilePage.jsx';
+import AdminPage from '../pages/AdminPage.jsx';
 import AdminActivationModal from './components/AdminActivationModal.jsx';
+import AdminFloatingWindow from './components/AdminFloatingWindow.jsx';
 import MorningEventCard from './components/MorningEventCard.jsx';
 
 export default function App() {
@@ -28,11 +30,12 @@ export default function App() {
 
 function AppShell() {
   const { user } = useAuth();
-  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showAdminModal,  setShowAdminModal]  = useState(false);
+  const [showAdminWindow, setShowAdminWindow] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.key.toLowerCase() === 't') {
+      if (e.ctrlKey && e.shiftKey && e.key === '/') {
         if (user?.isAdmin) {
           e.preventDefault();
           setShowAdminModal(true);
@@ -41,6 +44,12 @@ function AppShell() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [user]);
+
+  useEffect(() => {
+    const openAdmin = () => { if (user?.isAdmin) setShowAdminWindow(true); };
+    window.addEventListener('open-admin-panel', openAdmin);
+    return () => window.removeEventListener('open-admin-panel', openAdmin);
   }, [user]);
 
   return (
@@ -65,18 +74,19 @@ function AppShell() {
             <Route path="/profile"      element={<ProfilePage />} />
             <Route path="/profile/view" element={<ViewProfilePage />} />
             <Route path="/profile/settings" element={<Navigate to="/profile" replace />} />
+            <Route path="/admin" element={user?.isAdmin ? <AdminPage /> : <Navigate to="/" replace />} />
             <Route path="*"             element={<Navigate to="/" replace />} />
           </Routes>
+          <MorningEventCard />
+          {showAdminModal && <AdminActivationModal onClose={() => setShowAdminModal(false)} />}
+          {showAdminWindow && user?.isAdmin && (
+            <AdminFloatingWindow onClose={() => setShowAdminWindow(false)}>
+              <AdminPage />
+            </AdminFloatingWindow>
+          )}
         </BrowserRouter>
-        <MorningEventCard />
-        {showAdminModal && <AdminActivationModal onClose={() => setShowAdminModal(false)} />}
         <ToastContainer /> {/* เพิ่ม ToastContainer ที่นี่ */}
       </GameDataProvider>
     </GameProvider>
   );
-  useEffect(() => {
-  const openAdmin = () => { if (user?.isAdmin) setShowAdminModal(true); };
-  window.addEventListener('open-admin-panel', openAdmin);
-  return () => window.removeEventListener('open-admin-panel', openAdmin);
-}, [user]);
 }

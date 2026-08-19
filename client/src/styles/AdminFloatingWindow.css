@@ -1,0 +1,98 @@
+.admin-floating-window {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-void, #12100e);
+  border: 1px solid var(--gold-bright, #c8a45a);
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(200, 164, 90, 0.15);
+  overflow: hidden;
+  min-width: 420px;
+  min-height: 320px;
+}
+
+.admin-floating-window.is-minimized {
+  min-height: 0;
+  height: auto !important;
+}
+
+.afw-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, #201b14, #171310);
+  border-bottom: 1px solid var(--border-subtle, #4a3f2e);
+  cursor: move;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.afw-title {
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  color: var(--gold-bright, #d4a84c);
+}
+
+.afw-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.afw-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle, #4a3f2e);
+  border-radius: 5px;
+  color: var(--text-primary, #c8b89a);
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.afw-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.afw-btn-close:hover {
+  background: #b0483f;
+  color: #fff;
+  border-color: #b0483f;
+}
+
+.afw-body {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.afw-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  background:
+    linear-gradient(135deg, transparent 0 50%, var(--gold-bright, #c8a45a) 50% 55%, transparent 55% 60%,
+      var(--gold-bright, #c8a45a) 60% 65%, transparent 65% 70%, var(--gold-bright, #c8a45a) 70% 75%, transparent 75%);
+  opacity: 0.6;
+}
+
+.admin-floating-window.is-maximized {
+  border-radius: 8px;
+}
+
+/* Let the embedded AdminPage fill the floating window instead of the full viewport */
+.admin-floating-window .admin-page {
+  min-height: 100%;
+  height: 100%;
+  background-image: none !important;
+}

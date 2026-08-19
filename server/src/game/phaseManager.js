@@ -344,7 +344,7 @@ export async function endGameIfDecided(io, roomId) {
   return true;
 }
 
-async function _endGameAndBroadcast(io, roomId, win) {
+export async function _endGameAndBroadcast(io, roomId, win) {
   const room = getRoom(roomId);
   const players = getPlayersArray(roomId);
   endGame(roomId, win.winner, win.message);

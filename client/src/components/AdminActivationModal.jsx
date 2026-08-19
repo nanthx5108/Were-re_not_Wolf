@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import '../styles/AdminActivationModal.css';
 
 export default function AdminActivationModal({ onClose }) {
   const [input, setInput] = useState('');
   const [error, setError] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
@@ -16,7 +14,7 @@ export default function AdminActivationModal({ onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (input.toLowerCase() === 'adminbar') {
-      navigate('/admin');
+      window.dispatchEvent(new CustomEvent('open-admin-panel'));
       onClose();
     } else {
       setError(true);

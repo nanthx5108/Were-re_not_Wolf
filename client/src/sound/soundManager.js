@@ -1,93 +1,63 @@
-const STORAGE_KEY = 'wnw_audio_settings';
+import { Howl, Howler } from 'howler';
 
-const DEFAULT_SETTINGS = {
-  master: 80,
-  sfx: 80,
-  music: 60,
-  muted: false,
-};
-
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
+const DEFAULTS = { master: 0.85, music: 0.45, sfx: 0.6, muted: false }; // tuned quieter defaults for pleasant UX
 
 class SoundManager {
   constructor() {
-    this.settings = loadSettings();
+    this.settings = this._loadSettings();
+    Howler.volume(this.settings.master);
+    Howler.mute(this.settings.muted);
     this.bgm = null;
-    this.sfxCache = new Map();
-
-    window.addEventListener('storage', (e) => {
-      if (e.key === STORAGE_KEY) {
-        this.settings = loadSettings();
-        this.updateBgmVolume();
-      }
-    });
+    this.currentBgmKey = null;
   }
 
-  _getVolume(type) {
-    if (this.settings.muted) return 0;
-    const masterVol = this.settings.master / 100;
-    const typeVol = (type === 'music' ? this.settings.music : this.settings.sfx) / 100;
-    return Math.max(0, Math.min(1, masterVol * typeVol));
+  _loadSettings() {
+    try { return JSON.parse(localStorage.getItem('wnw_sound')) || DEFAULTS } catch { return DEFAULTS }
   }
+  _saveSettings() { localStorage.setItem('wnw_sound', JSON.stringify(this.settings)); }
 
-  playBgm(src, loop = true) {
-    if (!src) return;
-    if (this.bgm && this.bgm.src.endsWith(src)) {
-      if (this.bgm.paused) this.bgm.play().catch(() => {});
-      return;
+  init() { Howler.volume(this.settings.master); Howler.mute(this.settings.muted); }
+
+  _buildSrcCandidates(src) {
+    // prefer optimized OGG/MP3 in public/assets/sounds/optimized, fall back to original
+    try {
+      const url = new URL(src, window.location.origin).pathname;
+      const base = url.split('/').pop();
+      const name = base.replace(/\.[^.]+$/, '');
+      const optimized = `/assets/sounds/optimized/${name}.ogg`;
+      return [optimized, src];
+    } catch (e) {
+      return [src];
     }
-
-    this.stopBgm();
-
-    this.bgm = new Audio(src);
-    this.bgm.loop = loop;
-    this.updateBgmVolume();
-    this.bgm.play().catch(() => {
-      const resume = () => {
-        this.bgm.play().catch(() => {});
-        document.removeEventListener('click', resume, { once: true });
-        document.removeEventListener('keydown', resume, { once: true });
-      };
-      document.addEventListener('click', resume, { once: true });
-      document.addEventListener('keydown', resume, { once: true });
-    });
   }
 
-  stopBgm() {
+  playBgm(key, src, { loop = true, volume = 1.0, fade = 600 } = {}) {
+    if (this.currentBgmKey === key) return;
     if (this.bgm) {
-      this.bgm.pause();
-      this.bgm.currentTime = 0;
-      this.bgm = null;
+      try { this.bgm.fade(this.bgm.volume(), 0, fade); } catch {}
+      setTimeout(() => { try { this.bgm.stop(); } catch {} }, fade);
     }
+    const candidates = this._buildSrcCandidates(src);
+    this.bgm = new Howl({ src: candidates, loop, volume: volume * this.settings.music, html5: true });
+    this.currentBgmKey = key;
+    this.bgm.play();
   }
 
-  playSfx(src, volumeMultiplier = 1.0) {
-    if (!src) return;
-    const volume = this._getVolume('sfx') * volumeMultiplier;
-    if (volume <= 0) return;
+  stopBgm() { if (this.bgm) { try { this.bgm.stop(); } catch {} this.bgm = null; this.currentBgmKey = null; } }
 
-    const sfx = new Audio(src);
-    sfx.volume = volume;
-    sfx.play().catch(() => {});
+  playSfx(src, { volume = 1.0 } = {}) {
+    // lightweight one-shot SFX — try optimized first
+    const candidates = this._buildSrcCandidates(src);
+    const h = new Howl({ src: candidates, volume: volume * this.settings.sfx, html5: false });
+    h.play();
   }
 
-  updateSettings(newSettings) {
-    this.settings = { ...this.settings, ...newSettings };
-    this.updateBgmVolume();
-  }
-
-  updateBgmVolume() {
-    if (this.bgm) {
-      this.bgm.volume = this._getVolume('music');
-    }
-  }
+  setMaster(v) { this.settings.master = Number(v); Howler.volume(this.settings.master); this._saveSettings(); }
+  setMusic(v) { this.settings.music = Number(v); if (this.bgm) this.bgm.volume(this.settings.music); this._saveSettings(); }
+  setSfx(v) { this.settings.sfx = Number(v); this._saveSettings(); }
+  mute(m) { this.settings.muted = !!m; Howler.mute(this.settings.muted); this._saveSettings(); }
+  // expose read-only copy of settings for UI
+  getSettings() { return { ...this.settings }; }
 }
 
-export const soundManager = new SoundManager();
+export default new SoundManager();

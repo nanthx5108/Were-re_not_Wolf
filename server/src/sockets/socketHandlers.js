@@ -2,7 +2,7 @@ import pool from '../../db/connection.js';
 import {
   getRoom, addPlayerToRoom, removePlayerFromRoom,
   updatePlayer, getPlayersArray, getConnectedPlayers,
-  serializeRoom, serializeRoomForPlayer, updateRoom,
+  serializeRoom, serializeRoomForPlayer, serializeRoomForAdmin, updateRoom,
 } from '../game/gameStore.js';
 import { distributeRoles }   from '../game/Roledistributor.js';
 import { PLAYER_LIMITS, CHANNELS, PHASES } from '../game/constants.js';
@@ -12,13 +12,14 @@ import {
   buildChaosRoleConfig, CHAOS_PHASE_DURATIONS, GAME_MODES,
 } from '../game/roomConfig.js';
 import {
-  startPhaseTimer, advancePhase, getPhaseDurationMs,
-  endGameIfDecided, scheduleRoomAbandon, cancelRoomAbandon,
+  startPhaseTimer, advancePhase, getPhaseDurationMs, getTimeRemaining,
+  endGameIfDecided, scheduleRoomAbandon, cancelRoomAbandon, _endGameAndBroadcast,
 } from '../game/phaseManager.js';
 import { castVote, hasAllVoted } from '../game/voteManager.js';
 import { teardownRoom } from '../game/roomMaintenance.js';
 import { initNightActions, submitNightAction, getBlockedProtectTargets } from '../game/nightActions.js';
 import { censorProfanity } from '../game/profanity.js';
+import { getUserByIdService } from '../services/authService.js';
 
 export function registerSocketHandlers(socket, io) {
 
@@ -414,6 +415,114 @@ export function registerSocketHandlers(socket, io) {
       console.error('[phase:advance]', err)
     );
   });
+
+  // ── ระบบควบคุมแอดมินภายในหน้าเล่นเกม ──
+  // ตรวจสิทธิ์จาก session ที่แชร์กับ Express (socket.request.session) ไม่เชื่อ client
+  // ส่งมาตรงๆ เพื่อกัน client ปลอมตัวเป็นแอดมิน
+  socket.on('admin:action', async ({ type, payload = {} }) => {
+    try {
+      const userId = socket.request?.session?.userId;
+      if (!userId) return socket.emit('error', { message: 'จำเป็นต้องเข้าสู่ระบบ' });
+
+      const user = await getUserByIdService(userId);
+      if (!user?.isAdmin) return socket.emit('error', { message: 'ต้องมีสิทธิ์ผู้ดูแลระบบ' });
+
+      const { roomId } = socket.data || {};
+      if (!roomId) return socket.emit('error', { message: 'ไม่ได้อยู่ในห้อง' });
+      const room = getRoom(roomId);
+      if (!room) return socket.emit('error', { message: 'ไม่พบห้อง' });
+
+      const broadcastAdmin = () => io.to(roomId).emit('admin:room_state', serializeRoomForAdmin(roomId));
+      const broadcastPlayers = () => io.to(roomId).emit('room:players_updated', getPlayersArray(roomId));
+
+      switch (type) {
+        case 'get_state':
+          return socket.emit('admin:room_state', serializeRoomForAdmin(roomId));
+
+        case 'advance_phase':
+          await advancePhase(io, roomId);
+          break;
+
+        case 'add_time': {
+          const extraMs = Number(payload.ms) || 30_000;
+          const remaining = getTimeRemaining(roomId) ?? 0;
+          startPhaseTimer(io, roomId, room.phase, remaining + extraMs);
+          io.to(roomId).emit('phase:changed', {
+            phase: room.phase, endsAt: room.phaseEndsAt, durationMs: remaining + extraMs, round: room.round,
+          });
+          break;
+        }
+
+        case 'kill': {
+          const target = room.players.get(payload.targetPlayerId);
+          if (!target) return socket.emit('error', { message: 'ไม่พบผู้เล่น' });
+          updatePlayer(roomId, payload.targetPlayerId, { isAlive: false });
+          broadcastPlayers();
+          await endGameIfDecided(io, roomId);
+          break;
+        }
+
+        case 'revive': {
+          const target = room.players.get(payload.targetPlayerId);
+          if (!target) return socket.emit('error', { message: 'ไม่พบผู้เล่น' });
+          updatePlayer(roomId, payload.targetPlayerId, { isAlive: true });
+          broadcastPlayers();
+          break;
+        }
+
+        case 'set_role': {
+          const target = room.players.get(payload.targetPlayerId);
+          if (!target) return socket.emit('error', { message: 'ไม่พบผู้เล่น' });
+          updatePlayer(roomId, payload.targetPlayerId, { role: payload.role });
+          break;
+        }
+
+        case 'mute': {
+          const target = room.players.get(payload.targetPlayerId);
+          if (!target) return socket.emit('error', { message: 'ไม่พบผู้เล่น' });
+          updatePlayer(roomId, payload.targetPlayerId, { isMutedByAdmin: true });
+          break;
+        }
+
+        case 'unmute': {
+          const target = room.players.get(payload.targetPlayerId);
+          if (!target) return socket.emit('error', { message: 'ไม่พบผู้เล่น' });
+          updatePlayer(roomId, payload.targetPlayerId, { isMutedByAdmin: false });
+          break;
+        }
+
+        case 'kick': {
+          const target = room.players.get(payload.targetPlayerId);
+          if (!target) return socket.emit('error', { message: 'ไม่พบผู้เล่น' });
+          const targetSocket = target.socketId ? io.sockets.sockets.get(target.socketId) : null;
+          removePlayerFromRoom(roomId, payload.targetPlayerId);
+          if (targetSocket) {
+            targetSocket.emit('room:closed', { message: 'คุณถูกแอดมินเตะออกจากห้อง' });
+            targetSocket.leave(roomId);
+            targetSocket.disconnect(true);
+          }
+          broadcastPlayers();
+          await endGameIfDecided(io, roomId);
+          break;
+        }
+
+        case 'end_game': {
+          const winner = payload.winner || 'draw';
+          const message = payload.message || 'แอดมินสั่งจบเกม';
+          await _endGameAndBroadcast(io, roomId, { winner, message });
+          break;
+        }
+
+        default:
+          return socket.emit('error', { message: `ไม่รู้จักคำสั่งแอดมิน: ${type}` });
+      }
+
+      broadcastAdmin();
+    } catch (err) {
+      console.error('[admin:action]', err);
+      socket.emit('error', { message: 'คำสั่งแอดมินล้มเหลว' });
+    }
+  });
 }
 
 async function handleRejoin(socket, io, roomId, playerId) {
@@ -570,6 +679,10 @@ async function handleLeave(socket, io) {
 }
 
 function getChatValidationError(room, player, channel) {
+  if (player.isMutedByAdmin) {
+    return 'แอดมินปิดปากเจ้าไว้';
+  }
+
   if (!player.isAlive) {
     if (channel !== CHANNELS.DEAD) {
       return 'เจ้าตายไปแล้ว พูดได้แค่ในห้องวิญญาณเท่านั้น';

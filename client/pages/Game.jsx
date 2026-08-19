@@ -15,6 +15,7 @@ import FortuneInfoPanel from '../src/components/FortuneInfoPanel.jsx';
 import HighlightTimeline from '../src/components/HighlightTimeline.jsx';
 import FortuneEffects from '../src/components/FortuneEffects.jsx';
 import FortuneCard from '../src/components/FortuneCard.jsx';
+import AdminGameBar from '../src/components/AdminGameBar.jsx';
 
 const ROLE_LABEL = {
   villager:  '🧑‍🌾 Villager',
@@ -193,6 +194,7 @@ export default function Game() {
 
   return (
     <div className="gp-page">
+      <AdminGameBar />
       <MorningEventBanner />
       <EarlyInfoToast />
       <FortuneEffects card={myFortuneCard} messages={messages} />

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/Gamecontext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import ChatMessage from './ChatMessage.jsx';
@@ -10,7 +9,6 @@ export default function ChatBox({ showWerewolfChannel = false, showHead = true, 
     isDead, loadDeadHistory, censorNote, clearCensorNote,
   } = useGame();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [input,   setInput]   = useState('');
   const [channel, setChannel] = useState('village');
   const bottomRef = useRef(null);
@@ -114,7 +112,7 @@ export default function ChatBox({ showWerewolfChannel = false, showHead = true, 
     if (trimmed.toLowerCase() === '/adminbar') {
       setInput('');
       stopTyping();
-      if (user?.isAdmin) navigate('/admin');
+      if (user?.isAdmin) window.dispatchEvent(new CustomEvent('open-admin-panel'));
       return;
     }
 

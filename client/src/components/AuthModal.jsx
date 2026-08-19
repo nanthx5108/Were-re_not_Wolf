@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/AuthModal.css';
+import favicon from '../assets/Favicon.png';
 
 export default function AuthModal({ onClose, message }) {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function AuthModal({ onClose, message }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card sketch-border" onClick={e => e.stopPropagation()}>
-        <div className="modal-icon">W</div>
+        <img src={favicon} alt="" className="modal-icon" />
         <h3 className="modal-title">ต้องเข้าสู่ระบบก่อน</h3>
         <p className="modal-body">
           {message || 'คุณต้องเข้าสู่ระบบก่อนจึงจะสร้างหรือเข้าร่วมห้องได้'}

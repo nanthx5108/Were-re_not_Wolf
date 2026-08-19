@@ -9,6 +9,7 @@ export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false
     id, name, hostId,
     status:      'waiting',
     gameMode,
+    createdAt:   new Date().toISOString(),
     phase:       'lobby',
     round:       1,
     phaseEndsAt: null,
@@ -109,6 +110,18 @@ export function serializeRoom(roomId) {
       isAlive:     p.isAlive,
       isConnected: p.isConnected !== false,
       ...(room.revealRoleOnDeath === true && p.isAlive === false ? { revealedRole: p.role } : {}),
+    })),
+  };
+}
+
+export function serializeRoomForAdmin(roomId) {
+  const room = getRoom(roomId);
+  if (!room) return null;
+  return {
+    ...serializeRoom(roomId),
+    players: getPlayersArray(roomId).map(p => ({
+      id: p.id, nickname: p.nickname, role: p.role, isAlive: p.isAlive,
+      isConnected: p.isConnected !== false, isMutedByAdmin: p.isMutedByAdmin === true,
     })),
   };
 }

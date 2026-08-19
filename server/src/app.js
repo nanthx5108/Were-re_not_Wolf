@@ -33,7 +33,7 @@ app.use(cors({ origin: CLIENT_ORIGINS, credentials: true }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-app.use(session({
+export const sessionMiddleware = session({
   name:   'wolf.sid',
   secret: SESSION_SECRET,
   resave: false,
@@ -44,7 +44,9 @@ app.use(session({
     secure:   IS_PROD,
     maxAge:   7 * 24 * 60 * 60 * 1000,
   },
-}));
+});
+
+app.use(sessionMiddleware);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
