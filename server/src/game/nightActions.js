@@ -1,166 +1,95 @@
-import { getRoom, updateRoom, updatePlayer } from './gameStore.js';
-import { getRoleFactionMap } from './constants.js';
-import { consumeNightEffect, getActiveNightEffect } from './morningEvents.js';
+import test, { mock } from 'node:test';
+import assert from 'node:assert/strict';
 
-export function initNightActions(roomId) {
-  const room = getRoom(roomId);
-  if (!room) return null;
+mock.module('../services/gameSettingsService.js', {
+  namedExports: {
+    getSetting: (key, fallback) => fallback,
+    refreshSettings: async () => {},
+  },
+});
 
-  const actions = {
-    werewolf: {},
-    seer: null,
-    bodyguard: null,
-    silencer: null,
-  };
+mock.module('../services/gameDataService.js', {
+  namedExports: {
+    getActiveRoles: () => [
+      { name_en: 'villager', faction: 'village', night_action: false },
+      { name_en: 'werewolf', faction: 'werewolf', night_action: true },
+      { name_en: 'seer', faction: 'village', night_action: true },
+      { name_en: 'bodyguard', faction: 'village', night_action: true },
+      { name_en: 'silencer', faction: 'village', night_action: true },
+      { name_en: 'fool', faction: 'neutral', night_action: false },
+    ],
+    getActiveFortuneCards: () => [],
+    getMorningEvents: () => [],
+    refreshGameData: async () => {},
+  },
+});
 
-  updateRoom(roomId, { nightActions: actions });
-  return actions;
-}
+const { createRoom, addPlayerToRoom, updatePlayer, updateRoom, deleteRoom, getRoom } = await import('./gameStore.js');
+const { initNightActions, submitNightAction, getBlockedProtectTargets } = await import('./nightActions.js');
 
-export function getBlockedProtectTargets(roomId, playerId) {
-  const room = getRoom(roomId);
-  const player = room?.players.get(playerId);
-  if (!room || player?.role !== 'bodyguard') return [];
-  return room.lastProtectedIds || [];
-}
+let seq = 0;
 
-export function submitNightAction(roomId, playerId, action) {
-  const room = getRoom(roomId);
-  if (!room) return null;
-
-  const player = room.players.get(playerId);
-  if (!player || !player.isAlive) return null;
-
-  const targetId = action?.targetId;
-  if (!targetId) return null;
-
-  const target = room.players.get(targetId);
-  if (!target || !target.isAlive || targetId === playerId) return null;
-
-  const current = room.nightActions || { werewolf: {}, seer: null, bodyguard: null, silencer: null };
-  const next = {
-    werewolf: { ...(current.werewolf || {}) },
-    seer: current.seer,
-    bodyguard: current.bodyguard,
-    silencer: current.silencer,
-  };
-
-  if (player.role === 'werewolf') {
-    next.werewolf[playerId] = targetId;
-  } else if (player.role === 'seer') {
-    next.seer = { playerId, targetId };
-  } else if (player.role === 'silencer') {
-    next.silencer = { playerId, targetId };
-  } else if (player.role === 'bodyguard') {
-    if (getBlockedProtectTargets(roomId, playerId).includes(targetId)) return null;
-
-    const maxTargets = getActiveNightEffect(roomId) === 'double_guard' ? 2 : 1;
-    const existing = next.bodyguard?.playerId === playerId
-      ? (next.bodyguard.targetIds || [next.bodyguard.targetId].filter(Boolean))
-      : [];
-
-    let targetIds;
-    if (existing.includes(targetId)) {
-      targetIds = existing;
-    } else if (existing.length < maxTargets) {
-      targetIds = [...existing, targetId];
-    } else {
-      targetIds = maxTargets === 1 ? [targetId] : [existing[0], targetId];
-    }
-
-    next.bodyguard = { playerId, targetIds };
-  } else {
-    return null;
-  }
-
-  updateRoom(roomId, { nightActions: next });
-  return next;
-}
-
-export function resolveNightActions(roomId) {
-  const room = getRoom(roomId);
-  if (!room) return null;
-
-  const actions = room.nightActions || { werewolf: {}, seer: null, bodyguard: null, silencer: null };
-  const werewolfVotes = actions.werewolf || {};
-
-  const voteCounts = {};
-  for (const targetId of Object.values(werewolfVotes)) {
-    if (!targetId) continue;
-    voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
-  }
-
-  let topCount = 0;
-  let topTargets = [];
-  for (const [targetId, count] of Object.entries(voteCounts)) {
-    if (count > topCount) {
-      topCount = count;
-      topTargets = [targetId];
-    } else if (count === topCount) {
-      topTargets.push(targetId);
-    }
-  }
-
-  const selectedTargetId = topTargets.length === 1 ? topTargets[0] : null;
-
-  const nightEffect = consumeNightEffect(roomId);
-
-  const protectedIds = actions.bodyguard?.targetIds
-    || (actions.bodyguard?.targetId ? [actions.bodyguard.targetId] : []);
-
-  const protectionActive = nightEffect !== 'blackout';
-  const prevented = Boolean(
-    selectedTargetId && protectionActive && protectedIds.includes(selectedTargetId)
-  );
-
-  let killedId = null;
-  let killedNickname = null;
-
-  if (selectedTargetId && !prevented) {
-    const target = room.players.get(selectedTargetId);
-    if (target && target.isAlive) {
-      killedId = selectedTargetId;
-      killedNickname = target.nickname;
-      updatePlayer(roomId, killedId, { isAlive: false });
-    }
-  }
-
-  const seerResult = actions.seer?.targetId ? (() => {
-    const target = room.players.get(actions.seer.targetId);
-    if (!target) return null;
-    return nightEffect === 'fog'
-      ? { targetId: target.id, faction: 'unclear' }
-      : { targetId: target.id, faction: ROLE_FACTION[target.role] };
-  })() : null;
-
-  const silencedId = actions.silencer?.targetId && actions.silencer.targetId !== killedId
-    ? actions.silencer.targetId
-    : null;
-  const silencedNickname = silencedId ? room.players.get(silencedId)?.nickname ?? null : null;
-
-  updateRoom(roomId, {
-    lastProtectedIds: protectedIds,
-    silencedPlayerId: silencedId,
+function setupRoom(roles) {
+  const roomId = `T${seq++}`;
+  createRoom({ id: roomId, name: 'test', hostId: 'p0', maxPlayers: 8 });
+  roles.forEach((role, i) => {
+    addPlayerToRoom(roomId, { id: `p${i}`, nickname: `P${i}` });
+    updatePlayer(roomId, `p${i}`, { role });
   });
-
-  const skillCount =
-    Object.keys(werewolfVotes).length +
-    (actions.seer ? 1 : 0) +
-    (actions.bodyguard ? 1 : 0) +
-    (actions.silencer ? 1 : 0);
-
-  return {
-    werewolfVotes,
-    selectedTargetId,
-    killedId,
-    killedNickname,
-    protectedIds,
-    prevented,
-    seerResult,
-    seerId: actions.seer?.playerId || null,
-    silencedId,
-    silencedNickname,
-    skillCount,
-    nightEffect,
-  };
+  initNightActions(roomId);
+  return roomId;
 }
+
+test('bodyguard cannot protect the same player two nights running', (t) => {
+  const roomId = setupRoom(['bodyguard', 'werewolf', 'villager', 'villager']);
+  t.after(() => deleteRoom(roomId));
+
+  assert.deepEqual(getBlockedProtectTargets(roomId, 'p0'), []);
+  assert.ok(submitNightAction(roomId, 'p0', { targetId: 'p2' }));
+
+  updateRoom(roomId, { lastProtectedIds: ['p2'] });
+  initNightActions(roomId);
+
+  assert.deepEqual(getBlockedProtectTargets(roomId, 'p0'), ['p2']);
+  assert.equal(submitNightAction(roomId, 'p0', { targetId: 'p2' }), null, 'ป้องกันซ้ำต้องถูกปฏิเสธ');
+
+  assert.ok(submitNightAction(roomId, 'p0', { targetId: 'p3' }));
+});
+
+test('the repeat-protect block only applies to the bodyguard', (t) => {
+  const roomId = setupRoom(['bodyguard', 'seer', 'werewolf', 'villager']);
+  t.after(() => deleteRoom(roomId));
+
+  updateRoom(roomId, { lastProtectedIds: ['p3'] });
+
+  assert.deepEqual(getBlockedProtectTargets(roomId, 'p1'), []);
+  assert.ok(submitNightAction(roomId, 'p1', { targetId: 'p3' }), 'Seer ยังตรวจคนที่เคยถูกเฝ้าได้');
+});
+
+test('silencer action is recorded and targets cannot include self', (t) => {
+  const roomId = setupRoom(['silencer', 'werewolf', 'villager', 'villager']);
+  t.after(() => deleteRoom(roomId));
+
+  assert.equal(submitNightAction(roomId, 'p0', { targetId: 'p0' }), null, 'ปิดปากตัวเองไม่ได้');
+
+  const actions = submitNightAction(roomId, 'p0', { targetId: 'p2' });
+  assert.deepEqual(actions.silencer, { playerId: 'p0', targetId: 'p2' });
+});
+
+test('villagers have no night action', (t) => {
+  const roomId = setupRoom(['villager', 'werewolf', 'villager', 'villager']);
+  t.after(() => deleteRoom(roomId));
+
+  assert.equal(submitNightAction(roomId, 'p0', { targetId: 'p2' }), null);
+});
+
+test('a dead bodyguard gets no blocked targets', (t) => {
+  const roomId = setupRoom(['bodyguard', 'werewolf', 'villager', 'villager']);
+  t.after(() => deleteRoom(roomId));
+
+  updateRoom(roomId, { lastProtectedIds: ['p2'] });
+  updatePlayer(roomId, 'p0', { isAlive: false });
+
+  assert.equal(submitNightAction(roomId, 'p0', { targetId: 'p3' }), null, 'คนตายทำ action ไม่ได้');
+  assert.equal(getRoom(roomId).players.get('p0').isAlive, false);
+});

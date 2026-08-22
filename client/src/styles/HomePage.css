@@ -2098,3 +2098,29 @@
 .home-page .join-search-input:focus-visible {
   outline: none;
 }
+/* ── โหมดประหยัดพลัง — ปิดเลเยอร์ตกแต่งที่กิน GPU หนักสำหรับคอมสเปกต่ำ ── */
+.perf-mode .home-stars,
+.perf-mode .home-fireflies,
+.perf-mode .home-grain,
+.perf-mode .home-moonbeams,
+.perf-mode .home-water-shimmer,
+.perf-mode .home-lantern-glow,
+.perf-mode .home-vignette {
+  display: none !important;
+}
+.perf-mode .menu-panel,
+.perf-mode .home-form,
+.perf-mode .panel-box,
+.perf-mode .home-topbar,
+.perf-mode .home-footer {
+  backdrop-filter: none !important;
+  background: #0d1218 !important;
+}
+.perf-mode *,
+.perf-mode *::before,
+.perf-mode *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}

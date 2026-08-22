@@ -872,3 +872,39 @@
   font-size: 0.72rem;
   cursor: pointer;
 }
+
+/* ── แถบควบคุมไมค์ (VoiceChat.jsx) ── */
+.voice-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.voice-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(79, 209, 197, 0.4);
+  background: rgba(79, 209, 197, 0.1);
+  color: #4fd1c5;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+}
+.voice-btn.is-speaking {
+  background: rgba(79, 209, 197, 0.35);
+  box-shadow: 0 0 12px rgba(79, 209, 197, 0.5);
+  transform: scale(1.03);
+}
+.voice-btn.is-muted {
+  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: #999;
+}
+.voice-btn-ptt {
+  cursor: default;
+}
+.voice-error {
+  font-size: 0.76rem;
+  color: #e8a94b;
+}

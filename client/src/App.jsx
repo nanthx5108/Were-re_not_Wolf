@@ -4,6 +4,7 @@ import { GameProvider } from './context/Gamecontext.jsx';
 import { GameDataProvider } from './context/GameDataContext.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'; // เพิ่ม useAuth
 import ToastContainer from './components/ToastContainer.jsx'; // เพิ่ม import ToastContainer
+import { applyPerfModeClass } from './utils/perfMode.js';
 
 import HomePage     from '../pages/HomePage.jsx';
 import LoginPage    from '../pages/LoginPage.jsx';
@@ -21,6 +22,7 @@ import AdminFloatingWindow from './components/AdminFloatingWindow.jsx';
 import MorningEventCard from './components/MorningEventCard.jsx';
 
 export default function App() {
+  useEffect(() => { applyPerfModeClass(); }, []);
   return (
     <AuthProvider>
       <AppShell />

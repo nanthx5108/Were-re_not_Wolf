@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSound } from '../src/context/SoundContext.jsx';
+import { getPerfMode, setPerfMode } from '../src/utils/perfMode.js';
+import { getMicSettings, setMicSettings } from '../src/utils/micSettings.js';
 import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/SettingsPage.css';
 
@@ -37,6 +39,29 @@ export default function SettingsPage() {
   const sound = useSound();
   const [settings, setSettings] = useState(loadSettings);
   const [showSaved, setShowSaved] = useState(false);
+  const [perfMode, setPerfModeState] = useState(getPerfMode);
+  const [micSettings, setMicSettingsState] = useState(getMicSettings);
+  const [listeningForKey, setListeningForKey] = useState(false);
+
+  function handlePerfModeToggle(checked) {
+    setPerfModeState(checked);
+    setPerfMode(checked);
+  }
+
+  function handleMicModeChange(mode) {
+    setMicSettingsState(setMicSettings({ mode }));
+  }
+
+  useEffect(() => {
+    if (!listeningForKey) return;
+    function onKeyDown(e) {
+      e.preventDefault();
+      setMicSettingsState(setMicSettings({ pttKey: e.code }));
+      setListeningForKey(false);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [listeningForKey]);
 
   useEffect(() => {
     document.title = 'Settings — WEREWOLF';
@@ -95,6 +120,55 @@ export default function SettingsPage() {
               onChange={v => updateValue('music', v)}
               disabled={settings.muted}
             />
+          </div>
+
+          <div className="settings-divider" />
+
+          <div className="settings-mute-row">
+            <label className="mute-toggle">
+              <input
+                type="checkbox"
+                checked={perfMode}
+                onChange={e => handlePerfModeToggle(e.target.checked)}
+              />
+              <span>โหมดประหยัดพลัง (ลดกระตุกสำหรับคอมสเปกต่ำ)</span>
+            </label>
+          </div>
+
+          <div className="settings-divider" />
+
+          <div className="settings-mic-row">
+            <span className="field-label">โหมดไมค์</span>
+            <div className="mode-options" style={{ marginTop: 8 }}>
+              <div
+                className={`mode-card ${micSettings.mode === 'toggle' ? 'is-active' : ''}`}
+                onClick={() => handleMicModeChange('toggle')}
+              >
+                <span className="mode-card-title">กดทีเดียวเปิด-ปิด</span>
+                <span className="mode-card-desc">กดปุ่มครั้งเดียวเพื่อเปิด/ปิดไมค์ ไม่ต้องกดค้าง</span>
+              </div>
+              <div
+                className={`mode-card ${micSettings.mode === 'ptt' ? 'is-active' : ''}`}
+                onClick={() => handleMicModeChange('ptt')}
+              >
+                <span className="mode-card-title">กดค้างเพื่อพูด</span>
+                <span className="mode-card-desc">ปล่อยปุ่มแล้วไมค์ปิดทันที (Push-to-talk)</span>
+              </div>
+            </div>
+
+            {micSettings.mode === 'ptt' && (
+              <div style={{ marginTop: 10 }}>
+                <span className="field-label">ปุ่มที่ใช้กดค้าง</span>
+                <button
+                  type="button"
+                  className="btn-back"
+                  style={{ marginTop: 6 }}
+                  onClick={() => setListeningForKey(true)}
+                >
+                  {listeningForKey ? 'กดปุ่มที่ต้องการ…' : micSettings.pttKey}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="settings-divider" />

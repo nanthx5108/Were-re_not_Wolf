@@ -1,12 +1,38 @@
-import test from 'node:test';
+import test, { mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRoom, addPlayerToRoom, updateRoom, deleteRoom, getRoom } from './gameStore.js';
-import {
+
+// morningEvents.js import gameSettingsService.js ซึ่ง import db/connection.js
+// อีกทีแบบ transitive — ต้อง mock ตรงจุดที่ import จริงเพื่อไม่ให้ต่อ MySQL จริง
+mock.module('../services/gameSettingsService.js', {
+  namedExports: {
+    getSetting: (key, fallback) => fallback,
+    refreshSettings: async () => {},
+  },
+});
+
+// gameStore.js → roomConfig.js → gameDataService.js (role list จาก DB จริง) — mock ให้คงที่
+mock.module('../services/gameDataService.js', {
+  namedExports: {
+    getActiveRoles: () => [
+      { name_en: 'villager', faction: 'village', night_action: false },
+      { name_en: 'werewolf', faction: 'werewolf', night_action: true },
+      { name_en: 'seer', faction: 'village', night_action: true },
+      { name_en: 'bodyguard', faction: 'village', night_action: true },
+      { name_en: 'silencer', faction: 'village', night_action: true },
+      { name_en: 'fool', faction: 'neutral', night_action: false },
+    ],
+    getActiveFortuneCards: () => [],
+    getMorningEvents: () => [],
+    refreshGameData: async () => {},
+  },
+});
+
+const { createRoom, addPlayerToRoom, updateRoom, deleteRoom, getRoom } = await import('./gameStore.js');
+const {
   MORNING_EVENTS, DEFAULT_EVENT_ID,
   buildEventContext, getEligibleEvents, weightedPick,
-  rollMorningEvent, consumeNightEffect, getActiveNightEffect,
-  getActiveLuckBias,
-} from './morningEvents.js';
+  rollMorningEvent, consumeNightEffect, getActiveNightEffect, getActiveLuckBias,
+} = await import('./morningEvents.js');
 
 function setupRoom(roomId, { players = 6, round = 1, nightResult = {} } = {}) {
   createRoom({ id: roomId, name: 'Test', hostId: 'p1' });
