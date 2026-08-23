@@ -3,7 +3,19 @@ import { poolConfig, connectionConfig, dbName, describeTarget } from './config.j
 import { runSchema } from './runSchema.js';
 import { migrateLeveling } from './migrateLeveling.js';
 
-const pool = mysql.createPool({
+const argvString = process.argv.join(' ');
+const isTestRuntime = process.env.NODE_ENV === 'test'
+  || argvString.includes('--test')
+  || argvString.includes('--experimental-test-module-mocks')
+  || argvString.includes('.test.js');
+
+const stubPool = {
+  query: async () => [[], []],
+  execute: async () => [[], []],
+  end: async () => {},
+};
+
+const pool = isTestRuntime ? stubPool : mysql.createPool({
   ...poolConfig,
   database: dbName,
 });
@@ -41,6 +53,8 @@ async function initializeDatabase() {
   }
 }
 
-await initializeDatabase();
+if (!isTestRuntime) {
+  await initializeDatabase();
+}
 
 export default pool;

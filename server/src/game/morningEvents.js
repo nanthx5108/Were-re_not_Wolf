@@ -164,7 +164,17 @@ export function rollMorningEvent(roomId, rng = Math.random) {
   if (!ctx) return null;
 
   const history = ctx.room.eventHistory || [];
-  const eligible = getEligibleEvents(ctx, history);
+  let eligible = getEligibleEvents(ctx, history);
+
+  // If any eligible events declare a 'requires' predicate, prefer those
+  // candidates only. This ensures targeted events (e.g. boat_return that
+  // requires last-night.prevented) take precedence over the quiet/default
+  // morning when their conditions are met.
+  const requiredCandidates = eligible.filter((e) => typeof e.requires === 'function');
+  if (requiredCandidates.length > 0) {
+    const satisfied = requiredCandidates.filter((e) => e.requires(ctx));
+    if (satisfied.length > 0) eligible = satisfied;
+  }
 
   const event = weightedPick(eligible, ctx, rng)
     || MORNING_EVENTS.find((e) => e.id === DEFAULT_EVENT_ID);
