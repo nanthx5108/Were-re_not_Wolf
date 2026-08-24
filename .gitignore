@@ -8,3 +8,7 @@ build/
 server/db/data/
 server/uploads/avatars/*
 !server/uploads/avatars/.gitkeep
+
+# Local-only env overrides (do not commit)
+.env.local
+server/.env.local

@@ -15,13 +15,18 @@ const stubPool = {
   end: async () => {},
 };
 
-const pool = isTestRuntime ? stubPool : mysql.createPool({
-  ...poolConfig,
-  database: dbName,
-});
+let pool;
+if (isTestRuntime) {
+  pool = stubPool;
+} else {
+  pool = mysql.createPool({
+    ...poolConfig,
+    database: dbName,
+  });
+}
 
-async function ensureDatabaseExists() {
-  const connection = await mysql.createConnection({ ...connectionConfig });
+async function ensureDatabaseExists(cfg = connectionConfig) {
+  const connection = await mysql.createConnection({ ...cfg });
 
   try {
     await connection.query(
@@ -48,7 +53,31 @@ async function initializeDatabase() {
 
     await migrateLeveling(pool);
   } catch (err) {
-    console.error(`❌ MySQL connection failed (${describeTarget()}):`, err.message);
+    console.error(`❌ MySQL connection failed (${describeTarget()}):`, err && err.message ? err.message : err);
+    // Helpful hint and fallback: if DB_PORT is 3307, try common alternative 3306 before exiting
+    const currentPort = connectionConfig.port;
+    if (!isTestRuntime && currentPort === 3307) {
+      console.warn(`ℹ️ Attempting fallback to port 3306 (your DB_PORT is ${currentPort}).`);
+      try {
+        const altPort = 3306;
+        const altPool = mysql.createPool({ ...poolConfig, port: altPort, database: dbName });
+        await ensureDatabaseExists({ ...connectionConfig, port: altPort });
+        await runSchema(altPool);
+        const [rows] = await altPool.query('SELECT 1 + 1 AS result');
+        if (rows?.[0]?.result === 2) {
+          pool = altPool;
+          connectionConfig.port = altPort;
+          poolConfig.port = altPort;
+          console.log(`✅ MySQL connected on fallback port ${altPort} — ${describeTarget()}`);
+          await migrateLeveling(pool);
+          return;
+        } else {
+          await altPool.end();
+        }
+      } catch (err2) {
+        console.error('Fallback attempt to port 3306 failed:', err2 && err2.message ? err2.message : err2);
+      }
+    }
     process.exit(1);
   }
 }

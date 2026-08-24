@@ -1,7 +1,24 @@
 import dotenv from 'dotenv';
 import fs from 'node:fs';
+import path from 'node:path';
 
-dotenv.config();
+// Load environment variables with a safe local override for development.
+// Priority (non-production): server/.env.local -> .env.local (project root) -> .env
+// In production (e.g. Render) we load the default .env from environment or Render's env vars.
+const serverLocal = path.resolve(process.cwd(), 'server', '.env.local');
+const rootLocal = path.resolve(process.cwd(), '.env.local');
+if (process.env.NODE_ENV !== 'production') {
+  if (fs.existsSync(serverLocal)) {
+    dotenv.config({ path: serverLocal });
+  } else if (fs.existsSync(rootLocal)) {
+    dotenv.config({ path: rootLocal });
+  } else {
+    dotenv.config();
+  }
+} else {
+  // Production: rely on real environment variables (Render) or .env if present
+  dotenv.config();
+}
 
 export const dbName = process.env.DB_NAME || 'were_not_wolf';
 
