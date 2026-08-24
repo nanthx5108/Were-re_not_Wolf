@@ -35,6 +35,6 @@ export function evaluateWinCondition(roomId) {
 }
 
 export function endGame(roomId, winner, message) {
-  const room = updateRoom(roomId, { status: 'finished', phase: 'ended' });
+  const room = updateRoom(roomId, { status: 'finished', phase: 'ended', winner });
   return { room, winner, message };
 }

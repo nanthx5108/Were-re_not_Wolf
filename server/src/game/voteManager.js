@@ -1,4 +1,5 @@
 import { getRoom } from './gameStore.js';
+import { recordVoteHistory } from './highlightService.js';
 
 const voteStore = new Map();
 
@@ -9,11 +10,13 @@ export function initVoting(roomId) {
 export function castVote(roomId, voterId, targetId) {
   const roomVotes = voteStore.get(roomId);
   if (!roomVotes) return null;
-  const player = getRoom(roomId)?.players.get(voterId);
+  const room = getRoom(roomId);
+  const player = room?.players.get(voterId);
   if (player?.isConfusedThisRound) {
     return null;
   }
   roomVotes.set(voterId, targetId);
+  recordVoteHistory(roomId, voterId, targetId);
   return getVoteData(roomId);
 }
 

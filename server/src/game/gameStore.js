@@ -17,11 +17,22 @@ export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false
     isPrivate,
     roleConfig,
     phaseDurations,
+    fortuneCards: new Map(),
+    fortuneInventory: new Map(),
     usedWhispers: new Set(), // For 'whisper' card
     usedExtraTime: new Set(), // For 'injury_time' card
     revealRoleOnDeath: revealRoleOnDeath === true,
     players:     new Map(),
     nightActions: {},
+    memory: {
+      voteTally: {},
+      voteHistory: [],
+      deathLog: [],
+      firstDeath: null,
+      chatCountByPlayer: {},
+      savesByPlayer: {},
+      turningPoint: null,
+    },
   });
   return roomStore.get(id);
 }
@@ -49,6 +60,8 @@ export function addPlayerToRoom(roomId, player) {
     socketId:    player.socketId,
     isConfusedThisRound: false, // For 'confused' fortune card effect (prevents voting this round)
     hasConfusedRecurrence: false, // For 'confused' 10% recurrence chance for next round
+    silenceShieldUsed: false,
+    reflexUsed: false,
   });
   return room;
 }

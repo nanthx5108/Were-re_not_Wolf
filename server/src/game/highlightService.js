@@ -1,4 +1,4 @@
-import { getRoom } from './gameStore.js';
+import { getRoom, getPlayersArray } from './gameStore.js';
 
 function addHighlight(roomId, highlight) {
   const room = getRoom(roomId);
@@ -111,4 +111,153 @@ export function addTurningPointHighlight(roomId, { eliminatedPlayer }) {
     description,
     playersInvolved: [eliminatedPlayer.id],
   });
+}
+
+export function recordVoteHistory(roomId, voterId, targetId) {
+  const room = getRoom(roomId);
+  if (!room || !room.memory) return;
+  room.memory.voteHistory ??= [];
+  room.memory.voteHistory.push({ voterId, targetId, round: room.round ?? 1, at: new Date().toISOString() });
+  room.memory.voteTally ??= {};
+  room.memory.voteTally[targetId] = (room.memory.voteTally[targetId] || 0) + 1;
+}
+
+export function recordPlayerDeath(roomId, playerId, cause = 'unknown', round = 1) {
+  const room = getRoom(roomId);
+  if (!room || !room.memory) return;
+  room.memory.deathLog ??= [];
+  const item = { playerId, cause, round, at: new Date().toISOString() };
+  room.memory.deathLog.push(item);
+  if (!room.memory.firstDeath) {
+    room.memory.firstDeath = item;
+  }
+}
+
+export function recordChatCount(roomId, playerId) {
+  const room = getRoom(roomId);
+  if (!room || !room.memory) return;
+  room.memory.chatCountByPlayer ??= {};
+  room.memory.chatCountByPlayer[playerId] = (room.memory.chatCountByPlayer[playerId] || 0) + 1;
+}
+
+export function recordGuardianSave(roomId, playerId) {
+  const room = getRoom(roomId);
+  if (!room || !room.memory) return;
+  room.memory.savesByPlayer ??= {};
+  room.memory.savesByPlayer[playerId] = (room.memory.savesByPlayer[playerId] || 0) + 1;
+}
+
+export function getPostGameHighlights(roomId) {
+  const room = getRoom(roomId);
+  if (!room) return [];
+
+  const players = getPlayersArray(roomId);
+  const playerMap = new Map(players.map(player => [player.id, player]));
+  const memory = room.memory || {};
+  const voteTally = memory.voteTally || {};
+
+  const candidateHighlights = [];
+
+  const firstDeath = memory.firstDeath ? playerMap.get(memory.firstDeath.playerId) : null;
+  if (firstDeath) {
+    candidateHighlights.push({
+      type: 'FIRST_BLOOD',
+      icon: '🩸',
+      title: 'ผู้พลีชีพคนแรก',
+      description: `${firstDeath.nickname} คือคนแรกที่จากไป ขอให้เป็นความตายที่มีความหมาย`,
+      playersInvolved: [firstDeath.id],
+    });
+  }
+
+  const highestTarget = Object.entries(voteTally).sort((a, b) => b[1] - a[1])[0];
+  if (highestTarget && playerMap.has(highestTarget[0])) {
+    const survivor = playerMap.get(highestTarget[0]);
+    if (survivor && survivor.isAlive) {
+      candidateHighlights.push({
+        type: 'MOST_TARGETED',
+        icon: '🕵️',
+        title: 'ผู้ต้องสงสัยตัวยง',
+        description: `${survivor.nickname} ถูกชี้หน้ากล่าวหาเยอะสุดทั้งเกม แต่ยังยืนหยัดจนไฟดับ — บริสุทธิ์หรือแค่โชคดี?`,
+        playersInvolved: [survivor.id],
+      });
+    }
+  }
+
+  const chatter = Object.entries(memory.chatCountByPlayer || {}).sort((a, b) => b[1] - a[1])[0];
+  if (chatter && playerMap.has(chatter[0])) {
+    const player = playerMap.get(chatter[0]);
+    candidateHighlights.push({
+      type: 'CHAT_CHAMP',
+      icon: '💬',
+      title: 'นักพูดแห่งราตรี',
+      description: `พิมพ์ไปทั้งหมด ${chatter[1]} ข้อความ ปากคือพลัง (หรือหลุมพราง)`,
+      playersInvolved: [player.id],
+    });
+  }
+
+  if (room.status === 'finished' && room.winner === 'fool') {
+    const fool = players.find(p => p.role === 'fool');
+    if (fool) {
+      candidateHighlights.push({
+        type: 'FOOL_WIN',
+        icon: '🃏',
+        title: 'ความบังเอิญที่ไม่มีใครตั้งใจ',
+        description: `${fool.nickname} ถูกโหวตออกจนชนะ นี่คือความเฮฮาแบบไม่คาดคิด`,
+        playersInvolved: [fool.id],
+      });
+    }
+  }
+
+  const turningPointId = memory.turningPoint?.playerId || null;
+  if (turningPointId && playerMap.has(turningPointId)) {
+    const player = playerMap.get(turningPointId);
+    candidateHighlights.push({
+      type: 'TURNING_POINT',
+      icon: '🎯',
+      title: 'โหวตพลิกเกม',
+      description: `${player.nickname} คือคนที่ถูกโหวตในจังหวะตัดสินใจสำคัญ สีของเกมเปลี่ยนทันที`,
+      playersInvolved: [player.id],
+    });
+  }
+
+  const wolfMostSilent = players.filter(p => p.role === 'werewolf' && p.isAlive).sort((a, b) => {
+    const aVotes = voteTally[a.id] || 0;
+    const bVotes = voteTally[b.id] || 0;
+    return aVotes - bVotes;
+  })[0];
+  if (wolfMostSilent) {
+    candidateHighlights.push({
+      type: 'WOLF_SNEAK',
+      icon: '🐺',
+      title: 'หมาป่าจอมกล',
+      description: `${wolfMostSilent.nickname} เป็นหมาป่าแท้ ๆ แต่ไม่มีใครเอ่ยชื่อสักครั้ง เนียนจนน่าขนลุก`,
+      playersInvolved: [wolfMostSilent.id],
+    });
+  }
+
+  const guardian = Object.entries(memory.savesByPlayer || {}).sort((a, b) => b[1] - a[1])[0];
+  if (guardian && playerMap.has(guardian[0])) {
+    const player = playerMap.get(guardian[0]);
+    if ((guardian[1] || 0) >= 1) {
+      candidateHighlights.push({
+        type: 'GUARDIAN',
+        icon: '🛡️',
+        title: 'ผู้คุ้มกันเงียบ',
+        description: `${player.nickname} ปกป้องคนรอบตัวได้สำเร็จ ${guardian[1]} ครั้ง สายตาเงียบแต่ยิ่งใหญ่จริง`,
+        playersInvolved: [player.id],
+      });
+    }
+  }
+
+  const deduped = [];
+  const seen = new Set();
+  for (const highlight of candidateHighlights) {
+    const key = `${highlight.type}:${highlight.playersInvolved?.[0] || 'none'}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(highlight);
+    }
+  }
+
+  return deduped.slice(0, 4);
 }

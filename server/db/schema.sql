@@ -119,6 +119,23 @@ CREATE TABLE IF NOT EXISTS fortune_cards (
     INDEX idx_fortune_cards_type (type)
 );
 
+CREATE TABLE IF NOT EXISTS room_player_cards (
+    id                 INT             NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    room_id            VARCHAR(8)      NOT NULL,
+    player_id          VARCHAR(36)     NOT NULL,
+    card_id            INT             NOT NULL,
+    card_name          VARCHAR(50)     NOT NULL,
+    card_type          ENUM('good', 'bad') NOT NULL,
+    status             ENUM('active','inventory','used','discarded') NOT NULL DEFAULT 'active',
+    source             VARCHAR(32)     NOT NULL DEFAULT 'daily_draw',
+    created_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_room_player_cards_room
+        FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+    INDEX idx_room_player_cards_room_player (room_id, player_id),
+    INDEX idx_room_player_cards_status (status)
+);
+
 CREATE TABLE IF NOT EXISTS game_settings (
     setting_key        VARCHAR(50)     NOT NULL PRIMARY KEY,
     setting_value      TEXT            NOT NULL,

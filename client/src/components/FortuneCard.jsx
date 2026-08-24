@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/FortuneCard.css';
 import { useGameData } from '../context/GameDataContext.jsx';
@@ -13,15 +13,15 @@ const cardVariants = {
 export default function FortuneCard({ card }) {
   const sound = useSound();
   const { fortuneCardMap } = useGameData();
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
-    // Play sound when a new card is drawn
-    if (card) {
-      const sfx = card.type === 'good'
-        ? '/assets/audio/SFX-GoodCard.mp3'
-        : '/assets/audio/SFX-BadCard.mp3';
-      sound.playSfx(sfx);
-    }
+    if (!card) return;
+    setShowDetails(true);
+    sound.playCard?.(card, 0.9);
+
+    const timer = setTimeout(() => setShowDetails(false), 4200);
+    return () => clearTimeout(timer);
   }, [card, sound]);
 
   const cardInfo = card ? fortuneCardMap.get(card.id) : null;
@@ -47,7 +47,12 @@ export default function FortuneCard({ card }) {
             )}
             <h3 className="fc-name">{cardInfo.name_th || card.name}</h3>
           </div>
-          <p className="fc-desc">{cardInfo.description_th || card.description}</p>
+          {showDetails && (
+            <>
+              <p className="fc-desc">{cardInfo.description_th || card.description}</p>
+              <button className="fc-close" type="button" onClick={() => setShowDetails(false)}>ปิด</button>
+            </>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

@@ -20,16 +20,47 @@ import {
   addBetrayalHighlight,
   addFoolWinHighlight,
   addTurningPointHighlight,
+  recordPlayerDeath,
+  recordGuardianSave,
+  getPostGameHighlights,
 } from './highlightService.js';
 import { applyExp, expNeeded, EXP_PER_GAME } from '../../../shared/leveling.js';
 
 export const RESULTS_DURATION_MS = 10_000;
 
+function cardMatchesAny(card, aliases = []) {
+  if (!card) return false;
+  const haystack = [
+    card.id,
+    card.name,
+    card.name_en,
+    card.name_th,
+    card.description,
+    card.description_th,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  return aliases.some(alias => {
+    const key = String(alias).toLowerCase();
+    return haystack.includes(key) || key.includes(haystack);
+  });
+}
+
 export function getPhaseDurationMs(roomId, phase) {
   if (phase === PHASES.RESULTS) return RESULTS_DURATION_MS;
 
-  const durations = getRoom(roomId)?.phaseDurations || DEFAULT_PHASE_DURATIONS;
-  const seconds = durations[phase] ?? DEFAULT_PHASE_DURATIONS[phase];
+  const room = getRoom(roomId);
+  const durations = room?.phaseDurations || DEFAULT_PHASE_DURATIONS;
+  let seconds = durations[phase] ?? DEFAULT_PHASE_DURATIONS[phase];
+
+  if (phase === PHASES.VOTING && room) {
+    const hasCarefulCard = getPlayersArray(roomId).some(player => {
+      if (!player.isAlive) return false;
+      const card = room.fortuneCards?.get(player.id);
+      return cardMatchesAny(card, ['รอบคอบ', 'cautious', 'careful', 'vote_time', 'extra_vote']);
+    });
+    if (hasCarefulCard) seconds += 10;
+  }
+
   return (seconds ?? 30) * 1000;
 }
 
@@ -47,6 +78,50 @@ const PHASE_MESSAGES = Object.freeze({
   [PHASES.VOTING]:  'ถึงเวลาโหวตแล้ว ใครคือหมาป่า?',
   [PHASES.RESULTS]: 'กำลังนับคะแนนเสียง...',
 });
+
+async function persistRoomPlayerCard(roomId, playerId, card, status = 'active', source = 'daily_draw') {
+  if (!roomId || !playerId || !card || !card.id) return;
+
+  const room = getRoom(roomId);
+  if (!room) return;
+
+  const cardId = Number.isFinite(Number(card.id)) ? Number(card.id) : null;
+  const name = card.name_th || card.name || card.id;
+  const type = card.type || 'bad';
+
+  if (cardId !== null) {
+    try {
+      await pool.query(
+        `INSERT INTO room_player_cards (room_id, player_id, card_id, card_name, card_type, status, source)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           card_name = VALUES(card_name),
+           card_type = VALUES(card_type),
+           status = VALUES(status),
+           source = VALUES(source),
+           updated_at = CURRENT_TIMESTAMP`,
+        [roomId, playerId, cardId, name, type, status, source]
+      );
+    } catch (error) {
+      console.warn('[fortune card persist] fallback insert failed:', error.message);
+    }
+  }
+
+  const currentCards = room.fortuneCards || new Map();
+  currentCards.set(playerId, { ...card, status, source });
+  updateRoom(roomId, { fortuneCards: currentCards });
+
+  if (card.type === 'good') {
+    const inventory = room.fortuneInventory || new Map();
+    const history = inventory.get(playerId)?.history || [];
+    inventory.set(playerId, {
+      current: { ...card, status, source },
+      history: [...history, String(card.id)].slice(-5),
+      lastDrawnAt: new Date().toISOString(),
+    });
+    updateRoom(roomId, { fortuneInventory: inventory });
+  }
+}
 
 const timers = new Map();
 const streamIntervals = new Map(); // For Magic Eyes card effect
@@ -72,7 +147,7 @@ export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
 
       const playersWithCard = getPlayersArray(roomId).filter(p => {
         const card = room.fortuneCards?.get(p.id);
-        return p.isAlive && card?.id === 'magic_eyes';
+        return p.isAlive && cardMatchesAny(card, ['magic_eyes', 'ดวงตาอัจฉริยะ', 'magic_eyes_card', 'seer_eyes']);
       });
 
       if (playersWithCard.length > 0) {
@@ -171,6 +246,8 @@ async function _advancePhase(io, roomId) {
   const morning = nextPhase === PHASES.DAY ? rollMorningEvent(roomId) : null;
 
   if (nextPhase === PHASES.DAY) {
+    const room = getRoom(roomId);
+
     // At the start of DAY, reset confused status from previous round
     // and check for 'confused' recurrence from previous round
     for (const player of getPlayersArray(roomId)) {
@@ -192,27 +269,59 @@ async function _advancePhase(io, roomId) {
       }
     }
 
+    const observerPlayers = getPlayersArray(roomId).filter(player => {
+      if (!player.isAlive) return false;
+      const card = room?.fortuneCards?.get(player.id);
+      return cardMatchesAny(card, ['นักสังเกต', 'observer', 'the_observer', 'observe']);
+    });
+
+    for (const player of observerPlayers) {
+      const candidates = getPlayersArray(roomId).filter(p => p.isAlive && p.id !== player.id);
+      if (candidates.length === 0) continue;
+      const target = candidates[Math.floor(Math.random() * candidates.length)];
+      const targetCard = room?.fortuneCards?.get(target.id);
+      const hasNightSkill = ['werewolf', 'seer', 'bodyguard', 'silencer'].includes(target.role);
+      const targetAction = room?.nightActions?.[target.role] || null;
+      const socket = player.socketId ? io.sockets.sockets.get(player.socketId) : null;
+      if (socket) {
+        socket.emit('fortune:private_info', {
+          type: 'observer',
+          title: 'นักสังเกต',
+          data: {
+            targetId: target.id,
+            targetNickname: target.nickname,
+            targetRole: target.role,
+            usesNightSkill: hasNightSkill,
+            hasNightTarget: !!targetAction,
+            targetAction: targetAction ? { targetId: targetAction.targetId } : null,
+            note: targetCard ? 'มีข้อมูลลับจากการสังเกต' : 'ไม่มีข้อมูลเพิ่มเติม',
+          },
+        });
+      }
+    }
+
     const alivePlayers = getPlayersArray(roomId).filter(p => p.isAlive);
     const luckBias = getActiveLuckBias(roomId);
     const drawnCards = new Map();
 
     for (const player of alivePlayers) {
-      const card = drawFortuneCard(luckBias);
+      const card = drawFortuneCard(room.gameMode || 'classic', luckBias);
       drawnCards.set(player.id, card);
       const playerSocket = io.sockets.sockets.get(player.socketId);
       if (playerSocket) {
         playerSocket.emit('fortune:card_drawn', { card });
       }
 
-      // Apply server-side effects for drawn cards
-      if (card.id === 'confused') {
-        updatePlayer(roomId, player.id, { isConfusedThisRound: true, hasConfusedRecurrence: true });
+      if (card?.type === 'good') {
+        await persistRoomPlayerCard(roomId, player.id, card, 'inventory', 'daily_draw');
       } else {
-        // If a player draws a non-confused card, any existing recurrence chance is cleared
-        // (unless it already triggered this round, in which case it was cleared above)
-        if (!player.isConfusedThisRound) { // Only clear if not already confused by recurrence this round
-          updatePlayer(roomId, player.id, { hasConfusedRecurrence: false });
-        }
+        await persistRoomPlayerCard(roomId, player.id, card, 'active', 'daily_draw');
+      }
+
+      if (cardMatchesAny(card, ['confused', 'สับสนกับตัวเอง', 'self_confused', 'confusion', 'confused_self'])) {
+        updatePlayer(roomId, player.id, { isConfusedThisRound: true, hasConfusedRecurrence: true });
+      } else if (!player.isConfusedThisRound) {
+        updatePlayer(roomId, player.id, { hasConfusedRecurrence: false });
       }
     }
     updateRoom(roomId, { fortuneCards: drawnCards });
@@ -347,6 +456,7 @@ export async function endGameIfDecided(io, roomId) {
 export async function _endGameAndBroadcast(io, roomId, win) {
   const room = getRoom(roomId);
   const players = getPlayersArray(roomId);
+  if (room && room.memory) room.memory.turningPoint = room.memory.turningPoint || null;
   endGame(roomId, win.winner, win.message);
   await pool.query(`UPDATE rooms SET status = 'finished' WHERE id = ?`, [roomId]);
 
@@ -354,11 +464,24 @@ export async function _endGameAndBroadcast(io, roomId, win) {
     id: p.id, nickname: p.nickname, role: p.role, isAlive: p.isAlive,
   }));
 
+  const summaryHighlights = [...(room.highlights || []), ...getPostGameHighlights(roomId)];
+  const dedupedHighlights = [];
+  const seen = new Set();
+  for (const highlight of summaryHighlights) {
+    const key = `${highlight.type}:${highlight.playersInvolved?.join('-') || 'none'}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      dedupedHighlights.push(highlight);
+    }
+  }
+
+  updateRoom(roomId, { winner: win.winner, memory: { ...(room.memory || {}), turningPoint: room.memory?.turningPoint || null } });
+
   io.to(roomId).emit('game:ended', {
     winner: win.winner,
     message: win.message,
     reveal,
-    highlights: room.highlights || [],
+    highlights: dedupedHighlights.slice(0, 4),
   });
   io.to(roomId).emit('chat:message', {
     id:      `sys-end-${Date.now()}`,
@@ -435,11 +558,14 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
       ? room.players.get(room.nightActions.bodyguard.playerId)
       : null;
     addSaveHighlight(roomId, { bodyguard, protectedPlayer });
+    if (bodyguard?.id) {
+      recordGuardianSave(roomId, bodyguard.id);
+    }
   }
 
   const playersWithCard = getPlayersArray(roomId).filter(p => {
     const card = room.fortuneCards?.get(p.id);
-    return p.isAlive && card?.id === 'good_to_know';
+    return p.isAlive && cardMatchesAny(card, ['good_to_know', 'รู้ล่วงหน้า', 'premonition', 'future_know', 'prognosis']);
   });
 
   if (playersWithCard.length > 0) {
@@ -454,8 +580,30 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
     }
   }
 
+  const reflexTarget = result.killedId ? room.players.get(result.killedId) : null;
+  if (reflexTarget && !reflexTarget.reflexUsed) {
+    const reflexCard = room.fortuneCards?.get(reflexTarget.id);
+    if (cardMatchesAny(reflexCard, ['รีเฟล็กซ์วัยรุ่น', 'reflex', 'young_reflex', 'survival_reflex'])) {
+      reflexTarget.isAlive = true;
+      reflexTarget.reflexUsed = true;
+      result.killedId = null;
+      result.killedNickname = null;
+      result.prevented = true;
+      result.selectedTargetId = null;
+      const socket = reflexTarget.socketId ? io.sockets.sockets.get(reflexTarget.socketId) : null;
+      if (socket) {
+        socket.emit('fortune:private_info', {
+          type: 'reflex',
+          title: 'รีเฟล็กซ์วัยรุ่น',
+          data: { message: 'เจ้าใช้รีเฟล็กซ์วัยรุ่นป้องกันการถูกฆ่าได้สำเร็จ' },
+        });
+      }
+    }
+  }
+
   if (result.killedId) {
     await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [result.killedId]);
+    recordPlayerDeath(roomId, result.killedId, 'night', room.round ?? 1);
     addKillHighlight(roomId, { killedId: result.killedId, killedNickname: result.killedNickname });
   }
 
@@ -523,7 +671,7 @@ async function _resolveVotingAndBroadcast(io, roomId) {
   
   const playersWithCard = getPlayersArray(roomId).filter(p => {
     const card = room.fortuneCards?.get(p.id);
-    return p.isAlive && card?.id === 'broken_home';
+    return p.isAlive && cardMatchesAny(card, ['broken_home', 'บ้านแตก', 'fragile_home', 'home_break', 'broken_house']);
   });
 
   if (playersWithCard.length > 0) {
@@ -568,6 +716,10 @@ async function _resolveVotingAndBroadcast(io, roomId) {
     eliminatedNickname = target?.nickname ?? 'Unknown';
     eliminatedRole     = target?.role ?? null;
     updatePlayer(roomId, eliminatedId, { isAlive: false });
+    recordPlayerDeath(roomId, eliminatedId, 'vote', room.round ?? 1);
+    if (eliminatedRole === 'werewolf') {
+      updateRoom(roomId, { memory: { ...(room.memory || {}), turningPoint: { playerId: eliminatedId, round: room.round ?? 1 } } });
+    }
     updateRoom(roomId, { lastEliminatedId: eliminatedId });
     await pool.query(`UPDATE players SET is_alive = false WHERE id = ?`, [eliminatedId]);
   }

@@ -45,6 +45,7 @@ const { createRoom, addPlayerToRoom, updatePlayer, updateRoom, getRoom, deleteRo
   await import('./gameStore.js');
 const { initVoting, castVote } = await import('./voteManager.js');
 const { PHASES } = await import('./constants.js');
+const { getPostGameHighlights } = await import('./highlightService.js');
 
 function makeIo() {
   const emitted = [];      // broadcast ทั้งห้อง
@@ -195,4 +196,32 @@ test('guests in the room get no exp and no progress event', async t => {
     0,
     'guest ไม่ควรได้รับ player:progress'
   );
+});
+
+test('post-game highlight summary compiles from room memory and keeps the final narrative data', () => {
+  const roomId = 'room-postgame-highlights';
+  createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 4 });
+
+  ['werewolf', 'villager', 'villager', 'fool'].forEach((role, index) => {
+    addPlayerToRoom(roomId, { id: `p${index}`, nickname: `p${index}`, socketId: `sock-p${index}` });
+    updatePlayer(roomId, `p${index}`, { role, isAlive: true });
+  });
+
+  const room = getRoom(roomId);
+  room.status = 'finished';
+  room.winner = 'fool';
+  room.memory.voteTally = { p0: 3, p1: 1, p2: 1 };
+  room.memory.voteHistory = [{ voterId: 'p1', targetId: 'p0' }, { voterId: 'p2', targetId: 'p0' }, { voterId: 'p3', targetId: 'p0' }];
+  room.memory.firstDeath = { playerId: 'p2', cause: 'vote', round: 1 };
+  room.memory.chatCountByPlayer = { p1: 12, p2: 7, p3: 3 };
+  room.memory.savesByPlayer = { p1: 1 };
+  room.memory.turningPoint = { playerId: 'p0', round: 1 };
+
+  const highlights = getPostGameHighlights(roomId);
+  assert.ok(highlights.some(h => h.type === 'MOST_TARGETED'));
+  assert.ok(highlights.some(h => h.type === 'FIRST_BLOOD'));
+  assert.ok(highlights.some(h => h.type === 'CHAT_CHAMP'));
+  assert.ok(highlights.some(h => h.type === 'FOOL_WIN'));
+
+  deleteRoom(roomId);
 });

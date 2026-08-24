@@ -17,7 +17,7 @@ import {
 } from '../game/phaseManager.js';
 import { castVote, hasAllVoted } from '../game/voteManager.js';
 import { teardownRoom } from '../game/roomMaintenance.js';
-import { initNightActions, submitNightAction, getBlockedProtectTargets } from '../game/nightActions.js';
+import { initNightActions, submitNightAction, resolveNightActions, getBlockedProtectTargets } from '../game/nightActions.js';
 import { censorProfanity } from '../game/profanity.js';
 import { getUserByIdService } from '../services/authService.js';
 
@@ -110,6 +110,10 @@ export function registerSocketHandlers(socket, io) {
       `INSERT INTO messages (room_id, player_id, nickname, content, channel) VALUES (?, ?, ?, ?, ?)`,
       [roomId, playerId, nickname, message.content, channel]
     );
+
+    room.memory ??= { voteTally: {}, voteHistory: [], deathLog: [], firstDeath: null, chatCountByPlayer: {}, savesByPlayer: {}, turningPoint: null };
+    room.memory.chatCountByPlayer ??= {};
+    room.memory.chatCountByPlayer[playerId] = (room.memory.chatCountByPlayer[playerId] || 0) + 1;
 
     if (censored) socket.emit('chat:censored', { message: 'คำหยาบในข้อความของเจ้าถูกกลบไว้แล้ว' });
 
@@ -280,16 +284,24 @@ export function registerSocketHandlers(socket, io) {
     }
   });
 
-  socket.on('night:action', ({ targetId }) => {
+  socket.on('night:action', async ({ targetId }) => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
 
     const room = getRoom(roomId);
     if (!room) return socket.emit('error', { message: 'Room not found.' });
-    if (room.phase !== PHASES.NIGHT) return socket.emit('error', { message: 'Not night phase.' });
 
     const player = room.players.get(playerId);
     if (!player?.isAlive) return socket.emit('error', { message: 'Dead players cannot act.' });
+
+    const playerCard = room.fortuneCards?.get(playerId);
+    const hasEarlyAction = cardMatchesAny(playerCard, ['ลงมือก่อนที่จะสาย', 'early_action', 'before_it_is_too_late', 'early_night_action']);
+    const isNightActionPhase = room.phase === PHASES.NIGHT;
+    const isDayEarlyAction = room.phase === PHASES.DAY && hasEarlyAction && ['werewolf', 'seer', 'bodyguard', 'silencer'].includes(player.role);
+
+    if (!isNightActionPhase && !isDayEarlyAction) {
+      return socket.emit('error', { message: 'Not night phase.' });
+    }
 
     if (getBlockedProtectTargets(roomId, playerId).includes(targetId)) {
       return socket.emit('error', { message: 'เจ้าเพิ่งเฝ้าคนนี้ไปเมื่อคืน ห้ามป้องกันคนเดิมสองคืนติด' });
@@ -299,6 +311,17 @@ export function registerSocketHandlers(socket, io) {
     if (!action) return socket.emit('error', { message: 'Invalid night action.' });
 
     socket.emit('night:action:ack', { targetId });
+
+    if (isDayEarlyAction) {
+      const result = await resolveNightActions(roomId);
+      if (result) {
+        io.to(roomId).emit('night:result', {
+          killedId: result.killedId,
+          killedNickname: result.killedNickname,
+        });
+      }
+      return;
+    }
 
     if (player.role === 'werewolf') {
       broadcastToRole(io, room, 'werewolf', 'night:action:update', {
@@ -319,7 +342,7 @@ export function registerSocketHandlers(socket, io) {
     }
 
     const playerCard = room.fortuneCards?.get(playerId);
-    const isInjuryTimeCard = playerCard?.id === 'injury_time';
+    const isInjuryTimeCard = cardMatchesAny(playerCard, ['injury_time', 'give_me_time', 'extra_time', 'more_time', 'ให้โอกาส']);
 
     if (!isInjuryTimeCard || room.usedExtraTime.has(playerId)) {
       return socket.emit('error', { message: 'คุณไม่มีสิทธิ์ขอต่อเวลา หรือใช้สิทธิ์ไปแล้ว' });
@@ -349,13 +372,16 @@ export function registerSocketHandlers(socket, io) {
 
     const player = room.players.get(playerId);
     if (!player?.isAlive) return socket.emit('error', { message: 'คนตายโหวตไม่ได้' });
+    if (player.isConfusedThisRound) {
+      return socket.emit('error', { message: 'คุณสับสนกับตัวเองอยู่ ไม่สามารถโหวตได้จนกว่าจะผ่านเกมคลิกให้สำเร็จ' });
+    }
 
     const target = room.players.get(targetId);
     if (!target || !target.isAlive) return socket.emit('error', { message: 'ไม่สามารถโหวตผู้เล่นที่ไม่มีอยู่จริงหรือตายไปแล้วได้' });
     if (targetId === playerId) return socket.emit('error', { message: 'โหวตให้ตัวเองไม่ได้' });
 
     const playerCard = room.fortuneCards?.get(playerId);
-    const isOpportunist = playerCard?.id === 'opportunist';
+    const isOpportunist = cardMatchesAny(playerCard, ['opportunist', 'หน้าไหว้หลังหลอก', 'change_vote', 'vote_switch', 'second_chance_vote']);
     const timeRemaining = room.phaseEndsAt ? Math.ceil((room.phaseEndsAt - Date.now()) / 1000) : Infinity;
 
     const { voteMap: currentVoteMap } = getVoteData(roomId);
@@ -373,7 +399,12 @@ export function registerSocketHandlers(socket, io) {
       }
     }
 
-    const { voteMap, counts } = castVote(roomId, playerId, targetId);
+    const voteResult = castVote(roomId, playerId, targetId);
+    if (!voteResult) {
+      return socket.emit('error', { message: 'คุณสับสนกับตัวเองอยู่ ไม่สามารถโหวตได้จนกว่าจะผ่านเกมคลิกให้สำเร็จ' });
+    }
+
+    const { voteMap, counts } = voteResult;
 
     const players = getPlayersArray(roomId);
     for (const p of players) {
@@ -383,7 +414,7 @@ export function registerSocketHandlers(socket, io) {
       const maskedVoteMap = {};
       for (const [voterId, votedTargetId] of Object.entries(voteMap)) {
         const voterCard = room.fortuneCards?.get(voterId);
-        const isAnonymous = voterCard?.id === 'like_the_wind';
+        const isAnonymous = cardMatchesAny(voterCard, ['like_the_wind', 'ลมพา', 'anonymous_vote', 'mask_vote', 'vote_mask']);
 
         if (isAnonymous && p.id !== voterId) {
           const anonKey = `ANON_${voterId}`;
@@ -725,6 +756,23 @@ async function handleLeave(socket, io) {
   });
 }
 
+function cardMatchesAny(card, aliases = []) {
+  if (!card) return false;
+  const haystack = [
+    card.id,
+    card.name,
+    card.name_en,
+    card.name_th,
+    card.description,
+    card.description_th,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  return aliases.some(alias => {
+    const key = String(alias).toLowerCase();
+    return haystack.includes(key) || key.includes(haystack);
+  });
+}
+
 function getChatValidationError(room, player, channel) {
   if (player.isMutedByAdmin) {
     return 'แอดมินปิดปากเจ้าไว้';
@@ -738,8 +786,15 @@ function getChatValidationError(room, player, channel) {
     return 'คนเป็นเข้าห้องวิญญาณไม่ได้';
   }
 
-  if (player.isAlive && room.silencedPlayerId === player.id) {
+  const playerCard = room.fortuneCards?.get(player.id);
+  const hasSilencerShield = cardMatchesAny(playerCard, ['ปากแจ๋ว', 'silencer_guard', 'silence_guard', 'mouth_guard', 'paka_jwa']);
+  if (player.isAlive && room.silencedPlayerId === player.id && !hasSilencerShield) {
     return 'เจ้าถูกปิดปากไว้ วันนี้พูดไม่ได้';
+  }
+  if (player.isAlive && room.silencedPlayerId === player.id && hasSilencerShield && !player.silenceShieldUsed) {
+    player.silenceShieldUsed = true;
+    room.silencedPlayerId = null;
+    return null;
   }
 
   if (channel === CHANNELS.WEREWOLF && player.role !== 'werewolf') {
@@ -751,7 +806,7 @@ function getChatValidationError(room, player, channel) {
 
 function handleWhisperLogic(room, playerId, targetPlayerId) {
   const playerCard = room.fortuneCards?.get(playerId);
-  const isWhisperCard = playerCard?.id === 'whisper';
+  const isWhisperCard = cardMatchesAny(playerCard, ['whisper', 'กระซิบข้างหู', 'private_whisper', 'secret_message', 'whisper_tell']);
 
   if (!isWhisperCard || room.usedWhispers.has(playerId)) {
     return { error: 'คุณไม่สามารถกระซิบได้' };

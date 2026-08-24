@@ -295,6 +295,9 @@ function gameReducer(state, action) {
     case 'FORTUNE_CARD_DRAWN':
       return { ...state, myFortuneCard: action.payload.card };
 
+    case 'CLEAR_FORTUNE_CARD':
+      return { ...state, myFortuneCard: null };
+
     case 'FORTUNE_PRIVATE_INFO':
       return { ...state, fortuneInfo: action.payload };
 
@@ -346,6 +349,8 @@ export function GameProvider({ children }) {
   const { addToast } = useToast();
 
   useEffect(() => {
+    let fortuneClearTimer = null;
+
     const handlers = {
       connect:    () => dispatch({ type: 'SOCKET_CONNECTED' }),
       disconnect: () => dispatch({ type: 'SOCKET_DISCONNECTED' }),
@@ -359,23 +364,32 @@ export function GameProvider({ children }) {
           message.channel !== 'system' &&
           message.playerId !== session?.playerId
         ) {
-          soundManager.playSfx('/assets/audio/SFX-Chat.mp3', 0.5);
+          soundManager.playEvent('chat', 0.5);
         }
         dispatch({ type: 'CHAT_MESSAGE', message });
       },
       [SOCKET_EVENTS.CHAT_TYPING_UPDATE]:   ({ typingIds }) => dispatch({ type: 'TYPING_UPDATE', typingIds }),
       [SOCKET_EVENTS.CHAT_CENSORED]:        (payload)       => dispatch({ type: 'CENSORED', payload }),
       [SOCKET_EVENTS.CHAT_DEAD_HISTORY]:    ({ messages })  => dispatch({ type: 'DEAD_HISTORY', messages: messages ?? [] }),
-      [SOCKET_EVENTS.GAME_STARTED]:         (data)          => dispatch({ type: 'GAME_STARTED', ...data }),
+      [SOCKET_EVENTS.GAME_STARTED]:         (data) => {
+        soundManager.playEvent('ready', 0.9);
+        dispatch({ type: 'GAME_STARTED', ...data });
+      },
       [SOCKET_EVENTS.NIGHTZERO_READY]:      (data)          => dispatch({ type: 'NIGHTZERO_READY', ...data }),
       [SOCKET_EVENTS.PHASE_CHANGED]: (data) => {
-        soundManager.playSfx('/assets/audio/SFX-Phase.mp3');
+        soundManager.playEvent('phase');
         dispatch({ type: 'PHASE_CHANGED', ...data });
       },
-      [SOCKET_EVENTS.ERROR]: ({ message }) => addToast(message, 'error'),
+      [SOCKET_EVENTS.ERROR]: ({ message }) => {
+        soundManager.playEvent('error', 0.3);
+        addToast(message, 'error');
+      },
       [SOCKET_EVENTS.NIGHT_ACTION_ACK]:     (payload)       => dispatch({ type: 'NIGHT_ACTION_ACK', payload }),
       [SOCKET_EVENTS.NIGHT_ACTION_UPDATE]:  (payload)       => dispatch({ type: 'WOLF_TARGET_UPDATE', payload }),
-      [SOCKET_EVENTS.NIGHT_RESULT]:         (payload)       => dispatch({ type: 'NIGHT_RESULT', payload }),
+      [SOCKET_EVENTS.NIGHT_RESULT]:         (payload) => {
+        soundManager.playEvent(payload?.killedNickname ? 'badCard' : 'phase', payload?.killedNickname ? 0.7 : 0.5);
+        dispatch({ type: 'NIGHT_RESULT', payload });
+      },
       [SOCKET_EVENTS.NIGHT_SEER_RESULT]:    (payload)       => dispatch({ type: 'SEER_RESULT', payload }),
       [SOCKET_EVENTS.NIGHT_BLOCKED_TARGETS]:(payload)       => dispatch({ type: 'BLOCKED_TARGETS', payload }),
       [SOCKET_EVENTS.CHAT_SILENCED]:        (payload)       => dispatch({ type: 'SILENCED', payload }),
@@ -384,16 +398,40 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.FORTUNE_PRIVATE_INFO]: (payload)       => dispatch({ type: 'FORTUNE_PRIVATE_INFO', payload }),
       [SOCKET_EVENTS.FORTUNE_EARLY_INFO]:   (payload)       => dispatch({ type: 'FORTUNE_EARLY_INFO', payload }),
       [SOCKET_EVENTS.FORTUNE_REALTIME_VOTE_COUNT]: (payload) => dispatch({ type: 'FORTUNE_REALTIME_VOTE_COUNT', payload }),
-      [SOCKET_EVENTS.FORTUNE_CARD_DRAWN]:   (payload)       => dispatch({ type: 'FORTUNE_CARD_DRAWN', payload }),
+      [SOCKET_EVENTS.FORTUNE_CARD_DRAWN]:   (payload) => {
+        if (fortuneClearTimer) {
+          clearTimeout(fortuneClearTimer);
+          fortuneClearTimer = null;
+        }
+        soundManager.playEvent(payload?.card?.type === 'good' ? 'goodCard' : 'badCard', 0.9);
+        dispatch({ type: 'FORTUNE_CARD_DRAWN', payload });
+
+        if (payload?.card?.type === 'bad') {
+          fortuneClearTimer = setTimeout(() => {
+            dispatch({ type: 'CLEAR_FORTUNE_CARD' });
+          }, 4200);
+        }
+      },
       [SOCKET_EVENTS.GAME_RESUMED]:         (data)          => dispatch({ type: 'GAME_RESUMED', ...data }),
-      [SOCKET_EVENTS.GAME_ENDED]:           (payload) => dispatch({ type: 'GAME_ENDED', ...payload }),
+      [SOCKET_EVENTS.GAME_ENDED]:           (payload) => {
+        soundManager.playEvent(payload?.winner === 'villagers' || payload?.winner === 'fool' ? 'win' : 'lose', 0.9);
+        dispatch({ type: 'GAME_ENDED', ...payload });
+      },
       [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
-      [SOCKET_EVENTS.VOTE_RESULT]: (data) => dispatch({ type: 'VOTE_RESULT', ...data }),
-      [SOCKET_EVENTS.ROOM_CLOSED]: () => { clearSession(); dispatch({ type: 'ROOM_CLOSED' }); },
-    };
+      [SOCKET_EVENTS.VOTE_RESULT]: (data) => {
+        soundManager.playEvent(data?.wasTie ? 'chat' : 'vote', data?.wasTie ? 0.5 : 0.8);
+        dispatch({ type: 'VOTE_RESULT', ...data });
+      },
+   
+      [SOCKET_EVENTS.ROOM_CLOSED]: () => {
+        soundManager.playEvent('roomClose', 0.5);
+        clearSession();
+        dispatch({ type: 'ROOM_CLOSED' });
+      },    };
 
     for (const [event, handler] of Object.entries(handlers)) socket.on(event, handler);
     return () => {
+      if (fortuneClearTimer) clearTimeout(fortuneClearTimer);
       for (const [event, handler] of Object.entries(handlers)) socket.off(event, handler);
     };
   }, [addToast]);
@@ -407,6 +445,7 @@ export function GameProvider({ children }) {
   }, []);
 
   const leaveRoom     = useCallback(() => {
+    soundManager.playSfx('/assets/audio/SFX-Chat.mp3', 0.3);
     clearSession();
     socket.emit(SOCKET_EVENTS.ROOM_LEAVE);
     socket.disconnect();
@@ -428,13 +467,25 @@ export function GameProvider({ children }) {
   const sendMessage   = useCallback((content, channel = 'village', options = {}, targetPlayerId = null) => socket.emit(SOCKET_EVENTS.CHAT_SEND, { content, channel, options, targetPlayerId }), []);
   const sendTyping    = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_TYPING), []);
   const sendStopTyping= useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_STOP_TYPING), []);
-  const startGame     = useCallback(() => socket.emit(SOCKET_EVENTS.GAME_START), []);
-  const markReady     = useCallback(() => socket.emit(SOCKET_EVENTS.PLAYER_READY), []);
+  const startGame     = useCallback(() => {
+    soundManager.playSfx('/assets/audio/SFX-Phase.mp3', 0.9);
+    socket.emit(SOCKET_EVENTS.GAME_START);
+  }, []);
+  const markReady     = useCallback(() => {
+    soundManager.playSfx('/assets/audio/SFX-Chat.mp3', 0.4);
+    socket.emit(SOCKET_EVENTS.PLAYER_READY);
+  }, []);
   const updateRoomConfig = useCallback((config) => socket.emit(SOCKET_EVENTS.ROOM_CONFIG, { config }), []);
   const advancePhase  = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_ADVANCE), []);
-  const castVote      = useCallback((targetId) => socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId }), []);
+  const castVote      = useCallback((targetId) => {
+    soundManager.playSfx('/assets/audio/SFX-Vote.mp3', 0.8);
+    socket.emit(SOCKET_EVENTS.VOTE_CAST, { targetId });
+  }, []);
   const requestExtraTime = useCallback(() => socket.emit(SOCKET_EVENTS.PHASE_REQUEST_EXTRA_TIME), []);
-  const submitNightAction = useCallback((targetId) => socket.emit(SOCKET_EVENTS.NIGHT_ACTION, { targetId }), []);
+  const submitNightAction = useCallback((targetId) => {
+    soundManager.playSfx('/assets/audio/SFX-NightAct.mp3', 0.8);
+    socket.emit(SOCKET_EVENTS.NIGHT_ACTION, { targetId });
+  }, []);
   const clearCensorNote = useCallback(() => dispatch({ type: 'CLEAR_CENSOR_NOTE' }), []);
   const loadDeadHistory = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_DEAD_HISTORY), []);
 

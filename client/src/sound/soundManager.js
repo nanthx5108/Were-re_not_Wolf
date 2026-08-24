@@ -19,6 +19,39 @@ const LEGACY_AUDIO_MAP = {
   '/audio/sfx_game_lose.wav': '/assets/audio/SFX-BadCard.mp3',
 };
 
+const EVENT_SOUND_MAP = {
+  chat: '/assets/audio/SFX-Chat.mp3',
+  phase: '/assets/audio/SFX-Phase.mp3',
+  vote: '/assets/audio/SFX-Vote.mp3',
+  goodCard: '/assets/audio/SFX-GoodCard.mp3',
+  badCard: '/assets/audio/SFX-BadCard.mp3',
+  roleDraw: '/assets/audio/SFX-RoleDrawFlip.mp3',
+  nightAction: '/assets/audio/SFX-NightAct.mp3',
+  roomJoin: '/assets/audio/SFX-joinroom.mp3',
+  roomLeave: '/assets/audio/SFX-outroom.mp3',
+  ready: '/assets/audio/SFX-Ready.mp3',
+  error: '/assets/audio/SFX-Invalid Action.mp3',
+  win: '/assets/audio/SFX-. Victory.mp3',
+  lose: '/assets/audio/SFX-Defeat.mp3',
+  roomClose: '/assets/audio/SFX-Host Action.mp3',
+  morning: '/assets/audio/SFX-Morning Event.mp3',
+  elimination: '/assets/audio/SFX-Elimination.mp3',
+  silenced: '/assets/audio/SFX-Silenced.mp3',
+  hover: '/assets/audio/SFX-UI Hover.mp3',
+  countdown: '/assets/audio/SFX-Countdown Warning.mp3',
+};
+
+const CARD_SOUND_MAP = {
+  good: '/assets/audio/SFX-GoodCard.mp3',
+  bad: '/assets/audio/SFX-BadCard.mp3',
+  default: '/assets/audio/SFX-RoleDrawFlip.mp3',
+  magic_eyes: '/assets/audio/SFX-Phase.mp3',
+  whisper: '/assets/audio/SFX-Chat.mp3',
+  confused: '/assets/audio/SFX-BadCard.mp3',
+  observer: '/assets/audio/SFX-Morning Event.mp3',
+  reflex: '/assets/audio/SFX-Ready.mp3',
+};
+
 function loadSettings() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -46,7 +79,23 @@ class SoundManager {
   resolveAssetPath(src) {
     if (!src) return src;
     if (LEGACY_AUDIO_MAP[src]) return LEGACY_AUDIO_MAP[src];
+    if (typeof src === 'string' && EVENT_SOUND_MAP[src]) return EVENT_SOUND_MAP[src];
     return src;
+  }
+
+  playEvent(eventName, volume = 1.0) {
+    const key = String(eventName || '').trim();
+    if (!key) return;
+    const resolved = this.resolveAssetPath(EVENT_SOUND_MAP[key] || key);
+    if (!resolved) return;
+    this.playSfx(resolved, volume);
+  }
+
+  playCard(card, volume = 1.0) {
+    const cardKey = card?.id || card?.type;
+    const resolved = CARD_SOUND_MAP[cardKey] || CARD_SOUND_MAP[card?.type] || CARD_SOUND_MAP.default;
+    if (!resolved) return;
+    this.playSfx(resolved, volume);
   }
 
   _volume(type) {
