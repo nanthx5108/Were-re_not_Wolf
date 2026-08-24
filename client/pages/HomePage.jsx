@@ -53,8 +53,8 @@ const newsVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE_OUT, delay: 0.95 } },
 };
 
-const BGM_SRC = '/audio/bgm_home.mp3';
-const HOVER_SFX_SRC = '/audio/sfx_hover.wav';
+const BGM_SRC = '/assets/audio/BGM-lobby.mp3';
+const HOVER_SFX_SRC = '/assets/audio/SFX-Chat.mp3';
 
 export default function HomePage() {
   const navigate = useNavigate();

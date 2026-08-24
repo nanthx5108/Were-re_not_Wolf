@@ -33,7 +33,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote, myF
 
   function handleVote(targetId) {
     if (canChangeVote) setHasChangedVote(true);
-    sound.playSfx('/audio/sfx_vote.wav');
+    sound.playSfx('/assets/audio/SFX-Vote.mp3');
     onVote(targetId);
   }
 

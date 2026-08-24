@@ -165,10 +165,10 @@ export default function Game() {
         playerWins = true;
       }
 
-      const sfx = playerWins ? '/audio/sfx_game_win.wav' : '/audio/sfx_game_lose.wav';
+      const sfx = playerWins ? '/assets/audio/SFX-GoodCard.mp3' : '/assets/audio/SFX-BadCard.mp3';
       sound.playSfx(sfx);
 
-      const bgm = playerWins ? '/audio/bgm_win.mp3' : '/audio/bgm_lose.mp3';
+      const bgm = playerWins ? '/assets/audio/BGM-voting.mp3' : '/assets/audio/BGM-night.mp3';
       // Stop any current BGM and play the end-game music (not looping)
       sound.playBgm(bgm, false);
     }

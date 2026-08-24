@@ -5,7 +5,7 @@ import PlayerCard from '../src/components/PlayerCard.jsx';
 import ChatBox    from '../src/components/ChatBox.jsx';
 import Navbar     from '../src/components/Navbar.jsx';
 import { CONFIGURABLE_ROLES } from '../src/constants/game.js';
-import SoundManager from '../src/sound/SoundManager';
+import SoundManager from '../src/sound/soundManager.js';
 import '../src/styles/Lobby.css';
 
 const MIN_PLAYERS = 4;
@@ -36,7 +36,7 @@ export default function Lobby() {
   // Play lobby BGM while on the Lobby page; stop on unmount
   useEffect(() => {
     // static import for consistent bundling
-    SoundManager.playBgm('lobby', '/assets/sounds/bgm/bgm_lobby.wav', { loop: true, volume: 0.6 });
+    SoundManager.playBgm('lobby', '/assets/audio/BGM-lobby.mp3', { loop: true, volume: 0.6 });
     return () => { try { SoundManager.stopBgm(); } catch {} };
   }, []);
 

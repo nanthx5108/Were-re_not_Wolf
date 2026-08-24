@@ -18,8 +18,8 @@ export default function FortuneCard({ card }) {
     // Play sound when a new card is drawn
     if (card) {
       const sfx = card.type === 'good'
-        ? '/audio/sfx_card_good.wav'
-        : '/audio/sfx_card_bad.wav';
+        ? '/assets/audio/SFX-GoodCard.mp3'
+        : '/assets/audio/SFX-BadCard.mp3';
       sound.playSfx(sfx);
     }
   }, [card, sound]);

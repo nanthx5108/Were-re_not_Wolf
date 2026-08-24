@@ -68,7 +68,7 @@ export default function NightAction() {
     : Boolean(myNightAction);
 
   function handlePick(targetId) {
-    sound.playSfx('/audio/sfx_action_confirm.wav');
+    sound.playSfx('/assets/audio/SFX-NightAct.mp3');
     submitNightAction(targetId);
     setChosenIds((ids) => (ids.includes(targetId) ? ids : [...ids, targetId].slice(0, maxTargets)));
   }

@@ -17,7 +17,7 @@ export default function MyRoleCard() {
 
   useEffect(() => {
     if (myRole && !open) {
-      sound.playSfx('/audio/sfx_card_draw.wav');
+      sound.playSfx('/assets/audio/SFX-RoleDrawFlip.mp3');
     }
   }, [myRole, sound, open]);
 
@@ -27,7 +27,7 @@ export default function MyRoleCard() {
 
   function toggle() {
     setOpen((o) => !o);
-    sound.playSfx('/audio/sfx_card_flip.wav');
+    sound.playSfx('/assets/audio/SFX-RoleDrawFlip.mp3');
   }
 
   return (

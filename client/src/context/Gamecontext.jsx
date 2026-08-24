@@ -359,7 +359,7 @@ export function GameProvider({ children }) {
           message.channel !== 'system' &&
           message.playerId !== session?.playerId
         ) {
-          soundManager.playSfx('/audio/sfx_chat_receive.wav', 0.5);
+          soundManager.playSfx('/assets/audio/SFX-Chat.mp3', 0.5);
         }
         dispatch({ type: 'CHAT_MESSAGE', message });
       },
@@ -369,7 +369,7 @@ export function GameProvider({ children }) {
       [SOCKET_EVENTS.GAME_STARTED]:         (data)          => dispatch({ type: 'GAME_STARTED', ...data }),
       [SOCKET_EVENTS.NIGHTZERO_READY]:      (data)          => dispatch({ type: 'NIGHTZERO_READY', ...data }),
       [SOCKET_EVENTS.PHASE_CHANGED]: (data) => {
-        soundManager.playSfx('/audio/sfx_phase_change.wav');
+        soundManager.playSfx('/assets/audio/SFX-Phase.mp3');
         dispatch({ type: 'PHASE_CHANGED', ...data });
       },
       [SOCKET_EVENTS.ERROR]: ({ message }) => addToast(message, 'error'),
