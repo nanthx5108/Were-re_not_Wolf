@@ -1,4 +1,4 @@
-import { Howl, Howler } from 'howler';
+import { soundManager } from './sound/soundManager.js';
 
 const DEFAULTS = { master: 0.85, music: 0.45, sfx: 0.6, muted: false }; // tuned quieter defaults for pleasant UX
 
