@@ -98,7 +98,7 @@ function SecondaryTimer({ phaseEndsAt, phaseDurationMs, label, color }) {
 }
 
 function NightZeroPanel() {
-  const { nightZero, markReady } = useGame();
+  const { nightZero = { readyCount: 0, total: 0 }, markReady } = useGame();
   const [ready, setReady] = useState(false);
 
   function confirm() {
@@ -119,7 +119,6 @@ function NightZeroPanel() {
 }
 
 export default function Game() {
-  useParams();
   const navigate = useNavigate();
   const {
     room,
