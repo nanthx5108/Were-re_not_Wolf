@@ -36,17 +36,23 @@ Notes on SSL behavior (how this repo works)
 - Render may spin down WebSocket instances on free plans; plan for reconnection and expect ~15 minute idle spin-down on free tiers.
 - Ensure your platform supports long-lived WebSocket connections for the best multiplayer experience or consider a paid tier with stable sockets.
 
-4) How to provide DB_CA on common platforms
+4) WebRTC voice configuration
+- The current deployment intentionally uses STUN-only:
+  `VITE_STUN_SERVER=stun:stun.l.google.com:19302`
+- STUN-only works when peers can establish a direct WebRTC path, but voice may fail on restrictive NAT or firewall networks. The game and text chat remain usable if voice cannot connect.
+- Do not add TURN credentials to the client environment for this deployment.
+
+5) How to provide DB_CA on common platforms
 - Render (mount file): add a secret and mount it into the filesystem, then set DB_SSL_CA_PATH to the mount path.
 - Render (env-only): base64 the PEM: cat aiven-ca.pem | base64 -w0 and set DB_SSL_CA_B64 to that value.
 - Aiven: Aiven provides CA; download the CA PEM and either mount it or copy its base64 into DB_SSL_CA_B64.
 
-5) Quick smoke tests after deploy
+6) Quick smoke tests after deploy
 - Confirm server running: curl -v https://<your-domain>/health
 - Confirm socket/API reachable (non-auth): curl -v https://<your-domain>/api/stats/online
 - Check logs for DB SSL messages — successful connect prints: "✅ MySQL connected and schema ready — <user>@<host>:<port>/<db>"
 
-6) Example env (Render / Aiven combined)
+7) Example env (Render / Aiven combined)
 NODE_ENV=production
 PORT=3001
 CLIENT_URL=https://app.example.com
@@ -62,20 +68,19 @@ DB_SSL_CA_PATH=/run/secrets/aiven_ca.pem
 # Option B (env-only)
 # DB_SSL_CA_B64=<base64-of-pem>
 
-7) Post-deploy checklist
+8) Post-deploy checklist
 - Check server logs for DB connected message
 - Run smoke tests (health and /api/stats/online)
 - Create/enter a test room and run one full cycle: lobby → start → night actions → day → vote → results
 
-8) Troubleshooting
+9) Troubleshooting
 - If DB connect fails with SSL errors and you set DB_SSL=true: ensure the CA is provided or try DB_SSL_CA_B64 with base64 content.
 - If cookies aren't persisting after login on production behind a proxy: ensure NODE_ENV=production and that the platform forwards secure headers and sets the external URL correctly.
 
-9) Security reminders
+10) Security reminders
 - Never commit DB credentials, CA files, or SESSION_SECRET into the repository. Use the host's secret store.
 
 ---
 If you want, I can also:
 - Provide exact Render service settings (UI steps) for mounting a secret file and adding environment variables
 - Create a Pull Request from branch player-level-bar to main with the changes (I can provide the PR body and title for you to paste)
-
