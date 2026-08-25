@@ -294,7 +294,7 @@ export function registerSocketHandlers(socket, io) {
     const player = room.players.get(playerId);
     if (!player?.isAlive) return socket.emit('error', { message: 'Dead players cannot act.' });
 
-    const playerCard = room.fortuneCards?.get(playerId);
+    const playerCard = isChaosRoom(room) ? room.fortuneCards?.get(playerId) : null;
     const hasEarlyAction = cardMatchesAny(playerCard, ['ลงมือก่อนที่จะสาย', 'early_action', 'before_it_is_too_late', 'early_night_action']);
     const isNightActionPhase = room.phase === PHASES.NIGHT;
     const isDayEarlyAction = room.phase === PHASES.DAY && hasEarlyAction && ['werewolf', 'seer', 'bodyguard', 'silencer'].includes(player.role);
@@ -341,7 +341,7 @@ export function registerSocketHandlers(socket, io) {
       return socket.emit('error', { message: 'ไม่สามารถขอต่อเวลาได้ในตอนนี้' });
     }
 
-    const playerCard = room.fortuneCards?.get(playerId);
+    const playerCard = isChaosRoom(room) ? room.fortuneCards?.get(playerId) : null;
     const isInjuryTimeCard = cardMatchesAny(playerCard, ['injury_time', 'give_me_time', 'extra_time', 'more_time', 'ให้โอกาส']);
 
     if (!isInjuryTimeCard || room.usedExtraTime.has(playerId)) {
@@ -380,7 +380,7 @@ export function registerSocketHandlers(socket, io) {
     if (!target || !target.isAlive) return socket.emit('error', { message: 'ไม่สามารถโหวตผู้เล่นที่ไม่มีอยู่จริงหรือตายไปแล้วได้' });
     if (targetId === playerId) return socket.emit('error', { message: 'โหวตให้ตัวเองไม่ได้' });
 
-    const playerCard = room.fortuneCards?.get(playerId);
+    const playerCard = isChaosRoom(room) ? room.fortuneCards?.get(playerId) : null;
     const isOpportunist = cardMatchesAny(playerCard, ['opportunist', 'หน้าไหว้หลังหลอก', 'change_vote', 'vote_switch', 'second_chance_vote']);
     const timeRemaining = room.phaseEndsAt ? Math.ceil((room.phaseEndsAt - Date.now()) / 1000) : Infinity;
 
@@ -413,7 +413,7 @@ export function registerSocketHandlers(socket, io) {
 
       const maskedVoteMap = {};
       for (const [voterId, votedTargetId] of Object.entries(voteMap)) {
-        const voterCard = room.fortuneCards?.get(voterId);
+        const voterCard = isChaosRoom(room) ? room.fortuneCards?.get(voterId) : null;
         const isAnonymous = cardMatchesAny(voterCard, ['like_the_wind', 'ลมพา', 'anonymous_vote', 'mask_vote', 'vote_mask']);
 
         if (isAnonymous && p.id !== voterId) {
@@ -782,6 +782,10 @@ function cardMatchesAny(card, aliases = []) {
   });
 }
 
+function isChaosRoom(room) {
+  return room?.gameMode === GAME_MODES.CHAOS;
+}
+
 function getChatValidationError(room, player, channel) {
   if (player.isMutedByAdmin) {
     return 'แอดมินปิดปากเจ้าไว้';
@@ -795,7 +799,7 @@ function getChatValidationError(room, player, channel) {
     return 'คนเป็นเข้าห้องวิญญาณไม่ได้';
   }
 
-  const playerCard = room.fortuneCards?.get(player.id);
+  const playerCard = isChaosRoom(room) ? room.fortuneCards?.get(player.id) : null;
   const hasSilencerShield = cardMatchesAny(playerCard, ['ปากแจ๋ว', 'silencer_guard', 'silence_guard', 'mouth_guard', 'paka_jwa']);
   if (player.isAlive && room.silencedPlayerId === player.id && !hasSilencerShield) {
     return 'เจ้าถูกปิดปากไว้ วันนี้พูดไม่ได้';
@@ -814,7 +818,7 @@ function getChatValidationError(room, player, channel) {
 }
 
 function handleWhisperLogic(room, playerId, targetPlayerId) {
-  const playerCard = room.fortuneCards?.get(playerId);
+  const playerCard = isChaosRoom(room) ? room.fortuneCards?.get(playerId) : null;
   const isWhisperCard = cardMatchesAny(playerCard, ['whisper', 'กระซิบข้างหู', 'private_whisper', 'secret_message', 'whisper_tell']);
 
   if (!isWhisperCard || room.usedWhispers.has(playerId)) {

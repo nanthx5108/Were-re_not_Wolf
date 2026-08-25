@@ -11,7 +11,7 @@ import { initNightActions, resolveNightActions } from './nightActions.js';
 import { evaluateWinCondition, endGame } from './winConditions.js'; 
 import { rollMorningEvent, getActiveLuckBias, consumeLuckBias } from './morningEvents.js';
 import { drawFortuneCard } from './fortuneCards.js';
-import { DEFAULT_PHASE_DURATIONS } from './roomConfig.js';
+import { DEFAULT_PHASE_DURATIONS, GAME_MODES } from './roomConfig.js';
 import {
   addKillHighlight,
   addSaveHighlight,
@@ -52,7 +52,7 @@ export function getPhaseDurationMs(roomId, phase) {
   const durations = room?.phaseDurations || DEFAULT_PHASE_DURATIONS;
   let seconds = durations[phase] ?? DEFAULT_PHASE_DURATIONS[phase];
 
-  if (phase === PHASES.VOTING && room) {
+  if (phase === PHASES.VOTING && room && room.gameMode === GAME_MODES.CHAOS) {
     const hasCarefulCard = getPlayersArray(roomId).some(player => {
       if (!player.isAlive) return false;
       const card = room.fortuneCards?.get(player.id);
@@ -84,6 +84,7 @@ async function persistRoomPlayerCard(roomId, playerId, card, status = 'active', 
 
   const room = getRoom(roomId);
   if (!room) return;
+  if (room.gameMode !== GAME_MODES.CHAOS) return;
 
   const cardId = Number.isFinite(Number(card.id)) ? Number(card.id) : null;
   const name = card.name_th || card.name || card.id;
@@ -140,13 +141,14 @@ export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
     );
   }, duration);
 
-  if (phase === PHASES.VOTING && duration > 5000) {
+  const room = getRoom(roomId);
+  if (phase === PHASES.VOTING && room?.gameMode === GAME_MODES.CHAOS && duration > 5000) {
     const magicEyesStreamer = setTimeout(() => {
       const room = getRoom(roomId);
       if (!room || room.phase !== PHASES.VOTING) return;
 
       const playersWithCard = getPlayersArray(roomId).filter(p => {
-        const card = room.fortuneCards?.get(p.id);
+        const card = room.gameMode === GAME_MODES.CHAOS ? room.fortuneCards?.get(p.id) : null;
         return p.isAlive && cardMatchesAny(card, ['magic_eyes', 'ดวงตาอัจฉริยะ', 'magic_eyes_card', 'seer_eyes']);
       });
 
@@ -243,11 +245,11 @@ async function _advancePhase(io, roomId) {
 
   updateRoom(roomId, { phase: nextPhase, round });
 
-  const morning = nextPhase === PHASES.DAY ? rollMorningEvent(roomId) : null;
+  const currentRoom = getRoom(roomId);
+  const isChaos = currentRoom?.gameMode === GAME_MODES.CHAOS;
+  const morning = nextPhase === PHASES.DAY && isChaos ? rollMorningEvent(roomId) : null;
 
   if (nextPhase === PHASES.DAY) {
-    const room = getRoom(roomId);
-
     // At the start of DAY, reset confused status from previous round
     // and check for 'confused' recurrence from previous round
     for (const player of getPlayersArray(roomId)) {
@@ -269,11 +271,11 @@ async function _advancePhase(io, roomId) {
       }
     }
 
-    const observerPlayers = getPlayersArray(roomId).filter(player => {
+    const observerPlayers = isChaos ? getPlayersArray(roomId).filter(player => {
       if (!player.isAlive) return false;
       const card = room?.fortuneCards?.get(player.id);
       return cardMatchesAny(card, ['นักสังเกต', 'observer', 'the_observer', 'observe']);
-    });
+    }) : [];
 
     for (const player of observerPlayers) {
       const candidates = getPlayersArray(roomId).filter(p => p.isAlive && p.id !== player.id);
@@ -301,31 +303,35 @@ async function _advancePhase(io, roomId) {
     }
 
     const alivePlayers = getPlayersArray(roomId).filter(p => p.isAlive);
-    const luckBias = getActiveLuckBias(roomId);
+    const luckBias = isChaos ? getActiveLuckBias(roomId) : null;
     const drawnCards = new Map();
 
-    for (const player of alivePlayers) {
-      const card = drawFortuneCard(room.gameMode || 'classic', luckBias);
-      drawnCards.set(player.id, card);
-      const playerSocket = io.sockets.sockets.get(player.socketId);
-      if (playerSocket) {
-        playerSocket.emit('fortune:card_drawn', { card });
-      }
+    if (isChaos) {
+      for (const player of alivePlayers) {
+        const card = drawFortuneCard(currentRoom.gameMode, luckBias);
+        drawnCards.set(player.id, card);
+        const playerSocket = io.sockets.sockets.get(player.socketId);
+        if (playerSocket) {
+          playerSocket.emit('fortune:card_drawn', { card });
+        }
 
-      if (card?.type === 'good') {
-        await persistRoomPlayerCard(roomId, player.id, card, 'inventory', 'daily_draw');
-      } else {
-        await persistRoomPlayerCard(roomId, player.id, card, 'active', 'daily_draw');
-      }
+        if (card?.type === 'good') {
+          await persistRoomPlayerCard(roomId, player.id, card, 'inventory', 'daily_draw');
+        } else {
+          await persistRoomPlayerCard(roomId, player.id, card, 'active', 'daily_draw');
+        }
 
-      if (cardMatchesAny(card, ['confused', 'สับสนกับตัวเอง', 'self_confused', 'confusion', 'confused_self'])) {
-        updatePlayer(roomId, player.id, { isConfusedThisRound: true, hasConfusedRecurrence: true });
-      } else if (!player.isConfusedThisRound) {
-        updatePlayer(roomId, player.id, { hasConfusedRecurrence: false });
+        if (cardMatchesAny(card, ['confused', 'สับสนกับตัวเอง', 'self_confused', 'confusion', 'confused_self'])) {
+          updatePlayer(roomId, player.id, { isConfusedThisRound: true, hasConfusedRecurrence: true });
+        } else if (!player.isConfusedThisRound) {
+          updatePlayer(roomId, player.id, { hasConfusedRecurrence: false });
+        }
       }
+      updateRoom(roomId, { fortuneCards: drawnCards });
+      consumeLuckBias(roomId);
+    } else {
+      updateRoom(roomId, { fortuneCards: new Map(), fortuneInventory: new Map(), activeLuckBias: null });
     }
-    updateRoom(roomId, { fortuneCards: drawnCards });
-    consumeLuckBias(roomId);
   }
 
   const dayDuration = morning?.event.dayTimerMod
@@ -564,7 +570,7 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
   }
 
   const playersWithCard = getPlayersArray(roomId).filter(p => {
-    const card = room.fortuneCards?.get(p.id);
+    const card = room.gameMode === GAME_MODES.CHAOS ? room.fortuneCards?.get(p.id) : null;
     return p.isAlive && cardMatchesAny(card, ['good_to_know', 'รู้ล่วงหน้า', 'premonition', 'future_know', 'prognosis']);
   });
 
@@ -582,7 +588,7 @@ async function _resolveNightActionsAndBroadcast(io, roomId) {
 
   const reflexTarget = result.killedId ? room.players.get(result.killedId) : null;
   if (reflexTarget && !reflexTarget.reflexUsed) {
-    const reflexCard = room.fortuneCards?.get(reflexTarget.id);
+    const reflexCard = room.gameMode === GAME_MODES.CHAOS ? room.fortuneCards?.get(reflexTarget.id) : null;
     if (cardMatchesAny(reflexCard, ['รีเฟล็กซ์วัยรุ่น', 'reflex', 'young_reflex', 'survival_reflex'])) {
       reflexTarget.isAlive = true;
       reflexTarget.reflexUsed = true;
@@ -670,7 +676,7 @@ async function _resolveVotingAndBroadcast(io, roomId) {
   }
   
   const playersWithCard = getPlayersArray(roomId).filter(p => {
-    const card = room.fortuneCards?.get(p.id);
+    const card = room.gameMode === GAME_MODES.CHAOS ? room.fortuneCards?.get(p.id) : null;
     return p.isAlive && cardMatchesAny(card, ['broken_home', 'บ้านแตก', 'fragile_home', 'home_break', 'broken_house']);
   });
 

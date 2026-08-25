@@ -189,6 +189,7 @@ export default function Game() {
   const isNightZero = room.phase === 'night_zero';
   const isVoting = room.phase === 'voting';
   const isResults = room.phase === 'results';
+  const isChaos = room.gameMode === 'chaos';
   const look     = PHASE_LOOK[room.phase] || PHASE_LOOK.lobby;
 
   const showVoteTimer  = isVoting && !isDead;
@@ -196,9 +197,9 @@ export default function Game() {
 
   return (
     <div className="gp-page">
-      <MorningEventBanner />
-      <EarlyInfoToast />
-      <FortuneEffects card={myFortuneCard} messages={messages} />
+      {isChaos && <MorningEventBanner />}
+      {isChaos && <EarlyInfoToast />}
+      {isChaos && <FortuneEffects card={myFortuneCard} messages={messages} />}
 
       <header className="gp-top gp-panel">
         <div className="gp-top-left">
@@ -273,7 +274,7 @@ export default function Game() {
             <p>{voteResult.eliminatedNickname ? `${voteResult.eliminatedNickname} ถูกเนรเทศ` : 'ไม่มีใครถูกเนรเทศ'}</p>
           </div>
         )}
-        {isResults && <FortuneInfoPanel />}
+        {isChaos && isResults && <FortuneInfoPanel />}
         <ChatBox showWerewolfChannel clientEffect={myFortuneCard?.clientEffect} players={players} playerId={playerId} />
       </aside>
 
@@ -304,7 +305,7 @@ export default function Game() {
         typingIds={typingIds}
       />
 
-      <FortuneCard card={myFortuneCard} />
+      {isChaos && <FortuneCard card={myFortuneCard} />}
 
       {settingsOpen && (
         <div className="gp-modal-backdrop" onClick={() => setSettingsOpen(false)}>
@@ -322,7 +323,7 @@ export default function Game() {
                   ข้ามช่วงนี้ (host)
                 </button>
               )}
-              {myFortuneCard?.id === 'injury_time' && room.phase === 'day' && (
+              {isChaos && myFortuneCard?.id === 'injury_time' && room.phase === 'day' && (
                 <button className="gp-btn" onClick={() => { requestExtraTime(); setSettingsOpen(false); }}>
                   ขอต่อเวลา (+20 วิ)
                 </button>
