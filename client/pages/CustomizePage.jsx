@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import bgHome from '../src/assets/bgHome.jpg';
 import '../src/styles/HomePage.css';
 
+const BG_IMAGE = bgHome;
+
 export default function CustomizePage() {
   const navigate = useNavigate();
 

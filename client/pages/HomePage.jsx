@@ -65,19 +65,12 @@ export default function HomePage() {
     sound.playUi(HOVER_SFX_SRC);
   }
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const MIN_DISPLAY = 600;
-    const MAX_WAIT    = 3000;
-    const start = Date.now();
-    const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
-    const timeoutFallback = new Promise(res => setTimeout(res, MAX_WAIT));
-
-    Promise.race([fontsReady, timeoutFallback]).then(() => {
-      const elapsed = Date.now() - start;
-      setTimeout(() => setIsLoading(false), Math.max(MIN_DISPLAY - elapsed, 0));
-    });
+    const timer = setTimeout(() => setIsLoading(false), MIN_DISPLAY);
+    return () => clearTimeout(timer);
   }, []);
 
   const [mode, setMode] = useState(null);

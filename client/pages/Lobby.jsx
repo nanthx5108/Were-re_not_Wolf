@@ -59,8 +59,12 @@ export default function Lobby() {
   const canStart    = isHost && playerCount >= MIN_PLAYERS && playerCount <= roomCapacity;
 
   return (
-    <div className="lobby-page">
-      <Navbar roomId={room.id} nickname={nickname} connected={connected} onLeave={handleLeave} />
+    <div className="lobby-shell">
+      <div className="lobby-overlay" aria-hidden="true" />
+      <div className="lobby-grain" aria-hidden="true" />
+      <div className="lobby-topbar">
+        <Navbar roomId={room.id} nickname={nickname} connected={connected} onLeave={handleLeave} />
+      </div>
 
       {error && (
         <div className="error-banner">
@@ -69,34 +73,13 @@ export default function Lobby() {
         </div>
       )}
 
-      <main className="lobby-main">
-        <aside className="lobby-aside">
-
-          <section className="lobby-section">
-            <div className="section-header">
-              <h3 className="section-title">Islanders</h3>
-              <span className="player-badge">{playerCount}/{roomCapacity}</span>
-            </div>
-
-            <div className="player-grid custom-scrollbar">
-              {room.players?.map(player => (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  isMe={player.id === playerId}
-                  isHost={player.id === room.hostId}
-                  myRole={player.id === playerId ? myRole : null}
-                  showRole={false}
-                />
-              ))}
-            </div>
-          </section>
-
-          {room.roleConfig && (
-            <section className="lobby-section">
-              <div className="section-header">
-                <h3 className="section-title">การตั้งค่าห้อง</h3>
-              </div>
+      <main className="lobby-grid">
+        <section className="lobby-panel lobby-config">
+          <div className="panel-head">
+            <h3 className="panel-title"><span className="panel-title-rule" /><span className="panel-title-text">การตั้งค่าห้อง</span><span className="panel-title-rule" /></h3>
+          </div>
+          <div className="lobby-panel-body">
+            {room.roleConfig && (
               <ul className="rules-list">
                 <li className="rules-item">
                   {CONFIGURABLE_ROLES
@@ -114,42 +97,52 @@ export default function Lobby() {
                   </li>
                 )}
               </ul>
-            </section>
-          )}
-
-          <section className="lobby-section lobby-rules">
-            <div className="section-header">
-              <h3 className="section-title">กฎกติกา</h3>
-            </div>
+            )}
+            <div className="lobby-subhead"><h3>กฎกติกา</h3></div>
             <ul className="rules-list">
-              {GAME_RULES.map((rule, i) => (
-                <li key={i} className="rules-item">{rule}</li>
-              ))}
+              {GAME_RULES.map((rule, i) => <li key={i} className="rules-item">{rule}</li>)}
             </ul>
-          </section>
-
+          </div>
           {isHost && (
-            <section className="lobby-section host-controls">
+            <div className="lobby-waiting">
               <p className="host-hint">
                 {playerCount < MIN_PLAYERS
                   ? `Waiting for ${MIN_PLAYERS - playerCount} more player${MIN_PLAYERS - playerCount !== 1 ? 's' : ''}…`
                   : `${playerCount} islanders ready!`}
               </p>
-              <button
-                onClick={startGame}
-                disabled={!canStart}
-                className={`btn-start-game ${canStart ? 'ready' : ''}`}
-              >
+              <button onClick={startGame} disabled={!canStart} className={`btn-start-game ${canStart ? 'ready' : ''}`}>
                 Begin the Night
               </button>
-            </section>
+            </div>
           )}
-
-        </aside>
-
-        <section className="lobby-chat-section">
-          <ChatBox />
         </section>
+
+        <section className="lobby-panel lobby-center">
+          <div className="lobby-chatwrap">
+            <ChatBox />
+          </div>
+        </section>
+
+        <aside className="lobby-panel lobby-players">
+          <div className="panel-head">
+            <h3 className="panel-title"><span className="panel-title-rule" /><span className="panel-title-text">Islanders</span><span className="panel-title-rule" /></h3>
+            <span className="player-badge">{playerCount}/{roomCapacity}</span>
+          </div>
+          <div className="lobby-panel-body">
+            <div className="islander-list custom-scrollbar">
+              {room.players?.map(player => (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  isMe={player.id === playerId}
+                  isHost={player.id === room.hostId}
+                  myRole={player.id === playerId ? myRole : null}
+                  showRole={false}
+                />
+              ))}
+            </div>
+          </div>
+        </aside>
       </main>
     </div>
   );
