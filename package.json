@@ -1,8 +1,19 @@
 {
+  "name": "were-not-wolf",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "build": "cd client && npm ci && npm run build",
+    "start": "cd server && npm ci --production && node server.js",
+    "heroku-postbuild": "npm run build"
+  },
   "dependencies": {
     "@nestjs/typeorm": "^11.0.3",
     "mysql2": "^3.23.3",
     "typeorm": "^1.1.0"
-  },
-  "type": "module"
+  }
 }
