@@ -1,0 +1,35 @@
+{
+  "runtime": {
+    "roles": {
+      "back": "/roles/back.png",
+      "bodyguard": "/roles/bodyguard.png",
+      "fool": "/roles/fool.png",
+      "seer": "/roles/seer.png",
+      "silencer": "/roles/silencer.png",
+      "villager": "/roles/villager.png",
+      "werewolf": "/roles/werewolf.png"
+    },
+    "cards": {
+      "back": "/cards/back.png",
+      "lucky": "/cards/lucky-card.png",
+      "unluck": "/cards/unluck-card.png"
+    },
+    "events": {
+      "blackout": "/events/blackout.png",
+      "boat_return": "/events/boat_return.png",
+      "bonfire": "/events/bonfire.png",
+      "circling_crow": "/events/circling_crow.png",
+      "distant_howl": "/events/distant_howl.png",
+      "fog": "/events/fog.png",
+      "full_moon": "/events/full_moon.png",
+      "high_tide": "/events/high_tide.png",
+      "warning": "/events/warning.png"
+    }
+  },
+  "archive": [
+    "client/public/roles/_archive/",
+    "client/public/cards/_archive/",
+    "client/public/events/_archive/"
+  ],
+  "notes": "These are the canonical active assets for runtime and should not be renamed unless the server-side asset paths are updated in tandem."
+}
