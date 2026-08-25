@@ -15,7 +15,7 @@ import FortuneInfoPanel from '../src/components/FortuneInfoPanel.jsx';
 import HighlightTimeline from '../src/components/HighlightTimeline.jsx';
 import FortuneEffects from '../src/components/FortuneEffects.jsx';
 import FortuneCard from '../src/components/FortuneCard.jsx';
-import AdminGameBar from '../src/components/AdminGameBar_temp.jsx';
+import AdminGameBar from '../src/components/AdminGameBar.jsx';
 import VoiceChat from '../src/components/VoiceChat.jsx';
 
 const ROLE_LABEL = {
@@ -155,13 +155,16 @@ export default function Game() {
   useEffect(() => {
     if (gameResult) {
       const villageRoles = new Set(['villager', 'seer', 'bodyguard', 'silencer']);
+      const normalizedWinner = gameResult.winner === 'villagers' ? 'village'
+        : gameResult.winner === 'werewolves' ? 'werewolf'
+        : gameResult.winner;
       let playerWins = false;
 
-      if (gameResult.winner === 'villagers' && villageRoles.has(myRole)) {
+      if (normalizedWinner === 'village' && villageRoles.has(myRole)) {
         playerWins = true;
-      } else if (gameResult.winner === 'werewolves' && myRole === 'werewolf') {
+      } else if (normalizedWinner === 'werewolf' && myRole === 'werewolf') {
         playerWins = true;
-      } else if (gameResult.winner === 'fool' && myRole === 'fool') {
+      } else if (normalizedWinner === 'fool' && myRole === 'fool') {
         playerWins = true;
       }
 

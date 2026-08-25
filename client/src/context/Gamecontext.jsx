@@ -414,7 +414,8 @@ export function GameProvider({ children }) {
       },
       [SOCKET_EVENTS.GAME_RESUMED]:         (data)          => dispatch({ type: 'GAME_RESUMED', ...data }),
       [SOCKET_EVENTS.GAME_ENDED]:           (payload) => {
-        soundManager.playEvent(payload?.winner === 'villagers' || payload?.winner === 'fool' ? 'win' : 'lose', 0.9);
+        const winner = payload?.winner;
+        soundManager.playEvent(winner === 'village' || winner === 'villagers' || winner === 'fool' ? 'win' : 'lose', 0.9);
         dispatch({ type: 'GAME_ENDED', ...payload });
       },
       [SOCKET_EVENTS.VOTE_UPDATE]: (data) => dispatch({ type: 'VOTE_UPDATE', ...data }),
