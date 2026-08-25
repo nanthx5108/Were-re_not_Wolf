@@ -94,6 +94,7 @@ const initialState = {
   earlyInfo:      null, // For 'good_to_know' card
   realtimeVoteCounts: null, // For 'magic_eyes' card
   myFortuneCard:  null, // System 3: การ์ดโชคดี/ร้ายประจำรอบ
+  fortuneInventory: null,
   nightZero:      { readyCount: 0, total: 0 },   // ความคืบหน้า "ดูแล้ว" ในคืนที่ 0
   typingIds:      [],   // ผู้เล่นที่กำลังพิมพ์ — ใช้จัดลำดับ sidebar
   roomClosed:     false, // เจ้าของห้องปิดห้อง — ใช้เด้งผู้เล่นที่เหลือกลับหน้าแรก
@@ -279,6 +280,7 @@ function gameReducer(state, action) {
       };
 
     case 'MORNING_EVENT':
+      if (state.room?.gameMode !== 'chaos') return state;
       return {
         ...state,
         morningEvent: action.payload,
@@ -293,18 +295,22 @@ function gameReducer(state, action) {
       return { ...state, privateNote: action.payload.message };
 
     case 'FORTUNE_CARD_DRAWN':
+      if (state.room?.gameMode !== 'chaos') return state;
       return { ...state, myFortuneCard: action.payload.card };
 
     case 'CLEAR_FORTUNE_CARD':
       return { ...state, myFortuneCard: null };
 
     case 'FORTUNE_PRIVATE_INFO':
+      if (state.room?.gameMode !== 'chaos') return state;
       return { ...state, fortuneInfo: action.payload };
 
     case 'FORTUNE_EARLY_INFO':
+      if (state.room?.gameMode !== 'chaos') return state;
       return { ...state, earlyInfo: action.payload.data };
 
     case 'FORTUNE_REALTIME_VOTE_COUNT':
+      if (state.room?.gameMode !== 'chaos') return state;
       return { ...state, realtimeVoteCounts: action.payload.counts };
 
     case 'GAME_RESUMED':
@@ -317,6 +323,8 @@ function gameReducer(state, action) {
           ? '🤐 เจ้ายังถูกปิดปากอยู่ — วันนี้พิมพ์อะไรไม่ได้'
           : null,
         messages:       action.messages ?? state.messages,
+        myFortuneCard: action.myFortuneCard ?? null,
+        fortuneInventory: action.fortuneInventory ?? null,
         room: state.room ? {
           ...state.room,
           status:          'in_progress',

@@ -2,10 +2,16 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { socket } from '../socket/socket.jsx';
 import { useGame } from '../context/Gamecontext.jsx';
 import { getMicSettings } from '../utils/micSettings.js';
+import soundManager from '../sound/soundManager.js';
 
-const ICE_SERVERS = [{
-  urls: import.meta.env.VITE_STUN_SERVER || 'stun:stun.l.google.com:19302',
-}];
+const ICE_SERVERS = [
+  { urls: import.meta.env.VITE_STUN_SERVER || 'stun:stun.l.google.com:19302' },
+  ...(import.meta.env.VITE_TURN_SERVER ? [{
+    urls: import.meta.env.VITE_TURN_SERVER,
+    username: import.meta.env.VITE_TURN_USERNAME,
+    credential: import.meta.env.VITE_TURN_CREDENTIAL,
+  }] : []),
+];
 
 // เปิดไมค์เฉพาะกลางวัน/โหวต — คนเป็นคุยกับคนเป็น คนตายคุยกับคนตาย (mesh WebRTC)
 // server แค่ relay SDP/ICE (ดู voice:* ใน socketHandlers.js) ไม่แตะเสียงเลย
@@ -22,6 +28,9 @@ export default function VoiceChat() {
   const peersRef = useRef(new Map()); // peerId -> RTCPeerConnection
   const audioElsRef = useRef(new Map()); // peerId -> HTMLAudioElement
   const iceQueueRef = useRef(new Map());
+  const analyserRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const speakingRef = useRef(false);
 
   const micMode = getMicSettings().mode; // 'toggle' | 'ptt'
   const isVoicePhase = room?.status === 'in_progress' && (room?.phase === 'day' || room?.phase === 'voting');
@@ -29,6 +38,7 @@ export default function VoiceChat() {
   const applyTrackEnabled = useCallback((val) => {
     const track = localStreamRef.current?.getAudioTracks()[0];
     if (track) track.enabled = val;
+    speakingRef.current = val;
     setSpeaking(val);
     setMicStatus(val ? 'enabled' : 'muted');
     socket.emit('voice:mute_state', { isMuted: !val });
@@ -70,6 +80,7 @@ export default function VoiceChat() {
       if (!el) {
         el = document.createElement('audio');
         el.autoplay = true;
+        el.volume = soundManager.getVoiceVolume();
         document.body.appendChild(el);
         audioElsRef.current.set(peerId, el);
       }
@@ -90,6 +101,55 @@ export default function VoiceChat() {
     }
     return pc;
   }, []);
+
+  useEffect(() => {
+    for (const el of audioElsRef.current.values()) el.volume = soundManager.getVoiceVolume();
+  }, [soundManager.getSettings().voice, soundManager.getSettings().master, soundManager.getSettings().muted]);
+
+  useEffect(() => {
+    if (!enabled || !localStreamRef.current || micMode !== 'toggle') return undefined;
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return undefined;
+    const context = new AudioContextCtor();
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 512;
+    const source = context.createMediaStreamSource(localStreamRef.current);
+    source.connect(analyser);
+    const levels = new Uint8Array(analyser.fftSize);
+    let frameId;
+    let quietFrames = 0;
+    const sample = () => {
+      analyser.getByteTimeDomainData(levels);
+      let sum = 0;
+      for (const value of levels) {
+        const normalized = (value - 128) / 128;
+        sum += normalized * normalized;
+      }
+      const active = Math.sqrt(sum / levels.length) > 0.055;
+      if (active) quietFrames = 0;
+      else quietFrames += 1;
+      if (active && !speakingRef.current) {
+        speakingRef.current = true;
+        setSpeaking(true);
+      } else if (!active && quietFrames >= 8 && speakingRef.current) {
+        speakingRef.current = false;
+        setSpeaking(false);
+      }
+      frameId = requestAnimationFrame(sample);
+    };
+    analyserRef.current = analyser;
+    audioContextRef.current = context;
+    context.resume().catch(() => {});
+    sample();
+    return () => {
+      cancelAnimationFrame(frameId);
+      source.disconnect();
+      analyser.disconnect();
+      context.close().catch(() => {});
+      analyserRef.current = null;
+      audioContextRef.current = null;
+    };
+  }, [enabled, micMode]);
 
   const startVoice = useCallback(async () => {
     if (localStreamRef.current) return;

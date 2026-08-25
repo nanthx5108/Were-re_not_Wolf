@@ -105,6 +105,28 @@ test('voting phase resolves and advances to results without crashing', async t =
   );
 });
 
+test('classic day transition does not create chaos state', async t => {
+  const roomId = 'room-classic-no-chaos';
+  createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 4, gameMode: 'classic' });
+  ['werewolf', 'villager', 'villager', 'villager'].forEach((role, i) => {
+    const id = `p${i}`;
+    addPlayerToRoom(roomId, { id, nickname: id, socketId: `sock-${id}` });
+    updatePlayer(roomId, id, { role });
+  });
+  updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT, round: 1, nightResult: {} });
+  t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); });
+
+  const { io, emitted } = makeIo();
+  await advancePhase(io, roomId);
+
+  const room = getRoom(roomId);
+  assert.equal(room.phase, PHASES.DAY);
+  assert.equal(room.fortuneCards.size, 0);
+  assert.equal(room.fortuneInventory.size, 0);
+  assert.equal(room.activeLuckBias, null);
+  assert.equal(emitted.some(e => e.event === 'morning:event'), false);
+});
+
 test('fool voted out wins the game immediately', async t => {
   const roomId = 'room-vote-fool';
   seedVotingRoom(roomId, ['werewolf', 'villager', 'villager', 'fool']);

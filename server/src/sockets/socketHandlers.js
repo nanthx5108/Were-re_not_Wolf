@@ -643,6 +643,12 @@ async function handleRejoin(socket, io, roomId, playerId) {
       isSilenced:     room.silencedPlayerId === playerId,
       blockedTargets: getBlockedProtectTargets(roomId, playerId),
       messages:       await loadRecentMessages(roomId, player),
+      myFortuneCard: room.gameMode === GAME_MODES.CHAOS
+        ? (room.fortuneCards?.get(playerId) || null)
+        : null,
+      fortuneInventory: room.gameMode === GAME_MODES.CHAOS
+        ? (room.fortuneInventory?.get(playerId) || null)
+        : null,
     });
   }
 

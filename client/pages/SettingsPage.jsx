@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS = {
   sfx: 80,
   music: 60,
   ui: 45,
+  voice: 100,
   muted: false,
 };
 
@@ -28,6 +29,7 @@ function loadSettings() {
       music: parsed.music <= 1 ? parsed.music * 100 : parsed.music,
       sfx: parsed.sfx <= 1 ? parsed.sfx * 100 : parsed.sfx,
       ui: parsed.ui <= 1 ? parsed.ui * 100 : parsed.ui,
+      voice: parsed.voice <= 1 ? parsed.voice * 100 : parsed.voice,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -133,6 +135,13 @@ export default function SettingsPage() {
               label="UI Volume"
               value={settings.ui}
               onChange={v => updateValue('ui', v)}
+              disabled={settings.muted}
+            />
+            <div className="settings-divider" style={{ margin: '16px 0' }} />
+            <VolumeRow
+              label="Voice Volume"
+              value={settings.voice}
+              onChange={v => updateValue('voice', v)}
               disabled={settings.muted}
             />
           </div>
