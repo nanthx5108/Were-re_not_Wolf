@@ -587,19 +587,28 @@ export function registerSocketHandlers(socket, io) {
     socket.to(roomId).emit('voice:peer_left', { peerId: playerId });
   });
 
-  socket.on('voice:signal', ({ targetPlayerId, signal }) => {
+  socket.on('voice:signal', ({ targetPlayerId, signal } = {}) => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId || !targetPlayerId) return;
     const room = getRoom(roomId);
+    const sender = room?.players.get(playerId);
     const target = room?.players.get(targetPlayerId);
-    if (!target?.socketId) return;
+    if (!voiceEligible(room, sender) || !voiceEligible(room, target)) return;
+    if (sender.isAlive !== target.isAlive || !target.socketId || !signal || typeof signal !== 'object') return;
     io.to(target.socketId).emit('voice:signal', { fromPlayerId: playerId, signal });
   });
 
-  socket.on('voice:mute_state', ({ isMuted }) => {
+  socket.on('voice:mute_state', ({ isMuted } = {}) => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
-    socket.to(roomId).emit('voice:mute_state', { playerId, isMuted: Boolean(isMuted) });
+    const room = getRoom(roomId);
+    const player = room?.players.get(playerId);
+    if (!voiceEligible(room, player)) return;
+    for (const peer of getPlayersArray(roomId)) {
+      if (peer.id !== playerId && peer.isConnected !== false && peer.isAlive === player.isAlive && peer.socketId) {
+        io.to(peer.socketId).emit('voice:mute_state', { playerId, isMuted: Boolean(isMuted) });
+      }
+    }
   });
 }
 

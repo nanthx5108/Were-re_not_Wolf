@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'wnw_sound';
+const LEGACY_STORAGE_KEY = 'wnw_audio_settings';
 
-const DEFAULTS = { master: 0.85, music: 0.45, sfx: 0.6, muted: false };
+const DEFAULTS = { master: 0.85, music: 0.45, sfx: 0.6, ui: 0.45, muted: false };
 
 const LEGACY_AUDIO_MAP = {
   '/audio/sfx_chat_receive.wav': '/assets/audio/SFX-Chat.mp3',
@@ -52,10 +53,27 @@ const CARD_SOUND_MAP = {
   reflex: '/assets/audio/SFX-Ready.mp3',
 };
 
+function normalizeVolume(value, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  const normalized = number > 1 ? number / 100 : number;
+  return Math.max(0, Math.min(1, normalized));
+}
+
+function normalizeSettings(settings = {}) {
+  return {
+    master: normalizeVolume(settings.master, DEFAULTS.master),
+    music: normalizeVolume(settings.music, DEFAULTS.music),
+    sfx: normalizeVolume(settings.sfx, DEFAULTS.sfx),
+    ui: normalizeVolume(settings.ui, DEFAULTS.ui),
+    muted: Boolean(settings.muted),
+  };
+}
+
 function loadSettings() {
   try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return raw ? { ...DEFAULTS, ...raw } : { ...DEFAULTS };
+    const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
+    return stored ? normalizeSettings(JSON.parse(stored)) : { ...DEFAULTS };
   } catch {
     return { ...DEFAULTS };
   }
@@ -73,7 +91,16 @@ class SoundManager {
   init() { /* no-op */ }
 
   _saveSettings() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings)); } catch { /* private mode */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
+      localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify({
+        ...this.settings,
+        master: this.settings.master * 100,
+        music: this.settings.music * 100,
+        sfx: this.settings.sfx * 100,
+        ui: this.settings.ui * 100,
+      }));
+    } catch { /* private mode */ }
   }
 
   resolveAssetPath(src) {
@@ -105,9 +132,10 @@ class SoundManager {
 
   playBgm(srcOrKey, maybeSrc, opts = {}) {
     // รองรับทั้ง playBgm(src) แบบเดิม และ playBgm(key, src, opts) แบบใหม่
-    const src  = this.resolveAssetPath(maybeSrc ?? srcOrKey);
-    const key  = maybeSrc ? srcOrKey : src;
-    const loop = opts.loop ?? true;
+    const legacyLoop = typeof maybeSrc === 'boolean' ? maybeSrc : null;
+    const src  = this.resolveAssetPath(legacyLoop === null ? (maybeSrc ?? srcOrKey) : srcOrKey);
+    const key  = legacyLoop === null && maybeSrc ? srcOrKey : src;
+    const loop = legacyLoop ?? opts.loop ?? true;
     if (!src) return;
     if (this.currentBgmKey === key && this.bgm && !this.bgm.paused) return;
 
@@ -145,9 +173,26 @@ class SoundManager {
     sfx.play().catch(() => {});
   }
 
-  setMaster(v) { this.settings.master = Number(v); this._applyBgmVolume(); this._saveSettings(); }
-  setMusic(v)  { this.settings.music  = Number(v); this._applyBgmVolume(); this._saveSettings(); }
-  setSfx(v)    { this.settings.sfx    = Number(v); this._saveSettings(); }
+  playUi(src, volumeArg = 1.0) {
+    const resolvedSrc = this.resolveAssetPath(src);
+    if (!resolvedSrc) return;
+    const multiplier = typeof volumeArg === 'number' ? volumeArg : (volumeArg.volume ?? 1.0);
+    const volume = this._volume('ui') * multiplier;
+    if (volume <= 0) return;
+    const uiSound = new Audio(resolvedSrc);
+    uiSound.volume = Math.max(0, Math.min(1, volume));
+    uiSound.play().catch(() => {});
+  }
+
+  updateSettings(patch = {}) {
+    this.settings = normalizeSettings({ ...this.settings, ...patch });
+    this._applyBgmVolume();
+    this._saveSettings();
+  }
+
+  setMaster(v) { this.updateSettings({ master: v }); }
+  setMusic(v)  { this.updateSettings({ music: v }); }
+  setSfx(v)    { this.updateSettings({ sfx: v }); }
   mute(m)      { this.settings.muted  = Boolean(m); this._applyBgmVolume(); this._saveSettings(); }
 
   _applyBgmVolume() {

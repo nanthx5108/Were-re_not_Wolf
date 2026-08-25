@@ -3,21 +3,25 @@ import { socket } from '../socket/socket.jsx';
 import { useGame } from '../context/Gamecontext.jsx';
 import { getMicSettings } from '../utils/micSettings.js';
 
-const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
+const ICE_SERVERS = [{
+  urls: import.meta.env.VITE_STUN_SERVER || 'stun:stun.l.google.com:19302',
+}];
 
 // เปิดไมค์เฉพาะกลางวัน/โหวต — คนเป็นคุยกับคนเป็น คนตายคุยกับคนตาย (mesh WebRTC)
 // server แค่ relay SDP/ICE (ดู voice:* ใน socketHandlers.js) ไม่แตะเสียงเลย
 export default function VoiceChat() {
   const { room, playerId, isDead } = useGame();
-  const [enabled, setEnabled] = useState(false);       // ผู้เล่นเปิดไมค์เอง (ต้อง getUserMedia สำเร็จ)
-  const [speaking, setSpeaking] = useState(false);      // สถานะ track.enabled ปัจจุบัน
+  const [enabled, setEnabled] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const [pttHeld, setPttHeld] = useState(false);
-  const [remoteMuted, setRemoteMuted] = useState({});   // { [peerId]: boolean }
+  const [remoteMuted, setRemoteMuted] = useState({});
+  const [micStatus, setMicStatus] = useState('off');
   const [micError, setMicError] = useState(null);
 
   const localStreamRef = useRef(null);
   const peersRef = useRef(new Map()); // peerId -> RTCPeerConnection
   const audioElsRef = useRef(new Map()); // peerId -> HTMLAudioElement
+  const iceQueueRef = useRef(new Map());
 
   const micMode = getMicSettings().mode; // 'toggle' | 'ptt'
   const isVoicePhase = room?.status === 'in_progress' && (room?.phase === 'day' || room?.phase === 'voting');
@@ -26,6 +30,7 @@ export default function VoiceChat() {
     const track = localStreamRef.current?.getAudioTracks()[0];
     if (track) track.enabled = val;
     setSpeaking(val);
+    setMicStatus(val ? 'enabled' : 'muted');
     socket.emit('voice:mute_state', { isMuted: !val });
   }, []);
 
@@ -34,6 +39,7 @@ export default function VoiceChat() {
     peersRef.current.delete(peerId);
     const el = audioElsRef.current.get(peerId);
     if (el) { el.srcObject = null; el.remove(); audioElsRef.current.delete(peerId); }
+    iceQueueRef.current.delete(peerId);
   }, []);
 
   const teardownAll = useCallback(() => {
@@ -42,6 +48,12 @@ export default function VoiceChat() {
     localStreamRef.current = null;
     setEnabled(false);
     setSpeaking(false);
+    setMicStatus('off');
+    setRemoteMuted({});
+  }, [closePeer]);
+
+  const resetPeers = useCallback(() => {
+    for (const id of Array.from(peersRef.current.keys())) closePeer(id);
   }, [closePeer]);
 
   const createPeer = useCallback((peerId, isInitiator) => {
@@ -66,9 +78,14 @@ export default function VoiceChat() {
 
     if (isInitiator) {
       pc.onnegotiationneeded = async () => {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('voice:signal', { targetPlayerId: peerId, signal: { sdp: pc.localDescription } });
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('voice:signal', { targetPlayerId: peerId, signal: { sdp: pc.localDescription } });
+        } catch (err) {
+          console.error('[voice negotiation]', err);
+          setMicError('เชื่อมต่อเสียงกับผู้เล่นอื่นไม่สำเร็จ');
+        }
       };
     }
     return pc;
@@ -76,16 +93,32 @@ export default function VoiceChat() {
 
   const startVoice = useCallback(async () => {
     if (localStreamRef.current) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMicStatus('unavailable');
+      setMicError('เบราว์เซอร์นี้ไม่รองรับไมโครโฟน');
+      return;
+    }
+    setMicStatus('requesting');
+    setMicError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // เริ่มแบบปิดไมค์ไว้ก่อนเสมอ ผู้เล่นต้องกดเปิด/กดค้างเอง
       stream.getAudioTracks()[0].enabled = false;
       localStreamRef.current = stream;
       setEnabled(true);
-      setMicError(null);
+      setMicStatus('muted');
       socket.emit('voice:join');
     } catch (err) {
-      setMicError('ไม่สามารถเข้าถึงไมโครโฟนได้ — เช็คสิทธิ์การใช้งานไมค์ของเบราว์เซอร์');
+      const denied = err?.name === 'NotAllowedError' || err?.name === 'SecurityError';
+      const unavailable = err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError';
+      setMicStatus(denied ? 'denied' : unavailable ? 'unavailable' : 'error');
+      setMicError(
+        denied
+          ? 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน'
+          : unavailable
+            ? 'ไม่พบไมโครโฟน'
+            : 'ไม่สามารถเข้าถึงไมโครโฟนได้'
+      );
     }
   }, []);
 
@@ -96,6 +129,28 @@ export default function VoiceChat() {
       teardownAll();
     }
   }, [isVoicePhase, teardownAll]);
+
+  useEffect(() => {
+    const onDisconnect = () => {
+      if (localStreamRef.current) {
+        resetPeers();
+        setMicStatus('error');
+      }
+    };
+    const onConnect = () => {
+      if (localStreamRef.current && isVoicePhase) {
+        setMicError(null);
+        setMicStatus('muted');
+        socket.emit('voice:join');
+      }
+    };
+    socket.on('disconnect', onDisconnect);
+    socket.on('connect', onConnect);
+    return () => {
+      socket.off('disconnect', onDisconnect);
+      socket.off('connect', onConnect);
+    };
+  }, [isVoicePhase, resetPeers]);
 
   useEffect(() => () => { socket.emit('voice:leave'); teardownAll(); }, [teardownAll]);
 
@@ -113,17 +168,32 @@ export default function VoiceChat() {
       setRemoteMuted(m => { const next = { ...m }; delete next[peerId]; return next; });
     }
     async function onSignal({ fromPlayerId, signal }) {
-      let pc = peersRef.current.get(fromPlayerId);
-      if (!pc) pc = createPeer(fromPlayerId, false);
-      if (signal.sdp) {
-        await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-        if (signal.sdp.type === 'offer') {
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          socket.emit('voice:signal', { targetPlayerId: fromPlayerId, signal: { sdp: pc.localDescription } });
+      try {
+        let pc = peersRef.current.get(fromPlayerId);
+        if (!pc) pc = createPeer(fromPlayerId, false);
+        if (signal.sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+          const queued = iceQueueRef.current.get(fromPlayerId) || [];
+          for (const candidate of queued) await pc.addIceCandidate(candidate);
+          iceQueueRef.current.delete(fromPlayerId);
+          if (signal.sdp.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('voice:signal', { targetPlayerId: fromPlayerId, signal: { sdp: pc.localDescription } });
+          }
+        } else if (signal.candidate) {
+          const candidate = new RTCIceCandidate(signal.candidate);
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(candidate);
+          } else {
+            const queued = iceQueueRef.current.get(fromPlayerId) || [];
+            queued.push(candidate);
+            iceQueueRef.current.set(fromPlayerId, queued);
+          }
         }
-      } else if (signal.candidate) {
-        try { await pc.addIceCandidate(new RTCIceCandidate(signal.candidate)); } catch { /* ignore late candidates */ }
+      } catch (err) {
+        console.error('[voice signal]', err);
+        setMicError('สัญญาณเสียงขัดข้อง กำลังลองเชื่อมต่อใหม่');
       }
     }
     function onMuteState({ playerId: pid, isMuted }) {
@@ -170,11 +240,13 @@ export default function VoiceChat() {
 
   if (!isVoicePhase) return null;
 
+  const remoteMutedCount = Object.values(remoteMuted).filter(Boolean).length;
+
   return (
     <div className="voice-bar">
       {!enabled ? (
         <button className="voice-btn voice-btn-start" onClick={startVoice}>
-          🎤 เปิดไมค์ {isDead && '(ห้องวิญญาณ)'}
+          {micStatus === 'requesting' ? 'กำลังขอสิทธิ์ไมค์…' : `🎤 เปิดไมค์ ${isDead ? '(ห้องวิญญาณ)' : ''}`}
         </button>
       ) : micMode === 'ptt' ? (
         <div className={`voice-btn voice-btn-ptt ${pttHeld ? 'is-speaking' : ''}`}>
@@ -188,6 +260,7 @@ export default function VoiceChat() {
           {speaking ? '🎤 กำลังพูด (กดปิด)' : '🔇 ไมค์ปิดอยู่ (กดพูด)'}
         </button>
       )}
+      {enabled && <span className="voice-peer-status">{remoteMutedCount ? `ปิดไมค์ ${remoteMutedCount} คน` : 'เสียงพร้อมใช้งาน'}</span>}
       {micError && <span className="voice-error">{micError}</span>}
     </div>
   );

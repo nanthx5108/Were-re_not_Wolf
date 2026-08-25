@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS = {
   master: 80,
   sfx: 80,
   music: 60,
+  ui: 45,
   muted: false,
 };
 
@@ -20,9 +21,16 @@ function loadSettings() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    return {
+      ...parsed,
+      master: parsed.master <= 1 ? parsed.master * 100 : parsed.master,
+      music: parsed.music <= 1 ? parsed.music * 100 : parsed.music,
+      sfx: parsed.sfx <= 1 ? parsed.sfx * 100 : parsed.sfx,
+      ui: parsed.ui <= 1 ? parsed.ui * 100 : parsed.ui,
+    };
   } catch {
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS };
   }
 }
 
@@ -118,6 +126,13 @@ export default function SettingsPage() {
               label="Music Volume"
               value={settings.music}
               onChange={v => updateValue('music', v)}
+              disabled={settings.muted}
+            />
+            <div className="settings-divider" style={{ margin: '16px 0' }} />
+            <VolumeRow
+              label="UI Volume"
+              value={settings.ui}
+              onChange={v => updateValue('ui', v)}
               disabled={settings.muted}
             />
           </div>

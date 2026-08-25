@@ -53,7 +53,6 @@ const newsVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE_OUT, delay: 0.95 } },
 };
 
-const BGM_SRC = '/assets/audio/BGM-lobby.mp3';
 const HOVER_SFX_SRC = '/assets/audio/SFX-Chat.mp3';
 
 export default function HomePage() {
@@ -62,16 +61,8 @@ export default function HomePage() {
   const sound = useSound();
   const { user, logout } = useAuth();
 
-  useEffect(() => {
-    sound.playBgm(BGM_SRC);
-    // Stop BGM when leaving the home page
-    return () => {
-      sound.stopBgm();
-    };
-  }, [sound]);
-
   function playHoverSfx() {
-    sound.playSfx(HOVER_SFX_SRC);
+    sound.playUi(HOVER_SFX_SRC);
   }
 
   const [isLoading, setIsLoading] = useState(true);

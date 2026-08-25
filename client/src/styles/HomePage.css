@@ -2098,15 +2098,23 @@
 .home-page .join-search-input:focus-visible {
   outline: none;
 }
-/* ── โหมดประหยัดพลัง — ปิดเลเยอร์ตกแต่งที่กิน GPU หนักสำหรับคอมสเปกต่ำ ── */
-.perf-mode .home-stars,
-.perf-mode .home-fireflies,
+/* ── โหมดประหยัดพลัง — ลดเลเยอร์ราคาแพง แต่คงบรรยากาศและ motion หลักไว้ ── */
 .perf-mode .home-grain,
-.perf-mode .home-moonbeams,
-.perf-mode .home-water-shimmer,
-.perf-mode .home-lantern-glow,
-.perf-mode .home-vignette {
+.perf-mode .home-water-shimmer {
   display: none !important;
+}
+.perf-mode .home-stars {
+  opacity: 0.7;
+}
+.perf-mode .home-fireflies {
+  opacity: 0.65;
+}
+.perf-mode .home-fireflies .firefly {
+  animation-duration: 8s !important;
+}
+.perf-mode .home-moonbeams,
+.perf-mode .home-lantern-glow {
+  opacity: 0.55;
 }
 .perf-mode .menu-panel,
 .perf-mode .home-form,
@@ -2119,8 +2127,12 @@
 .perf-mode *,
 .perf-mode *::before,
 .perf-mode *::after {
-  animation-duration: 0.001ms !important;
-  transition-duration: 0.001ms !important;
-  box-shadow: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28) !important;
   text-shadow: none !important;
+}
+.perf-mode .home-page button,
+.perf-mode .home-page a,
+.perf-mode .home-page input {
+  transition-duration: 180ms !important;
 }

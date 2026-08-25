@@ -908,3 +908,7 @@
   font-size: 0.76rem;
   color: #e8a94b;
 }
+.voice-peer-status {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}

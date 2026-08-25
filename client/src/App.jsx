@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { GameProvider } from './context/Gamecontext.jsx';
 import { GameDataProvider } from './context/GameDataContext.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'; // เพิ่ม useAuth
 import ToastContainer from './components/ToastContainer.jsx';
 import { ToastProvider } from './components/ToastContext.jsx';
 import { applyPerfModeClass } from './utils/perfMode.js';
+import soundManager from './sound/soundManager.js';
 
 import HomePage     from '../pages/HomePage.jsx';
 import LoginPage    from '../pages/LoginPage.jsx';
@@ -66,6 +67,7 @@ function AppShell() {
             </filter>
           </svg>
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AmbientBgm />
             <Routes>
               <Route path="/"              element={<HomePage />} />
               <Route path="/login"         element={<LoginPage />} />
@@ -94,4 +96,20 @@ function AppShell() {
       </GameProvider>
     </ToastProvider>
   );
+}
+
+function AmbientBgm() {
+  const { pathname } = useLocation();
+  const isGameRoute = pathname.startsWith('/game/');
+
+  useEffect(() => {
+    if (isGameRoute) {
+      soundManager.stopBgm();
+      return undefined;
+    }
+    soundManager.playBgm('home', '/assets/audio/BGM-lobby.mp3', { loop: true });
+    return undefined;
+  }, [isGameRoute]);
+
+  return null;
 }
