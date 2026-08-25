@@ -20,16 +20,27 @@ const SESSION_SECRET  = process.env.SESSION_SECRET || 'wolf-secret-change-in-pro
 const CLIENT_DIST     = path.join(__dirname, '../../client/dist');
 const SERVES_CLIENT   = fs.existsSync(CLIENT_DIST);
 
-export const CLIENT_ORIGINS = (process.env.CLIENT_URL || 'http://localhost:5173')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
+export const CLIENT_ORIGINS = (() => {
+  if (process.env.CLIENT_URL) return process.env.CLIENT_URL.split(',').map(s => s.trim()).filter(Boolean);
+  // If the server is serving the built client files, assume the client will be same-origin in prod.
+  // Returning an empty array signals the CORS setup below to allow dynamic origins (useful on PaaS like Render).
+  if (SERVES_CLIENT) return [];
+  return ['http://localhost:5173'];
+})();
 
 if (IS_PROD) {
   app.set('trust proxy', 1);
 }
 
-app.use(cors({ origin: CLIENT_ORIGINS, credentials: true }));
+// Configure CORS: if CLIENT_ORIGINS is non-empty, use it. If empty, allow dynamic origins (helps when serving client from same host on Render).
+const corsOptions = { credentials: true };
+if (CLIENT_ORIGINS.length) {
+  corsOptions.origin = CLIENT_ORIGINS;
+} else {
+  corsOptions.origin = (origin, callback) => callback(null, true);
+}
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
