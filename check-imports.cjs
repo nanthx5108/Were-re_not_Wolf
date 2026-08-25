@@ -1,3 +1,8 @@
+// รันด้วย: node check-imports.js
+// สแกนทุก import/require แบบ relative (./ หรือ ../) ในโฟลเดอร์ client
+// เทียบชื่อไฟล์ที่ import กับชื่อไฟล์จริงบนดิสก์แบบสนตัวพิมพ์เล็ก-ใหญ่
+// (Linux ที่ Render ใช้สนตัวพิมพ์เล็ก-ใหญ่ ต่าง Windows ที่ไม่สน)
+
 const fs = require('fs');
 const path = require('path');
 
@@ -41,7 +46,7 @@ function resolveWithCase(baseDir, importPath) {
 }
 
 const files = walk(ROOT).filter(f => SCAN_EXTS.includes(path.extname(f)));
-const importRegex = /(?:import\s+[^'"]*?from\s+|import\s*\(\s*|require\s*\(\s*)['"](\.[^'"]+)['"]/g;
+const importRegex = /(?:import\s+[^'"]*?from\s+|import\s*\(\s*|require\s*\(\s*|import\s+)['"](\.[^'"]+)['"]/g;
 
 for (const file of files) {
   const content = fs.readFileSync(file, 'utf8');
@@ -64,4 +69,3 @@ for (const file of files) {
 }
 
 console.log(`\n=== เจอปัญหาทั้งหมด ${problems} จุด ===`);
-
