@@ -90,14 +90,15 @@
 
 .gpr-toggle {
   position: absolute;
-  bottom: 1rem;
+  top: 0.75rem;
+  bottom: auto;
 }
 
 .gpr-content {
   position: relative;
   z-index: 1;
   margin-top: auto;
-  padding: 1rem;
+  padding: 3rem 1rem 1rem;
   background: linear-gradient(to top, rgba(8, 12, 20, 0.95) 40%, rgba(8, 12, 20, 0.6) 80%, transparent);
   display: flex;
   flex-direction: column;

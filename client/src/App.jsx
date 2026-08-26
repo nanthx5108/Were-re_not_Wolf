@@ -22,6 +22,7 @@ import AdminPage from '../pages/AdminPage.jsx';
 import AdminActivationModal from './components/AdminActivationModal.jsx';
 import AdminFloatingWindow from './components/AdminFloatingWindow.jsx';
 import MorningEventCard from './components/MorningEventCard.jsx';
+import ContactAdminButton from './components/ContactAdminButton.jsx';
 
 export default function App() {
   useEffect(() => { applyPerfModeClass(); }, []);
@@ -77,13 +78,14 @@ function AppShell() {
               <Route path="/customize"    element={<CustomizePage />} />
               <Route path="/settings"     element={<SettingsPage />} />
               <Route path="/news"         element={<NewsPage />} />
-              <Route path="/profile"      element={<ProfilePage />} />
-              <Route path="/profile/view" element={<ViewProfilePage />} />
+              <Route path="/profile"      element={<RequireAuth><ProfilePage /></RequireAuth>} />
+              <Route path="/profile/view" element={<RequireAuth><ViewProfilePage /></RequireAuth>} />
               <Route path="/profile/settings" element={<Navigate to="/profile" replace />} />
               <Route path="/admin" element={user?.isAdmin ? <AdminPage /> : <Navigate to="/" replace />} />
               <Route path="*"             element={<Navigate to="/" replace />} />
             </Routes>
             <MorningEventCard />
+            <ContactAdminButton />
             {showAdminModal && <AdminActivationModal onClose={() => setShowAdminModal(false)} />}
             {showAdminWindow && user?.isAdmin && (
               <AdminFloatingWindow onClose={() => setShowAdminWindow(false)}>
@@ -96,6 +98,20 @@ function AppShell() {
       </GameProvider>
     </ToastProvider>
   );
+}
+
+function RequireAuth({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="auth-loading" role="status">
+        กำลังตรวจสอบบัญชี...
+      </div>
+    );
+  }
+
+  return user ? children : <Navigate to="/login" replace />;
 }
 
 function AmbientBgm() {

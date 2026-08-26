@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSound } from '../src/context/SoundContext.jsx';
 import { getPerfMode, setPerfMode } from '../src/utils/perfMode.js';
 import { getMicSettings, setMicSettings } from '../src/utils/micSettings.js';
@@ -46,12 +46,16 @@ function IconBack() {
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const sound = useSound();
   const [settings, setSettings] = useState(loadSettings);
   const [showSaved, setShowSaved] = useState(false);
   const [perfMode, setPerfModeState] = useState(getPerfMode);
   const [micSettings, setMicSettingsState] = useState(getMicSettings);
   const [listeningForKey, setListeningForKey] = useState(false);
+  const returnPath = typeof location.state?.from === 'string' && location.state.from.startsWith('/')
+    ? location.state.from
+    : '/';
 
   function handlePerfModeToggle(checked) {
     setPerfModeState(checked);
@@ -100,7 +104,7 @@ export default function SettingsPage() {
 
       <div className="settings-container">
         <div className="settings-topbar">
-          <button className="settings-back-btn" onClick={() => navigate('/')} title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก">
+          <button className="settings-back-btn" onClick={() => navigate(returnPath, { replace: true })} title="ย้อนกลับ" aria-label="ย้อนกลับ">
             <IconBack />
           </button>
           <h1 className="settings-title">Settings</h1>

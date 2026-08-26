@@ -1,4 +1,5 @@
 import { buildDefaultRoomConfig } from './roomConfig.js';
+import { getActiveRoles, getActiveFortuneCards, getMorningEvents } from '../services/gameDataService.js';
 
 const roomStore = new Map();
 
@@ -124,6 +125,9 @@ export function serializeRoom(roomId) {
       isConnected: p.isConnected !== false,
       ...(room.revealRoleOnDeath === true && p.isAlive === false ? { revealedRole: p.role } : {}),
     })),
+    activeRoles: getActiveRoles(),
+    activeFortuneCards: getActiveFortuneCards(),
+    morningEvents: getMorningEvents(),
   };
 }
 

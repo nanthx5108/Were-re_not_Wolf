@@ -185,6 +185,11 @@ export default function ProfilePage() {
     setAvatarPreview(URL.createObjectURL(file));
   }
 
+  function handleAvatarError() {
+    setAvatarPreview(null);
+    setAvatarFile(null);
+  }
+
   function requestEditUsername() {
     if (usernameOnCooldown) return;
     setModal('edit-username');
@@ -292,7 +297,7 @@ export default function ProfilePage() {
             <div className="profile-avatar-row">
               <div className="profile-avatar-wrap" onClick={() => fileInputRef.current?.click()}>
                 {avatarPreview
-                  ? <img src={avatarPreview} alt="avatar" className="profile-avatar-img" />
+                  ? <img src={avatarPreview} alt="avatar" className="profile-avatar-img" onError={handleAvatarError} />
                   : <DerpyWolfAvatar />}
                 <div className="profile-avatar-edit-badge">เปลี่ยนรูป</div>
               </div>
@@ -467,7 +472,7 @@ export default function ProfilePage() {
           <div className="profile-viewer" onClick={e => e.stopPropagation()}>
             <div className="profile-viewer-img">
               {avatarPreview
-                ? <img src={avatarPreview} alt="รูปโปรไฟล์" />
+                ? <img src={avatarPreview} alt="รูปโปรไฟล์" onError={handleAvatarError} />
                 : <DerpyWolfAvatar size={220} />}
             </div>
             <div className="profile-viewer-actions">

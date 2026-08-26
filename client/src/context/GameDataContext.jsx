@@ -20,15 +20,13 @@ export function GameDataProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (room && room.activeRoles?.length > 0 && room.activeFortuneCards?.length > 0 && room.morningEvents?.length > 0) {
-      setRoles(room.activeRoles);
-      setFortuneCards(room.activeFortuneCards);
-      setMorningEvents(room.morningEvents);
+    if (room) {
+      if (Array.isArray(room.activeRoles)) setRoles(room.activeRoles);
+      if (Array.isArray(room.activeFortuneCards)) setFortuneCards(room.activeFortuneCards);
+      if (Array.isArray(room.morningEvents)) setMorningEvents(room.morningEvents);
       setLoading(false);
     } else {
-      if (!room) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [room]);
 
@@ -38,7 +36,7 @@ export function GameDataProvider({ children }) {
     fortuneCards,
     fortuneCardBack,
     morningEvents,
-    roleMap: new Map(roles.map(r => [r.name_en, r])),
+    roleMap: new Map(roles.map(r => [String(r.name_en).toLowerCase(), r])),
     fortuneCardMap: new Map(fortuneCards.map(c => [c.id, c])),
     morningEventMap: new Map(morningEvents.map(e => [e.id, e])),
   };

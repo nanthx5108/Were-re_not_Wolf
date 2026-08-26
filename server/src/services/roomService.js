@@ -76,7 +76,7 @@ export async function listRoomsService() {
     name:        r.name,
     status:      r.status,
     maxPlayers:  r.max_players,
-    playerCount: r.player_count,
+    playerCount: getRoom(r.id)?.players.size ?? Number(r.player_count),
     isPrivate:   !!r.is_private,
     host:        r.host_nickname || null,
   }));
@@ -117,12 +117,12 @@ export async function joinRoomService({ roomId, nickname, userId }) {
   if (!roomRows.length) throw Object.assign(new Error('Room not found.'), { status: 404 });
   if (roomRows[0].status !== 'waiting') throw Object.assign(new Error('Game already in progress.'), { status: 409 });
 
-  const [countRows] = await pool.query(
-    `SELECT COUNT(*) AS cnt FROM players WHERE room_id = ?`,
-    [upperRoomId]
-  );
   const roomLimit = getRoomPlayerLimit({ maxPlayers: roomRows[0].max_players });
-  if (countRows[0].cnt >= roomLimit) {
+  // The in-memory room is the source of truth while the server is running.
+  // DB rows can briefly outlive a disconnected socket and must not consume seats.
+  const room = getRoom(upperRoomId);
+  const currentPlayerCount = room ? room.players.size : 0;
+  if (currentPlayerCount >= roomLimit) {
     throw Object.assign(new Error(`Room is full (max ${roomLimit} players).`), { status: 409 });
   }
 

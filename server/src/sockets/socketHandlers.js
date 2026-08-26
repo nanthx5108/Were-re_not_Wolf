@@ -48,7 +48,12 @@ export function registerSocketHandlers(socket, io) {
       if (existing) return handleRejoin(socket, io, roomId, playerId);
 
       if (room.status !== 'waiting') return socket.emit('error', { message: 'Game already in progress.' });
-      if (!canJoinRoom(room, room.players.size)) return socket.emit('error', { message: 'Room is full.' });
+      if (!canJoinRoom(room, room.players.size)) {
+        // The HTTP join request may have inserted this player just before
+        // another socket joined. Remove that unclaimed reservation.
+        await pool.query(`DELETE FROM players WHERE id = ? AND room_id = ?`, [playerId, roomId]);
+        return socket.emit('error', { message: 'Room is full.' });
+      }
 
       addPlayerToRoom(roomId, { id: playerId, nickname, socketId: socket.id });
       await pool.query(`UPDATE players SET socket_id = ? WHERE id = ?`, [socket.id, playerId]);

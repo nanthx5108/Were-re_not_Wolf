@@ -21,7 +21,7 @@ async function loadGameData() {
       night_action: !!role.night_action,
       is_active: !!role.is_active,
       faction_th,
-      card_image: `/roles/${role.name_en}.png`, // Add the card image path
+      card_image: `/roles/${String(role.name_en).toLowerCase()}.png`,
       };
     });
 

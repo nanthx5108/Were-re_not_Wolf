@@ -67,7 +67,7 @@ export default function Lobby() {
       <div className="lobby-grain" aria-hidden="true" />
       <div className="lobby-topbar">
         <Navbar roomId={room.id} nickname={nickname} connected={connected} onLeave={handleLeave}
-          onSettings={() => navigate('/settings')} />
+          onSettings={() => navigate('/settings', { state: { from: `/lobby/${roomId}` } })} />
       </div>
 
       {error && (

@@ -21,7 +21,7 @@ export default function MyRoleCard() {
     }
   }, [myRole, sound, open]);
 
-  const roleInfo = roleMap.get(myRole);
+  const roleInfo = roleMap.get(String(myRole).toLowerCase());
 
   if (!myRole) return null;
 
@@ -61,7 +61,7 @@ export default function MyRoleCard() {
           {roleInfo?.card_image && !artFailed ? (
             <img
               className="gpr-art"
-              src={roleInfo?.card_image}
+              src={roleInfo?.card_image || `/roles/${String(myRole).toLowerCase()}.png`}
               alt={`การ์ด${roleInfo?.name_th}`}
               onError={() => setArtFailed(true)}
             />
