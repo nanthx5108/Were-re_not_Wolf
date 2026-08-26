@@ -688,7 +688,7 @@ export default function HomePage() {
           <span className="footer-credit">© 2026 Nanthaphat Punyaphat &amp; Nam</span>
         </div>
         <div className="socials">
-          <a className="soc-btn sketch-border" title="Discord" href="https://discord.gg/gvDNBHQKT" target="_blank" rel="noopener noreferrer" aria-label="Join our Discord">
+          <a className="soc-btn sketch-border" title="Discord" href="https://discord.gg/mZtybpuJM" target="_blank" rel="noopener noreferrer" aria-label="Join our Discord">
             <IconDiscord />
           </a>
           <a className="soc-btn sketch-border" title="Facebook" href="https://www.facebook.com/RayongTC?locale=th_TH" target="_blank" rel="noopener noreferrer" aria-label="Visit our Facebook page">
