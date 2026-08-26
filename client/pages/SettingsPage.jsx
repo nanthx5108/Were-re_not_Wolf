@@ -47,10 +47,19 @@ export default function SettingsPage() {
   const sound = useSound();
   const [settings, setSettings] = useState(loadSettings);
   const [showSaved, setShowSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [perfMode, setPerfModeState] = useState(getPerfMode);
   const returnPath = typeof location.state?.from === 'string' && location.state.from.startsWith('/')
     ? location.state.from
     : '/';
+
+  function handleBack() {
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+      return;
+    }
+    navigate(returnPath, { replace: true });
+  }
 
   function handlePerfModeToggle(checked) {
     setPerfModeState(checked);
@@ -68,13 +77,18 @@ export default function SettingsPage() {
   }
 
   function handleSave() {
+    setSaveError('');
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      if (localStorage.getItem(STORAGE_KEY) !== JSON.stringify(settings)) {
+        throw new Error('ไม่สามารถเขียนการตั้งค่าลงเครื่องได้');
+      }
       sound.updateSettings(settings); // Ensure manager is in sync on save
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 1800);
-    } catch {
-      // localStorage unavailable — silently ignore
+    } catch (err) {
+      setShowSaved(false);
+      setSaveError(err.message || 'บันทึกการตั้งค่าไม่สำเร็จ');
     }
   }
 
@@ -84,7 +98,7 @@ export default function SettingsPage() {
 
       <div className="settings-container">
         <div className="settings-topbar">
-          <button className="settings-back-btn" onClick={() => navigate(returnPath, { replace: true })} title="ย้อนกลับ" aria-label="ย้อนกลับ">
+          <button className="settings-back-btn" onClick={handleBack} title="ย้อนกลับ" aria-label="ย้อนกลับ">
             <IconBack />
           </button>
           <h1 className="settings-title">Settings</h1>
@@ -150,6 +164,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="settings-save-row">
+            {saveError && <span className="settings-error" role="alert">{saveError}</span>}
             {showSaved && <span className="settings-saved-msg">บันทึกแล้ว</span>}
             <button className="settings-save-btn sketch-border" onClick={handleSave}>
               บันทึก

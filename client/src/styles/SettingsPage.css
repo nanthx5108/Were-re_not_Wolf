@@ -244,6 +244,13 @@
   animation: fadeSlideIn 200ms ease forwards;
 }
 
+.settings-error {
+  align-self: center;
+  margin-right: var(--space-3);
+  color: #ffaaaa;
+  font-size: 0.78rem;
+}
+
 @media (max-width: 767px) {
   .settings-page {
     padding-bottom: calc(72px + var(--safe-bottom));

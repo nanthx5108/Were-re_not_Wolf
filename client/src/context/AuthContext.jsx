@@ -58,10 +58,10 @@ export function AuthProvider({ children }) {
 
   const updateProfile = useCallback(async (payload = {}) => {
     const form = new FormData();
-    if (payload.username !== undefined) form.append('username', payload.username);
-    if (payload.displayName !== undefined) form.append('displayName', payload.displayName);
-    if (payload.birthdate !== undefined) form.append('birthdate', payload.birthdate);
-    if (payload.email !== undefined) form.append('email', payload.email);
+    if (payload.username !== undefined) form.append('username', String(payload.username));
+    if (payload.displayName !== undefined) form.append('displayName', String(payload.displayName));
+    if (payload.birthdate !== undefined) form.append('birthdate', String(payload.birthdate));
+    if (payload.email !== undefined) form.append('email', String(payload.email));
     if (payload.avatarFile) form.append('avatar', payload.avatarFile);
 
     const res = await fetch(`${API}/profile`, {

@@ -157,6 +157,7 @@ export default function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
 
   const [modal, setModal] = useState(null); // 'edit-username' | 'link-email' | 'reset' | null
 
@@ -234,6 +235,7 @@ export default function ProfilePage() {
   async function handleSave(e) {
     e.preventDefault();
     setError('');
+    setSaved(false);
 
     if (!displayName.trim()) {
       setError('กรุณาใส่ชื่อที่จะแสดงในเกม');
@@ -256,16 +258,31 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
-      if (typeof updateProfile === 'function') {
-        await updateProfile({
+      if (typeof updateProfile !== 'function') {
+        throw new Error('ไม่สามารถเชื่อมต่อระบบบัญชีได้');
+      }
+
+      const updatedUser = await updateProfile({
           username: usernameChanged ? username.trim() : undefined,
           displayName: displayName.trim(),
-          birthdate: birthdate || undefined,
-          email: emailLinked ? email.trim() : undefined,
+          birthdate,
+          email: emailLinked ? email.trim() : '',
           avatarFile,
-        });
+      });
+      if (updatedUser) {
+        setUsername(updatedUser.username || '');
+        setDisplayName(updatedUser.displayName || updatedUser.username || '');
+        const updatedBirthdate = parseBirthdate(updatedUser.birthdate);
+        setDay(updatedBirthdate.day);
+        setMonth(updatedBirthdate.month);
+        setYear(updatedBirthdate.year);
+        setEmail(updatedUser.email || '');
+        setEmailLinked(Boolean(updatedUser.email));
+        setAvatarPreview(updatedUser.avatarUrl || null);
       }
-      navigate('/');
+      setAvatarFile(null);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2200);
     } catch (err) {
       setError(err.message || 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
       setSaving(false);
@@ -291,6 +308,7 @@ export default function ProfilePage() {
           <h1 className="profile-title">บัญชีของคุณ</h1>
 
           {error && <div className="profile-error">{error}</div>}
+          {saved && <div className="profile-saved" role="status">บันทึกข้อมูลเรียบร้อยแล้ว</div>}
 
           <form onSubmit={handleSave} className="profile-form">
             {/* Avatar */}
@@ -461,8 +479,8 @@ export default function ProfilePage() {
 
           <div className="profile-divider" />
 
-          <button className="profile-logout-btn" onClick={requestReset}>
-            รีเซ็ตการเปลี่ยนแปลง
+          <button type="button" className="profile-logout-btn" onClick={requestReset}>
+            ยกเลิกการแก้ไขที่ยังไม่บันทึก
           </button>
         </div>
       </div>

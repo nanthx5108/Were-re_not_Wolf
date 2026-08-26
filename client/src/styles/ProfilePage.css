@@ -145,6 +145,15 @@
   animation: shake 300ms ease;
 }
 
+.profile-saved {
+  background: var(--success-soft);
+  border: 1px solid rgba(42, 102, 68, 0.6);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--sage-bright);
+  font-size: 0.84rem;
+}
+
 .profile-form {
   display: flex;
   flex-direction: column;
