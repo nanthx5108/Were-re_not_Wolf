@@ -1,7 +1,8 @@
 import React from 'react';
 import '../styles/Navbar.css';
+import { IconSettings } from './ui/Icons.jsx';
 
-export default function Navbar({ roomId, nickname, connected, onLeave }) {
+export default function Navbar({ roomId, nickname, connected, onLeave, onSettings }) {
   return (
     <nav className="navbar">
       <div className="navbar-left">
@@ -19,6 +20,13 @@ export default function Navbar({ roomId, nickname, connected, onLeave }) {
         </span>
         
         {nickname && <span className="navbar-nickname">{nickname}</span>}
+
+        {onSettings && (
+          <button onClick={onSettings} className="navbar-settings-btn" title="การตั้งค่าเสียง">
+            <IconSettings />
+            <span>Settings</span>
+          </button>
+        )}
         
         {onLeave && (
           <button onClick={onLeave} className="navbar-leave-btn">

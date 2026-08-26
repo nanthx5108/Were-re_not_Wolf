@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../src/context/Gamecontext.jsx';
 import PlayerCard from '../src/components/PlayerCard.jsx';
 import ChatBox    from '../src/components/ChatBox.jsx';
 import Navbar     from '../src/components/Navbar.jsx';
+import RoomConfigPanel from '../src/components/RoomConfigPanel.jsx';
 import { CONFIGURABLE_ROLES } from '../src/constants/game.js';
 import '../src/styles/Lobby.css';
 
@@ -26,7 +27,9 @@ export default function Lobby() {
     room, playerId, nickname, myRole,
     connected, error,
     leaveRoom, startGame, clearError,
+    updateRoomConfig,
   } = useGame();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (!playerId || !nickname) navigate('/', { replace: true });
@@ -53,7 +56,7 @@ export default function Lobby() {
     );
   }
 
-  const isHost      = room.hostId === playerId;
+  const isHost      = String(room.hostId) === String(playerId);
   const playerCount = room.players?.length ?? 0;
   const roomCapacity = Number.isInteger(room.maxPlayers) ? room.maxPlayers : 8;
   const canStart    = isHost && playerCount >= MIN_PLAYERS && playerCount <= roomCapacity;
@@ -63,7 +66,8 @@ export default function Lobby() {
       <div className="lobby-overlay" aria-hidden="true" />
       <div className="lobby-grain" aria-hidden="true" />
       <div className="lobby-topbar">
-        <Navbar roomId={room.id} nickname={nickname} connected={connected} onLeave={handleLeave} />
+        <Navbar roomId={room.id} nickname={nickname} connected={connected} onLeave={handleLeave}
+          onSettings={() => navigate('/settings')} />
       </div>
 
       {error && (
@@ -77,8 +81,24 @@ export default function Lobby() {
         <section className="lobby-panel lobby-config">
           <div className="panel-head">
             <h3 className="panel-title"><span className="panel-title-rule" /><span className="panel-title-text">การตั้งค่าห้อง</span><span className="panel-title-rule" /></h3>
+            {isHost && room.gameMode !== 'chaos' && (
+              <button type="button" className="lobby-config-btn" onClick={() => setSettingsOpen(open => !open)}>
+                {settingsOpen ? 'ปิดการตั้งค่า' : 'ตั้งค่าห้อง'}
+              </button>
+            )}
           </div>
           <div className="lobby-panel-body">
+            {settingsOpen && room.gameMode !== 'chaos' && (
+              <RoomConfigPanel
+                roleConfig={room.roleConfig}
+                phaseDurations={room.phaseDurations}
+                revealRoleOnDeath={room.revealRoleOnDeath}
+                maxPlayers={roomCapacity}
+                playerCount={playerCount}
+                editable={isHost}
+                onChange={updateRoomConfig}
+              />
+            )}
             {room.roleConfig && (
               <ul className="rules-list">
                 <li className="rules-item">

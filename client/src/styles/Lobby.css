@@ -647,6 +647,22 @@
   font-size: 0.95rem;
 }
 
+.lobby-config-btn {
+  padding: 6px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.lobby-config-btn:hover {
+  color: var(--gold-bright);
+  border-color: var(--gold-dim);
+}
+
 /* Start Game button, modern and sleek */
 .btn-start-game {
   position: relative;

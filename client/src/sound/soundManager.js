@@ -1,7 +1,7 @@
 const STORAGE_KEY = 'wnw_sound';
 const LEGACY_STORAGE_KEY = 'wnw_audio_settings';
 
-const DEFAULTS = { master: 0.85, music: 0.45, sfx: 0.6, ui: 0.45, voice: 1, muted: false };
+const DEFAULTS = { master: 0.6, music: 0.35, sfx: 0.35, ui: 0.2, voice: 0.7, muted: false };
 
 const LEGACY_AUDIO_MAP = {
   '/audio/sfx_chat_receive.wav': '/assets/audio/SFX-Chat.mp3',
@@ -85,6 +85,7 @@ class SoundManager {
     this.settings = loadSettings();
     this.bgm = null;
     this.currentBgmKey = null;
+    this.lastUiSoundAt = new Map();
   }
 
   // ไม่มีอะไรต้องทำเพิ่ม (settings โหลดอัตโนมัติตอน construct แล้ว)
@@ -181,6 +182,10 @@ class SoundManager {
     const multiplier = typeof volumeArg === 'number' ? volumeArg : (volumeArg.volume ?? 1.0);
     const volume = this._volume('ui') * multiplier;
     if (volume <= 0) return;
+    const now = Date.now();
+    const lastPlayedAt = this.lastUiSoundAt.get(resolvedSrc) || 0;
+    if (now - lastPlayedAt < 120) return;
+    this.lastUiSoundAt.set(resolvedSrc, now);
     const uiSound = new Audio(resolvedSrc);
     uiSound.volume = Math.max(0, Math.min(1, volume));
     uiSound.play().catch(() => {});

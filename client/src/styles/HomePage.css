@@ -270,7 +270,8 @@
   flex-shrink: 0;
   transition: border-color var(--ease);
 }
-.user-pill-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-pill-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.user-pill-avatar img.is-default { object-fit: contain; padding: 2px; }
 .user-pill:hover .user-pill-avatar { border-color: var(--teal-mid); }
 
 .user-pill-info {

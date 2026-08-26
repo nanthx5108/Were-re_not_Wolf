@@ -187,7 +187,7 @@ export function registerSocketHandlers(socket, io) {
 
     const room = getRoom(roomId);
     if (!room)                    return socket.emit('error', { message: 'Room not found.' });
-    if (room.hostId !== playerId) return socket.emit('error', { message: 'เฉพาะเจ้าของห้องเท่านั้นที่ตั้งค่าได้' });
+    if (String(room.hostId) !== String(playerId)) return socket.emit('error', { message: 'เฉพาะเจ้าของห้องเท่านั้นที่ตั้งค่าได้' });
     if (room.status !== 'waiting') return socket.emit('error', { message: 'เกมเริ่มไปแล้ว แก้การตั้งค่าไม่ได้' });
 
     const { config: safe, error } = normalizeRoomConfig(config, getRoomPlayerLimit(room));
@@ -209,7 +209,7 @@ export function registerSocketHandlers(socket, io) {
 
     const room = getRoom(roomId);
     if (!room)                     return socket.emit('error', { message: 'Room not found.' });
-    if (room.hostId !== playerId)  return socket.emit('error', { message: 'Only the host can start.' });
+    if (String(room.hostId) !== String(playerId))  return socket.emit('error', { message: 'Only the host can start.' });
     if (room.status !== 'waiting') return socket.emit('error', { message: 'Game already started.' });
 
     const players = getPlayersArray(roomId);
