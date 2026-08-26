@@ -799,6 +799,118 @@
   }
 }
 
+@media (max-width: 767px) {
+  .gp-page {
+    min-height: 100dvh;
+    padding: var(--mobile-padding);
+    padding-bottom: calc(var(--mobile-padding) + var(--safe-bottom));
+    gap: 10px;
+    grid-template-areas:
+      "top"
+      "center"
+      "side"
+      "chat"
+      "log";
+    grid-template-rows: auto auto auto auto auto;
+  }
+
+  .gp-top {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .gp-setting-btn {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+
+  .gp-clock {
+    min-width: 0;
+  }
+
+  .gp-clock-time {
+    font-size: clamp(1.45rem, 8vw, 2rem);
+  }
+
+  .gp-clock-label {
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gp-top-right {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .gp-daybadge {
+    padding: 3px 8px;
+    font-size: 0.72rem;
+  }
+
+  .gp-roomcode {
+    max-width: 25vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gp-sectimer {
+    width: min(210px, 100%);
+  }
+
+  .gp-center,
+  .gp-side,
+  .gp-chat {
+    min-width: 0;
+  }
+
+  .gp-chat {
+    gap: 10px;
+  }
+
+  .gp-chat > .gpc {
+    min-height: 42dvh;
+  }
+
+  .gpch-frame {
+    min-height: 100px;
+  }
+
+  .gp-endcard {
+    padding: var(--space-4);
+  }
+
+  .gp-modal {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px - var(--safe-bottom));
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) and (orientation: landscape) {
+  .gp-page {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas:
+      "top top"
+      "log log"
+      "center side"
+      "chat side";
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+
+  .gp-chat {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ── แผงควบคุมแอดมิน (เห็นเฉพาะ user.isAdmin) ── */
 .admin-bar {
   position: relative;

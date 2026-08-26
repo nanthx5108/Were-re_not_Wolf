@@ -124,3 +124,54 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(192, 57, 43, 0.2);
 }
+
+@media (max-width: 767px) {
+  .navbar {
+    align-items: stretch;
+    padding: 10px var(--mobile-padding);
+    gap: 8px;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .navbar-left {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+  }
+
+  .navbar-right {
+    flex: 0 0 auto;
+  }
+
+  .navbar-logo {
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+
+  .navbar-code {
+    max-width: 100%;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
+
+  .navbar-status,
+  .navbar-nickname {
+    display: none;
+  }
+
+  .navbar-settings-btn,
+  .navbar-leave-btn {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .navbar-settings-btn span {
+    display: none;
+  }
+}

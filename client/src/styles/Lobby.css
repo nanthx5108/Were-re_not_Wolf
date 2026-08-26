@@ -898,7 +898,7 @@
   .lobby-topbar { padding: var(--space-3) var(--space-4); }
   .lobby-grid {
     grid-template-columns: 1fr;
-    grid-template-areas: "center" "players" "config";
+    grid-template-areas: "players" "config" "center";
     grid-template-rows: none;
     flex: none;
     padding: 0 var(--space-4) var(--space-6);
@@ -908,6 +908,62 @@
   .lobby-players { max-height: 60dvh; }
   .panel-head.is-split { flex-wrap: wrap; }
   .lobby-fab { right: var(--space-4); bottom: var(--space-4); }
+}
+
+@media (max-width: 767px) {
+  .lobby-shell {
+    overflow-x: clip;
+  }
+
+  .lobby-topbar {
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  }
+
+  .lobby-grid {
+    padding-left: var(--mobile-padding);
+    padding-right: var(--mobile-padding);
+    gap: 10px;
+  }
+
+  .lobby-panel {
+    min-width: 0;
+  }
+
+  .lobby-panel-body {
+    padding: var(--space-3);
+  }
+
+  .lobby-config,
+  .lobby-players {
+    max-height: none;
+  }
+
+  .lobby-center {
+    min-height: 58dvh;
+  }
+
+  .lobby-chatwrap,
+  .lobby-chatwrap .gpc.gp-panel {
+    min-height: 52dvh;
+  }
+
+  .btn-start-game,
+  .lobby-config-btn {
+    min-height: var(--touch-target);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .lobby-grid {
+    gap: var(--space-3);
+  }
+
+  .islander-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: 8px;
+  }
 }
 
 /* ── Scrollbar ของแผงต่าง ๆ (นิยามซ้ำจาก HomePage.css เพราะเข้าหน้า

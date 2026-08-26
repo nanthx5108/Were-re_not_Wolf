@@ -103,3 +103,19 @@
   color: var(--sage-bright);
   font-weight: 700;
 }
+
+@media (max-width: 767px) {
+  .na-panel {
+    padding: 12px;
+  }
+
+  .na-target-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .na-target-btn {
+    min-height: var(--touch-target);
+    padding: 8px 10px;
+  }
+}
