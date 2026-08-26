@@ -1,7 +1,7 @@
 const STORAGE_KEY = 'wnw_sound';
 const LEGACY_STORAGE_KEY = 'wnw_audio_settings';
 
-const DEFAULTS = { master: 0.6, music: 0.35, sfx: 0.35, ui: 0.2, voice: 0.7, muted: false };
+const DEFAULTS = { master: 0.6, music: 0.35, sfx: 0.35, ui: 0.2, muted: false };
 
 const LEGACY_AUDIO_MAP = {
   '/audio/sfx_chat_receive.wav': '/assets/audio/SFX-Chat.mp3',
@@ -66,7 +66,6 @@ function normalizeSettings(settings = {}) {
     music: normalizeVolume(settings.music, DEFAULTS.music),
     sfx: normalizeVolume(settings.sfx, DEFAULTS.sfx),
     ui: normalizeVolume(settings.ui, DEFAULTS.ui),
-    voice: normalizeVolume(settings.voice, DEFAULTS.voice),
     muted: Boolean(settings.muted),
   };
 }
@@ -101,7 +100,6 @@ class SoundManager {
         music: this.settings.music * 100,
         sfx: this.settings.sfx * 100,
         ui: this.settings.ui * 100,
-        voice: this.settings.voice * 100,
       }));
     } catch { /* private mode */ }
   }
@@ -200,7 +198,6 @@ class SoundManager {
   setMaster(v) { this.updateSettings({ master: v }); }
   setMusic(v)  { this.updateSettings({ music: v }); }
   setSfx(v)    { this.updateSettings({ sfx: v }); }
-  setVoice(v)  { this.updateSettings({ voice: v }); }
   mute(m)      { this.settings.muted  = Boolean(m); this._applyBgmVolume(); this._saveSettings(); }
 
   _applyBgmVolume() {
@@ -208,7 +205,6 @@ class SoundManager {
   }
 
   getSettings() { return { ...this.settings }; }
-  getVoiceVolume() { return this._volume('voice'); }
 }
 
 export const soundManager = new SoundManager();

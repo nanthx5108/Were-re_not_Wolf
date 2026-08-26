@@ -560,61 +560,6 @@ export function registerSocketHandlers(socket, io) {
     }
   });
 
-  // ── สัญญาณเสียง (WebRTC mesh) — server แค่ relay SDP/ICE ไม่แตะเสียงเลย ──
-  // อนุญาตเฉพาะตอนกลางวัน/โหวต และจับคู่เฉพาะคนที่สถานะ isAlive ตรงกัน
-  // (คนเป็นคุยกับคนเป็น, คนตายคุยกับคนตาย — เหมือนช่องแชท)
-  function voiceEligible(room, player) {
-    return room?.status === 'in_progress' &&
-      (room.phase === PHASES.DAY || room.phase === PHASES.VOTING) &&
-      Boolean(player);
-  }
-
-  socket.on('voice:join', () => {
-    const { roomId, playerId } = socket.data || {};
-    if (!roomId || !playerId) return;
-    const room = getRoom(roomId);
-    const player = room?.players.get(playerId);
-    if (!voiceEligible(room, player)) return;
-
-    const peers = getPlayersArray(roomId).filter(p =>
-      p.id !== playerId && p.isConnected !== false && p.isAlive === player.isAlive
-    );
-    socket.emit('voice:peers', peers.map(p => p.id));
-    for (const peer of peers) {
-      const peerSocket = peer.socketId ? io.sockets.sockets.get(peer.socketId) : null;
-      peerSocket?.emit('voice:peer_joined', { peerId: playerId });
-    }
-  });
-
-  socket.on('voice:leave', () => {
-    const { roomId, playerId } = socket.data || {};
-    if (!roomId || !playerId) return;
-    socket.to(roomId).emit('voice:peer_left', { peerId: playerId });
-  });
-
-  socket.on('voice:signal', ({ targetPlayerId, signal } = {}) => {
-    const { roomId, playerId } = socket.data || {};
-    if (!roomId || !playerId || !targetPlayerId) return;
-    const room = getRoom(roomId);
-    const sender = room?.players.get(playerId);
-    const target = room?.players.get(targetPlayerId);
-    if (!voiceEligible(room, sender) || !voiceEligible(room, target)) return;
-    if (sender.isAlive !== target.isAlive || !target.socketId || !signal || typeof signal !== 'object') return;
-    io.to(target.socketId).emit('voice:signal', { fromPlayerId: playerId, signal });
-  });
-
-  socket.on('voice:mute_state', ({ isMuted } = {}) => {
-    const { roomId, playerId } = socket.data || {};
-    if (!roomId || !playerId) return;
-    const room = getRoom(roomId);
-    const player = room?.players.get(playerId);
-    if (!voiceEligible(room, player)) return;
-    for (const peer of getPlayersArray(roomId)) {
-      if (peer.id !== playerId && peer.isConnected !== false && peer.isAlive === player.isAlive && peer.socketId) {
-        io.to(peer.socketId).emit('voice:mute_state', { playerId, isMuted: Boolean(isMuted) });
-      }
-    }
-  });
 }
 
 async function handleRejoin(socket, io, roomId, playerId) {

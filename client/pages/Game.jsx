@@ -15,7 +15,6 @@ import FortuneInfoPanel from '../src/components/FortuneInfoPanel.jsx';
 import HighlightTimeline from '../src/components/HighlightTimeline.jsx';
 import FortuneEffects from '../src/components/FortuneEffects.jsx';
 import FortuneCard from '../src/components/FortuneCard.jsx';
-import VoiceChat from '../src/components/voiceChat.jsx';
 
 const ROLE_LABEL = {
   villager:  '🧑‍🌾 Villager',
@@ -265,7 +264,6 @@ export default function Game() {
       <ActionLogBar />
 
       <aside className="gp-chat">
-        <VoiceChat />
         <NightAction />
         {isVoting && <VotingPanel players={players} playerId={playerId} votes={votes} onVote={castVote} myFortuneCard={myFortuneCard} realtimeVoteCounts={realtimeVoteCounts} phaseEndsAt={room.phaseEndsAt} />}
         {isResults && voteResult && (
