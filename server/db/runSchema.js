@@ -116,6 +116,17 @@ export async function runSchema(connection, recoveredTables = new Set()) {
     }
   }
 
+  await connection.query(
+    `INSERT INTO news (title, content, tag, author_username, created_at)
+     SELECT ?, ?, ?, ?, ?
+     WHERE NOT EXISTS (SELECT 1 FROM news WHERE title = ?)`,
+    [
+      'Demo Version 0.1.1',
+      '27 สิงหาคม 2026\n\n✨ เพิ่มระบบ\n- เพิ่ม Animation ภายในเกม\n- เพิ่ม Animation สำหรับการเปลี่ยนช่วงเวลากลางวันและกลางคืน\n- เพิ่ม Animation เมื่อเริ่มเกม\n- เพิ่ม Animation สำหรับการโหวตและการประกาศผล\n- เพิ่ม Animation สำหรับการเข้า-ออกห้องและการเปลี่ยนสถานะ Ready\n- เพิ่ม Animation สำหรับ Popup, Modal และ Notification\n- เพิ่ม Micro-interaction สำหรับปุ่มและองค์ประกอบต่าง ๆ ของ UI\n- เพิ่ม Loading Animation ระหว่างการโหลดข้อมูลและเริ่มเกม\n\n🛠 ปรับปรุง\n- ปรับปรุงความลื่นไหลของ UI ภายในเกม\n- ปรับปรุง Transition ระหว่างหน้าต่างและสถานะต่าง ๆ\n- ปรับแต่ง Visual Effects ให้เข้ากับธีม Dark / Mystery\n- ปรับปรุงการตอบสนองขององค์ประกอบ UI\n- ปรับปรุงประสิทธิภาพ Animation สำหรับ Desktop และ Mobile\n\n🚧 กำลังพัฒนา\n- บทบาทใหม่\n- ระบบบันทึกประวัติการเล่น\n- ระบบตั้งค่าห้อง\n- เอฟเฟกต์และแอนิเมชันเพิ่มเติม\n- การปรับปรุงประสิทธิภาพและความเสถียรอย่างต่อเนื่อง',
+      'อัปเดต', 'system', '2026-08-27 00:00:00', 'Demo Version 0.1.1',
+    ]
+  );
+
   try {
     const [userRows] = await connection.query("SELECT id FROM users WHERE email = 'blaztx5108@gmail.com' LIMIT 1");
     if (userRows.length > 0) {
