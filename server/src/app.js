@@ -11,6 +11,7 @@ import statsRoutes from './routes/statsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import newsRoutes from './routes/newsRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import pool from '../db/connection.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express(); 
@@ -61,6 +62,16 @@ app.use(sessionMiddleware);
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
+app.get('/keepalive', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).send('Server and Database are awake!');
+  } catch (error) {
+    console.error('[keepalive] Database connection error:', error);
+    res.status(500).send('Database connection error');
+  }
+});
+
 app.use('/api/auth', rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per window
@@ -79,7 +90,7 @@ if (SERVES_CLIENT) {
 
   app.use((req, res, next) => {
     if (req.method !== 'GET') return next();
-    if (/^\/(api|uploads|socket\.io|health)\b/.test(req.path)) return next();
+    if (/^\/(api|uploads|socket\.io|health|keepalive)\b/.test(req.path)) return next();
     res.sendFile(path.join(CLIENT_DIST, 'index.html'));
   });
 }
