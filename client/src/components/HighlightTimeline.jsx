@@ -49,6 +49,10 @@ function HighlightItem({ highlight, players }) {
                 alt={p.nickname}
                 title={p.nickname}
                 className="ht-avatar"
+                onError={e => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = defaultAvatar;
+                }}
               />
             ))}
           </div>

@@ -42,7 +42,15 @@ export default function UserPill({ user, onLogout, navigate }) {
       >
         <span className="user-pill-avatar">
           {user.avatarUrl
-            ? <img src={user.avatarUrl} alt="" />
+            ? <img
+                src={user.avatarUrl}
+                alt=""
+                onError={e => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = defaultAvatar;
+                  e.currentTarget.classList.add('is-default');
+                }}
+              />
             : <img src={defaultAvatar} alt="" className="is-default" />}
         </span>
 

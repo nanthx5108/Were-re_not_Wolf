@@ -48,7 +48,15 @@ export default function ViewProfilePage() {
           <div className="view-profile-avatar-row">
             <div className="view-profile-avatar-wrap">
               {user?.avatarUrl
-                ? <img src={user.avatarUrl} alt="avatar" className="view-profile-avatar-img" />
+                ? <img
+                    src={user.avatarUrl}
+                    alt="avatar"
+                    className="view-profile-avatar-img"
+                    onError={e => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = defaultAvatar;
+                    }}
+                  />
                 : <img src={defaultAvatar} alt="รูปโปรไฟล์เริ่มต้น" className="view-profile-avatar-img" />}
             </div>
           </div>

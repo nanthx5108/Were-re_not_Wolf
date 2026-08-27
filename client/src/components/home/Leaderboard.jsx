@@ -27,7 +27,15 @@ export default function Leaderboard({ players, loading }) {
               <span className="leaderboard-rank">{i + 1}</span>
               <span className="leaderboard-ava">
                 {p.avatarUrl
-                  ? <img src={p.avatarUrl} alt="" />
+                  ? <img
+                      src={p.avatarUrl}
+                      alt=""
+                      onError={e => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = defaultAvatar;
+                        e.currentTarget.classList.add('is-default');
+                      }}
+                    />
                   : <img src={defaultAvatar} alt="" className="is-default" />}
               </span>
               <span className="leaderboard-name">{p.name}</span>
