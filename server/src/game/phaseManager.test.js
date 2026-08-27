@@ -80,6 +80,28 @@ function seedVotingRoom(roomId, roles) {
   initVoting(roomId);
 }
 
+test('first night advances directly to day one without resolving night actions', async t => {
+  const roomId = 'room-first-night';
+  createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 4, gameMode: 'classic' });
+  ['werewolf', 'seer', 'villager', 'villager'].forEach((role, i) => {
+    const id = `p${i}`;
+    addPlayerToRoom(roomId, { id, nickname: id, socketId: `sock-${id}` });
+    updatePlayer(roomId, id, { role });
+  });
+  updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT_ZERO, round: 0 });
+  t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); });
+
+  const { io, emitted } = makeIo();
+  await advancePhase(io, roomId);
+
+  const room = getRoom(roomId);
+  assert.equal(room.phase, PHASES.DAY);
+  assert.equal(room.round, 1);
+  assert.equal(room.nightResult, undefined);
+  assert.equal(emitted.some(e => e.event === 'night:result'), false);
+  assert.equal(emitted.some(e => e.event === 'morning:event'), false);
+});
+
 test('voting phase resolves and advances to results without crashing', async t => {
   const roomId = 'room-vote-advance';
   seedVotingRoom(roomId, ['werewolf', 'villager', 'villager', 'villager']);

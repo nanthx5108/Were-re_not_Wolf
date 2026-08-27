@@ -65,7 +65,7 @@ export function getPhaseDurationMs(roomId, phase) {
 }
 
 const NEXT_PHASE = Object.freeze({
-  [PHASES.NIGHT_ZERO]: PHASES.NIGHT,   // จบช่วงดู role → เข้า Night 1 (game loop ปกติ)
+  [PHASES.NIGHT_ZERO]: PHASES.DAY,     // จบช่วงดู role → เข้า Day 1 โดยไม่ใช้ Night Action
   [PHASES.NIGHT]:      PHASES.DAY,
   [PHASES.DAY]:        PHASES.VOTING,
   [PHASES.VOTING]:     PHASES.RESULTS,
@@ -239,9 +239,11 @@ async function _advancePhase(io, roomId) {
     initVoting(roomId);
   }
 
-  const round = nextPhase === PHASES.NIGHT
-    ? (room.round ?? 1) + 1
-    : (room.round ?? 1);
+  const round = room.phase === PHASES.NIGHT_ZERO
+    ? 1
+    : nextPhase === PHASES.NIGHT
+      ? (room.round ?? 1) + 1
+      : (room.round ?? 1);
 
   updateRoom(roomId, { phase: nextPhase, round });
 

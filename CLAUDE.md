@@ -26,9 +26,9 @@
 - **shared/** — โค้ดที่ client/server ใช้ร่วม (เช่น `leveling.js`)
 
 ### game state machine (server)
-- Phases: `lobby → night_zero → night → day → voting → results → (loop) → ended` — `server/src/game/constants.js`
-- Loop: `RESULTS → NIGHT` (`NEXT_PHASE` ใน `phaseManager.js`) ; round +1 ตอนเข้า night
-- `night_zero` จบด้วยทุกคนกด "ดูแล้ว" (`player:ready`) ไม่ใช่หมดเวลา
+- Phases: `lobby → night_zero → day → voting → results → night → (loop) → ended` — `server/src/game/constants.js`
+- First-night flow: แจก role → `night_zero` รอทุกคนกด "ดูแล้ว" (`player:ready`) → `day` รอบที่ 1 โดยไม่ Resolve Night Action
+- Loop ปกติ: `RESULTS → NIGHT → DAY` (`NEXT_PHASE` ใน `phaseManager.js`) ; round +1 ตอนเข้า night
 - เวลาแต่ละ phase: `getPhaseDurationMs(roomId, phase)` อ่านจาก `room.phaseDurations` (host ตั้ง) — `results` คงที่ 10s
 - ตัวจับเวลา/advance รวมที่ `advancePhase()` (กันซ้อนด้วย `advancingRooms` set) เรียกได้ 3 ทาง: timer หมด, โหวต/ready ครบ, host skip
 
