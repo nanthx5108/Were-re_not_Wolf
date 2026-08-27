@@ -244,6 +244,7 @@
   font-size: 0.84rem;
   color: var(--text-secondary);
   line-height: 1.55;
+  white-space: pre-line;
   margin-bottom: var(--space-3);
 }
 

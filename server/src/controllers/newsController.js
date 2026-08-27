@@ -13,7 +13,7 @@ export async function getPublicNews(req, res) {
 
   try {
     let countQuery = 'SELECT COUNT(*) as total FROM news';
-    let dataQuery = 'SELECT id, title, content, content AS desc, tag, author_username, created_at, created_at AS date FROM news';
+    let dataQuery = 'SELECT id, title, content, content AS `desc`, tag, author_username, created_at, created_at AS date FROM news';
     const params = [];
 
     if (tag) {

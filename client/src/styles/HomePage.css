@@ -1474,6 +1474,7 @@
   font-size: 0.8rem;
   color: var(--text-secondary);
   line-height: 1.5;
+  white-space: pre-line;
 }
 
 /* Developer Note = เสียงจากคนทำเกม → dustypink (หมวด "ชุมชน/คน" ของพาเลตต์) */
