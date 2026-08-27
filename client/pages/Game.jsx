@@ -195,7 +195,7 @@ export default function Game() {
   const canNightAct    = isNight && !isDead && NIGHT_ACTION_ROLES.includes(myRole) && !myNightAction;
 
   return (
-    <div className="gp-page">
+    <div className={`gp-page gp-phase-${room.phase}`}>
       {isChaos && <MorningEventBanner />}
       {isChaos && <EarlyInfoToast />}
       {isChaos && <FortuneEffects card={myFortuneCard} messages={messages} />}
@@ -234,7 +234,7 @@ export default function Game() {
         </div>
 
         <div className="gp-top-right">
-          <span className={`gp-daybadge ${look.night ? 'is-night' : 'is-day'}`}>
+          <span key={`${room.phase}-${room.round}`} className={`gp-daybadge ${look.night ? 'is-night' : 'is-day'}`}>
             {look.badge} {room.round ?? 1}
           </span>
           <div className="gp-roomcode">ห้อง <b>{room.id}</b></div>

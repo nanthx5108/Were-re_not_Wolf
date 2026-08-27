@@ -150,6 +150,17 @@ CREATE INDEX idx_messages_room_id  ON messages(room_id);
 CREATE INDEX idx_messages_sent_at  ON messages(sent_at);
 CREATE INDEX idx_users_username    ON users(username);
 
+INSERT INTO news (title, content, tag, author_username, created_at)
+SELECT
+    'Demo Version 0.1.1',
+    '27 สิงหาคม 2026\n\n✨ เพิ่มระบบ\n- เพิ่ม Animation ภายในเกม\n- เพิ่ม Animation สำหรับการเปลี่ยนช่วงเวลากลางวันและกลางคืน\n- เพิ่ม Animation เมื่อเริ่มเกม\n- เพิ่ม Animation สำหรับการโหวตและการประกาศผล\n- เพิ่ม Animation สำหรับการเข้า-ออกห้องและการเปลี่ยนสถานะ Ready\n- เพิ่ม Animation สำหรับ Popup, Modal และ Notification\n- เพิ่ม Micro-interaction สำหรับปุ่มและองค์ประกอบต่าง ๆ ของ UI\n- เพิ่ม Loading Animation ระหว่างการโหลดข้อมูลและเริ่มเกม\n\n🛠 ปรับปรุง\n- ปรับปรุงความลื่นไหลของ UI ภายในเกม\n- ปรับปรุง Transition ระหว่างหน้าต่างและสถานะต่าง ๆ\n- ปรับแต่ง Visual Effects ให้เข้ากับธีม Dark / Mystery\n- ปรับปรุงการตอบสนองขององค์ประกอบ UI\n- ปรับปรุงประสิทธิภาพ Animation สำหรับ Desktop และ Mobile\n\n🚧 กำลังพัฒนา\n- บทบาทใหม่\n- ระบบบันทึกประวัติการเล่น\n- ระบบตั้งค่าห้อง\n- เอฟเฟกต์และแอนิเมชันเพิ่มเติม\n- การปรับปรุงประสิทธิภาพและความเสถียรอย่างต่อเนื่อง',
+    'อัปเดต',
+    'system',
+    '2026-08-27 00:00:00'
+WHERE NOT EXISTS (
+    SELECT 1 FROM news WHERE title = 'Demo Version 0.1.1'
+);
+
 ALTER TABLE users ADD COLUMN games_played INT NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN display_name VARCHAR(32) DEFAULT NULL;
 ALTER TABLE users ADD COLUMN email VARCHAR(255) DEFAULT NULL;

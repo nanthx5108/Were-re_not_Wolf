@@ -108,11 +108,15 @@
   border: 1px solid var(--color-border);
   gap: 8px;
   background: var(--color-surface-2);
+  transition: background var(--transition), border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+  animation: vote-row-in 240ms ease both;
 }
+.vp-row:hover { transform: translateX(2px); border-color: var(--color-accent-dim); }
 
 .vp-row.is-my-target {
   background: rgba(var(--accent-rgb), 0.07);
   border-color: var(--color-accent);
+  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.14);
 }
 
 .vp-player-info {
@@ -152,6 +156,7 @@
   font-size: 12px;
   color: var(--color-text-muted);
   transition: color 0.3s;
+  animation: vote-count-pop 220ms ease both;
 }
 
 .vp-vote-count.is-realtime {

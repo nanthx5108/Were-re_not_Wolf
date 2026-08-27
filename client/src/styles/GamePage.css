@@ -13,6 +13,7 @@
     "log    log     log"
     "chat   center  side";
   align-items: stretch;
+  animation: gp-page-in 420ms ease both;
 }
 
 .gp-page::before {
@@ -24,6 +25,14 @@
   background:
     radial-gradient(ellipse 60% 40% at 50% -8%, rgba(180,200,255,0.06) 0%, transparent 60%),
     radial-gradient(ellipse 120% 80% at 50% 60%, transparent 40%, rgba(0,0,0,0.55) 100%);
+  transition: background 700ms ease;
+}
+.gp-page.gp-phase-day::before,
+.gp-page.gp-phase-voting::before,
+.gp-page.gp-phase-results::before {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% -8%, rgba(232,169,75,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 120% 80% at 50% 60%, transparent 40%, rgba(0,0,0,0.48) 100%);
 }
 
 .gp-page > * { position: relative; z-index: 1; }
@@ -35,6 +44,7 @@
   background: rgba(13, 19, 26, 0.86);
   backdrop-filter: blur(16px);
   overflow: hidden;
+  transition: border-color var(--ease-md), box-shadow var(--ease-md), background-color var(--ease-md);
 }
 .gp-panel::before {
   content: '';
@@ -169,6 +179,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   border: 1px solid var(--border-default);
+  animation: phase-badge-in 520ms cubic-bezier(.2,.8,.2,1) both;
 }
 .gp-daybadge.is-day {
   color: var(--phase-day);
@@ -271,6 +282,12 @@
   background: rgba(var(--accent-rgb),0.18);
   transform: translateY(-1px);
 }
+.gp-btn:active,
+.gp-setting-btn:active,
+.gp-modal-close:active,
+.gpc-send:active {
+  transform: scale(0.96);
+}
 
 .gp-modal-backdrop {
   position: fixed;
@@ -280,6 +297,7 @@
   place-items: center;
   background: rgba(4,6,10,0.72);
   backdrop-filter: blur(3px);
+  animation: modal-backdrop-in 180ms ease both;
 }
 .gp-modal {
   width: min(420px, 92vw);
@@ -287,6 +305,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  animation: modal-in 240ms cubic-bezier(.2,.8,.2,1) both;
 }
 .gp-modal-head {
   display: flex;
@@ -365,6 +384,7 @@
   line-height: 1.45;
   padding: 3px 0;
   border-bottom: 1px solid rgba(255,255,255,0.03);
+  animation: chat-message-in 220ms ease both;
 }
 .gpc-sender {
   font-weight: 700;
@@ -484,6 +504,7 @@
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.02);
   transition: border-color var(--ease), background var(--ease);
+  animation: player-row-in 240ms ease both;
 }
 .gps-row.is-me { border-color: var(--color-accent-dim); background: rgba(79,209,197,0.06); }
 .gps-row.is-active { border-color: var(--color-accent-dim); box-shadow: 0 0 12px rgba(79,209,197,0.14); }
