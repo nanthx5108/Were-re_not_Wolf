@@ -6,7 +6,6 @@ import bgHome from '../src/assets/bgHome.jpg';
 import { useSound } from '../src/context/SoundContext.jsx';
 import logoLoadingImage from '../src/assets/logo/logo_loading.png';
 import logoMainImage from '../src/assets/logo/Logo-Main.png';
-import defaultAvatar from '../src/assets/ui/default_avatar.png';
 import AuthModal from '../src/components/AuthModal.jsx';
 import HowToPlayModal from '../src/components/HowToPlayModal.jsx';
 import Reveal from '../src/components/Reveal.jsx';

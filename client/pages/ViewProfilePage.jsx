@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../src/context/AuthContext.jsx';
 import { STARTING_LEVEL } from '../../shared/leveling.js';
 import bgHome from '../src/assets/bgHome.jpg';
-import defaultProfileAvatar from '../src/assets/ui/default_profile_avatar.png';
+import defaultAvatar from '../src/assets/ui/default_avatar.png';
 import Reveal from '../src/components/Reveal.jsx';
 import '../src/styles/ViewProfilePage.css';
 
@@ -49,7 +49,7 @@ export default function ViewProfilePage() {
             <div className="view-profile-avatar-wrap">
               {user?.avatarUrl
                 ? <img src={user.avatarUrl} alt="avatar" className="view-profile-avatar-img" />
-                : <img src={defaultProfileAvatar} alt="รูปโปรไฟล์เริ่มต้น" className="view-profile-avatar-img" />}
+                : <img src={defaultAvatar} alt="รูปโปรไฟล์เริ่มต้น" className="view-profile-avatar-img" />}
             </div>
           </div>
 

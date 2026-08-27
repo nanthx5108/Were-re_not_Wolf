@@ -2,7 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../src/context/AuthContext.jsx';
 import bgHome from '../src/assets/bgHome.jpg';
-import defaultProfileAvatar from '../src/assets/ui/default_profile_avatar.png';
+import defaultAvatar from '../src/assets/ui/default_avatar.png';
 import '../src/styles/ProfilePage.css';
 
 const USERNAME_COOLDOWN_DAYS = 90;
@@ -298,7 +298,7 @@ export default function ProfilePage() {
               <div className="profile-avatar-wrap" onClick={() => fileInputRef.current?.click()}>
                 {avatarPreview
                   ? <img src={avatarPreview} alt="avatar" className="profile-avatar-img" onError={handleAvatarError} />
-                  : <img src={defaultProfileAvatar} alt="รูปโปรไฟล์เริ่มต้น" className="profile-avatar-img" />}
+                  : <img src={defaultAvatar} alt="รูปโปรไฟล์เริ่มต้น" className="profile-avatar-img" />}
                 <div className="profile-avatar-edit-badge">เปลี่ยนรูป</div>
               </div>
               <input
@@ -473,7 +473,7 @@ export default function ProfilePage() {
             <div className="profile-viewer-img">
               {avatarPreview
                 ? <img src={avatarPreview} alt="รูปโปรไฟล์" onError={handleAvatarError} />
-                : <img src={defaultProfileAvatar} alt="รูปโปรไฟล์เริ่มต้น" />}
+                : <img src={defaultAvatar} alt="รูปโปรไฟล์เริ่มต้น" />}
             </div>
             <div className="profile-viewer-actions">
               <button

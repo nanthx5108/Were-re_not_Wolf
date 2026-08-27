@@ -105,6 +105,7 @@
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
+  object-position: center;
   border: 1px solid var(--border-default);
   background: var(--bg-void);
 }

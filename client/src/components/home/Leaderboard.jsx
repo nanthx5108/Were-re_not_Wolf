@@ -28,7 +28,7 @@ export default function Leaderboard({ players, loading }) {
               <span className="leaderboard-ava">
                 {p.avatarUrl
                   ? <img src={p.avatarUrl} alt="" />
-                  : <span className="leaderboard-ava-initial">{(p.name || '?').trim().charAt(0).toUpperCase()}</span>}
+                  : <img src={defaultAvatar} alt="" className="is-default" />}
               </span>
               <span className="leaderboard-name">{p.name}</span>
               <span className="leaderboard-meta">{p.gamesPlayed ?? 0} เกม</span>

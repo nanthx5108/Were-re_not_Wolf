@@ -1808,7 +1808,8 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.leaderboard-ava img { width: 100%; height: 100%; object-fit: cover; }
+.leaderboard-ava img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.leaderboard-ava img.is-default { object-fit: contain; padding: 2px; }
 .leaderboard-ava-initial {
   font-size: 0.8rem;
   font-weight: 700;
