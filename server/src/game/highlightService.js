@@ -220,11 +220,10 @@ export function getPostGameHighlights(roomId) {
     });
   }
 
-  const wolfMostSilent = players.filter(p => p.role === 'werewolf' && p.isAlive).sort((a, b) => {
-    const aVotes = voteTally[a.id] || 0;
-    const bVotes = voteTally[b.id] || 0;
-    return aVotes - bVotes;
-  })[0];
+  const wolfMostSilent = players
+    .filter(p => p.role === 'werewolf' && p.isAlive)
+    .filter(p => (voteTally[p.id] || 0) === 0)
+    .sort((a, b) => a.nickname.localeCompare(b.nickname))[0];
   if (wolfMostSilent) {
     candidateHighlights.push({
       type: 'WOLF_SNEAK',

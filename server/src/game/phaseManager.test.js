@@ -269,3 +269,24 @@ test('post-game highlight summary compiles from room memory and keeps the final 
 
   deleteRoom(roomId);
 });
+
+test('wolf sneaky highlight only fires when a werewolf is never targeted', () => {
+  const roomId = 'room-postgame-wolf-sneak';
+  createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 4 });
+
+  ['werewolf', 'werewolf', 'villager', 'villager'].forEach((role, index) => {
+    addPlayerToRoom(roomId, { id: `p${index}`, nickname: `p${index}`, socketId: `sock-p${index}` });
+    updatePlayer(roomId, `p${index}`, { role, isAlive: true });
+  });
+
+  const room = getRoom(roomId);
+  room.status = 'finished';
+  room.winner = 'village';
+  room.memory.voteTally = { p2: 2, p3: 1 };
+
+  const highlights = getPostGameHighlights(roomId);
+  assert.ok(highlights.some(h => h.type === 'WOLF_SNEAK' && h.playersInvolved[0] === 'p0'));
+  assert.ok(!highlights.some(h => h.type === 'WOLF_SNEAK' && h.playersInvolved[0] === 'p1'));
+
+  deleteRoom(roomId);
+});
