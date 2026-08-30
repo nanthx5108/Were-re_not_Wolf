@@ -15,6 +15,7 @@ import {
   startPhaseTimer, advancePhase, getPhaseDurationMs, getTimeRemaining,
   endGameIfDecided, scheduleRoomAbandon, cancelRoomAbandon, _endGameAndBroadcast,
 } from '../game/phaseManager.js';
+import { startGameForRoom } from '../game/startGame.js';
 import { castVote, hasAllVoted } from '../game/voteManager.js';
 import { teardownRoom } from '../game/roomMaintenance.js';
 import { initNightActions, submitNightAction, resolveNightActions, getBlockedProtectTargets } from '../game/nightActions.js';
@@ -212,60 +213,8 @@ export function registerSocketHandlers(socket, io) {
     const { roomId, playerId } = socket.data || {};
     if (!roomId) return;
 
-    const room = getRoom(roomId);
-    if (!room)                     return socket.emit('error', { message: 'Room not found.' });
-    if (String(room.hostId) !== String(playerId))  return socket.emit('error', { message: 'Only the host can start.' });
-    if (room.status !== 'waiting') return socket.emit('error', { message: 'Game already started.' });
-
-    const players = getPlayersArray(roomId);
-    if (players.length < PLAYER_LIMITS.MIN) {
-      return socket.emit('error', { message: `Need at least ${PLAYER_LIMITS.MIN} players.` });
-    }
-
-    const isChaos = room.gameMode === GAME_MODES.CHAOS;
-    if (isChaos) {
-      updateRoom(roomId, { phaseDurations: { ...CHAOS_PHASE_DURATIONS } });
-    }
-
-    const roleConfig = isChaos
-      ? buildChaosRoleConfig(players.length)
-      : (room.roleConfig || buildDefaultRoleConfig(players.length));
-    const configError = validateConfigForPlayerCount(roleConfig, players.length);
-    if (configError) return socket.emit('error', { message: configError });
-
-    if (isChaos) updateRoom(roomId, { roleConfig });
-
-    const assigned = distributeRoles(players, roleConfig);
-    for (const p of assigned) {
-      updatePlayer(roomId, p.id, { role: p.role });
-      await pool.query(`UPDATE players SET role = ? WHERE id = ?`, [p.role, p.id]);
-    }
-
-    updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT_ZERO, round: 0, readyPlayers: new Set() });
-    await pool.query(`UPDATE rooms SET status = 'in_progress' WHERE id = ?`, [roomId]);
-
-    const wolves = assigned.filter(p => p.role === 'werewolf');
-
-    for (const p of assigned) {
-      const s = findSocketByPlayerId(io, p.id);
-      if (!s) continue;
-
-      const teammates = p.role === 'werewolf'
-        ? wolves.filter(w => w.id !== p.id).map(w => ({ id: w.id, nickname: w.nickname }))
-        : undefined;
-
-      s.emit('game:started', {
-        phase: PHASES.NIGHT_ZERO, myRole: p.role, endsAt: null, durationMs: null, round: 0, teammates,
-      });
-    }
-
-    io.to(roomId).emit('room:state', serializeRoom(roomId));
-    io.to(roomId).emit('nightzero:ready', { readyCount: 0, total: getConnectedPlayers(roomId).length });
-    io.to(roomId).emit('chat:message', {
-      id: `sys-${Date.now()}`, channel: CHANNELS.SYSTEM,
-      content: 'คืนก่อนเริ่มเกม — เปิดการ์ดดูบทบาทของเจ้าให้ดี แล้วกด "ดูแล้ว" เมื่อพร้อม',
-      sentAt: new Date().toISOString(),
-    });
+    const result = await startGameForRoom(io, roomId, { callerPlayerId: playerId, forceStart: false });
+    if (!result.ok) return socket.emit('error', { message: result.error });
   });
 
   socket.on('player:ready', () => {
@@ -486,6 +435,43 @@ export function registerSocketHandlers(socket, io) {
           io.to(roomId).emit('phase:changed', {
             phase: room.phase, endsAt: room.phaseEndsAt, durationMs: remaining + extraMs, round: room.round,
           });
+          break;
+        }
+
+        case 'add_bot': {
+          if (room.status !== 'waiting') {
+            return socket.emit('error', { message: 'สามารถเพิ่มบอทได้เฉพาะตอนรอเริ่มเกม' });
+          }
+          if (room.players.size >= room.maxPlayers) {
+            return socket.emit('error', { message: 'ห้องเต็มแล้ว ไม่สามารถเพิ่มบอทได้' });
+          }
+
+          const botNumber = [...room.players.values()].filter(p => p.isBot).length + 1;
+          const botId = `bot-${roomId}-${Date.now()}-${botNumber}`;
+          const botName = `Bot ${botNumber}`;
+
+          await pool.query(
+            `INSERT INTO players (id, room_id, nickname, role, is_alive, socket_id)
+             VALUES (?, ?, ?, NULL, TRUE, NULL)
+             ON DUPLICATE KEY UPDATE room_id = VALUES(room_id), nickname = VALUES(nickname), role = NULL, is_alive = TRUE, socket_id = NULL`,
+            [botId, roomId, botName]
+          );
+
+          addPlayerToRoom(roomId, { id: botId, nickname: botName, isBot: true, socketId: null });
+          updatePlayer(roomId, botId, { isConnected: false });
+          io.to(roomId).emit('room:players_updated', getPlayersArray(roomId));
+          io.to(roomId).emit('chat:message', {
+            id: `sys-${Date.now()}`,
+            channel: CHANNELS.SYSTEM,
+            content: `${botName} arrived on the island.`,
+            sentAt: new Date().toISOString(),
+          });
+          break;
+        }
+
+        case 'force_start': {
+          const result = await startGameForRoom(io, roomId, { forceStart: true });
+          if (!result.ok) return socket.emit('error', { message: result.error });
           break;
         }
 

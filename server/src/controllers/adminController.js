@@ -1,9 +1,10 @@
 import pool from '../../db/connection.js';
-import { getAllRooms, getRoom } from '../game/gameStore.js';
+import { getAllRooms, getRoom, addPlayerToRoom, updatePlayer } from '../game/gameStore.js';
 import { teardownRoom } from '../game/roomMaintenance.js';
 import { logAdminAction } from '../utils/adminLogger.js';
 import { refreshGameData } from '../services/gameDataService.js';
 import { refreshSettings } from '../services/gameSettingsService.js';
+import { startGameForRoom } from '../game/startGame.js';
 
 /**
  * ดึงข้อมูลผู้ใช้ทั้งหมด
@@ -274,6 +275,72 @@ export async function closeRoom(req, res) {
     console.error(`[Admin] Error closing room ${id}:`, error);
     res.status(500).json({ error: 'ปิดห้องไม่สำเร็จ' });
   }
+}
+
+export async function addBotToRoom(req, res) {
+ const { id } = req.params;
+ const room = getRoom(id);
+
+ if (!room) {
+   return res.status(404).json({ error: 'ไม่พบห้องในระบบ' });
+ }
+
+ if (room.status !== 'waiting') {
+   return res.status(409).json({ error: 'สามารถเพิ่มบอทได้เฉพาะตอนรอเริ่มเกม' });
+ }
+
+ if (room.players.size >= room.maxPlayers) {
+   return res.status(409).json({ error: 'ห้องเต็มแล้ว' });
+ }
+
+ try {
+   const botNumber = [...room.players.values()].filter(p => p.isBot).length + 1;
+   const botId = `bot-${id}-${Date.now()}-${botNumber}`;
+   const botName = `Bot ${botNumber}`;
+
+   await pool.query(
+     `INSERT INTO players (id, room_id, nickname, role, is_alive, socket_id)
+      VALUES (?, ?, ?, NULL, TRUE, NULL)
+      ON DUPLICATE KEY UPDATE room_id = VALUES(room_id), nickname = VALUES(nickname), role = NULL, is_alive = TRUE, socket_id = NULL`,
+     [botId, id, botName]
+   );
+
+   addPlayerToRoom(id, { id: botId, nickname: botName, isBot: true, socketId: null });
+   updatePlayer(id, botId, { isConnected: false });
+
+   const io = req.app.get('io');
+   io.to(id).emit('room:players_updated', Array.from(room.players.values()));
+   io.to(id).emit('chat:message', {
+     id: `sys-${Date.now()}`,
+     channel: 'system',
+     content: `${botName} arrived on the island.`,
+     sentAt: new Date().toISOString(),
+   });
+
+   res.json({
+     message: `เพิ่ม ${botName} สำเร็จ`,
+     bot: { id: botId, nickname: botName },
+     room: room,
+   });
+
+   logAdminAction(req.user.id, req.user.username, 'room_add_bot', id, botName, { botId, botName });
+ } catch (error) {
+   console.error(`[Admin] Error adding bot to room ${id}:`, error);
+   res.status(500).json({ error: 'เพิ่มบอทไม่สำเร็จ' });
+ }
+}
+
+export async function forceStartRoom(req, res) {
+ const { id } = req.params;
+ const io = req.app.get('io');
+
+ const result = await startGameForRoom(io, id, { forceStart: true });
+ if (!result.ok) {
+   return res.status(400).json({ error: result.error });
+ }
+
+ res.json({ message: `เริ่มเกมห้อง ${id} เรียบร้อยแล้ว`, started: true });
+ logAdminAction(req.user.id, req.user.username, 'room_force_start', id, getRoom(id)?.name || id, { forced: true });
 }
 
 /**

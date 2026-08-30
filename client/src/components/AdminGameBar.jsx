@@ -37,6 +37,8 @@ export default function AdminGameBar() {
             <button onClick={() => send('advance_phase')}>ข้ามเฟส ▶</button>
             <button onClick={() => send('add_time', { ms: 30000 })}>+30 วิ</button>
             <button onClick={() => send('add_time', { ms: 60000 })}>+60 วิ</button>
+            <button onClick={() => send('add_bot')}>+Bot</button>
+            <button onClick={() => send('force_start')}>เริ่มเกมบังคับ</button>
             <select
               onChange={(e) => { if (e.target.value) { send('end_game', { winner: e.target.value }); e.target.value = ''; } }}
               defaultValue=""

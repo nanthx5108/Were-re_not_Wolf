@@ -1389,6 +1389,40 @@ export default function AdminPage() {
   };
 
   // --- Room Management Actions ---
+  const handleAddBotToRoom = async (room) => {
+    setApiLoading(true);
+    setApiError('');
+    try {
+      const res = await fetch(`/api/admin/rooms/${room.id}/bots`, { method: 'POST' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'เพิ่มบอทไม่สำเร็จ');
+      toast.success(`เพิ่มบอทในห้อง "${room.name}" สำเร็จ`);
+      fetchRooms();
+    } catch (err) {
+      setApiError(err.message);
+      toast.error(err.message);
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const handleForceStartRoom = async (room) => {
+    setApiLoading(true);
+    setApiError('');
+    try {
+      const res = await fetch(`/api/admin/rooms/${room.id}/force-start`, { method: 'POST' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'บังคับเริ่มเกมไม่สำเร็จ');
+      toast.success(`เริ่มเกมห้อง "${room.name}" เรียบร้อยแล้ว`);
+      fetchRooms();
+    } catch (err) {
+      setApiError(err.message);
+      toast.error(err.message);
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
   const handleCloseRoom = (room) => {
     setRoomToClose(room);
   };

@@ -56,6 +56,7 @@ export function addPlayerToRoom(roomId, player) {
     id:          player.id,
     nickname:    player.nickname,
     role:        player.role || null,
+    isBot:       !!player.isBot,
     isAlive:     true,
     isConnected: true,
     socketId:    player.socketId,
@@ -139,6 +140,7 @@ export function serializeRoomForAdmin(roomId) {
     players: getPlayersArray(roomId).map(p => ({
       id: p.id, nickname: p.nickname, role: p.role, isAlive: p.isAlive,
       isConnected: p.isConnected !== false, isMutedByAdmin: p.isMutedByAdmin === true,
+      isBot: p.isBot === true,
     })),
   };
 }

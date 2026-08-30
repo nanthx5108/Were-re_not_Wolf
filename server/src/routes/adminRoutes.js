@@ -23,6 +23,8 @@ import {
   getGameStats,
   getAllRoomsAdmin,
   closeRoom,
+  addBotToRoom,
+  forceStartRoom,
 } from '../controllers/adminController.js';
 
 const router = Router();
@@ -65,6 +67,8 @@ router.get('/logs', getAdminLogs);
 
 // Room Management
 router.get('/rooms', getAllRoomsAdmin);
+router.post('/rooms/:id/bots', addBotToRoom);
+router.post('/rooms/:id/force-start', forceStartRoom);
 router.delete('/rooms/:id', closeRoom);
 
 export default router;
