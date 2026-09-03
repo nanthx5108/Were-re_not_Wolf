@@ -23,9 +23,9 @@ export function buildRoleList(roleConfig, playerCount) {
   return roles;
 }
 
-export function distributeRoles(players, roleConfig) {
+export function distributeRoles(players, roleConfig, { allowBelowMinimum = false } = {}) {
   const count = players.length;
-  if (count < PLAYER_LIMITS.MIN || count > PLAYER_LIMITS.MAX) {
+  if ((count < PLAYER_LIMITS.MIN && !allowBelowMinimum) || count > PLAYER_LIMITS.MAX) {
     throw new Error(
       `Player count ${count} is outside allowed range [${PLAYER_LIMITS.MIN}, ${PLAYER_LIMITS.MAX}]`
     );

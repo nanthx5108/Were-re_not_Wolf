@@ -17,22 +17,33 @@ import {
   GAME_MODES,
 } from './roomConfig.js';
 
+const startingRooms = new Set();
+
 export async function startGameForRoom(io, roomId, options = {}) {
   const { callerPlayerId = null, forceStart = false } = options;
   const liveRoom = getRoom(roomId);
-  if (!liveRoom) return { ok: false, error: 'Room not found.' };
+  if (!liveRoom) return { ok: false, status: 404, error: 'Room not found.' };
 
   if (liveRoom.status !== 'waiting') {
-    return { ok: false, error: 'Game already started.' };
+    return { ok: false, status: 409, error: 'Game already started.' };
   }
 
+  if (startingRooms.has(roomId)) {
+    return { ok: false, status: 409, error: 'Game start is already in progress.' };
+  }
+  startingRooms.add(roomId);
+
+  try {
   if (!forceStart && callerPlayerId && String(liveRoom.hostId) !== String(callerPlayerId)) {
-    return { ok: false, error: 'Only the host can start.' };
+    return { ok: false, status: 403, error: 'Only the host can start.' };
   }
 
   const players = getPlayersArray(roomId);
+  if (players.length === 0) {
+    return { ok: false, status: 422, error: 'At least one player is required.' };
+  }
   if (players.length < PLAYER_LIMITS.MIN && !forceStart) {
-    return { ok: false, error: `Need at least ${PLAYER_LIMITS.MIN} players.` };
+    return { ok: false, status: 422, error: `Need at least ${PLAYER_LIMITS.MIN} players.` };
   }
 
   const isChaos = liveRoom.gameMode === GAME_MODES.CHAOS;
@@ -40,16 +51,20 @@ export async function startGameForRoom(io, roomId, options = {}) {
     updateRoom(roomId, { phaseDurations: { ...CHAOS_PHASE_DURATIONS } });
   }
 
-  const roleConfig = isChaos
+  const roleConfig = forceStart && players.length < PLAYER_LIMITS.MIN
+    ? { werewolf: 1, seer: 0, bodyguard: 0, silencer: 0, fool: 0 }
+    : isChaos
     ? buildChaosRoleConfig(players.length)
     : (liveRoom.roleConfig || buildDefaultRoleConfig(players.length));
 
   const configError = validateConfigForPlayerCount(roleConfig, players.length);
-  if (configError) return { ok: false, error: configError };
+  if (configError && !(forceStart && players.length < PLAYER_LIMITS.MIN)) {
+    return { ok: false, status: 422, error: configError };
+  }
 
   if (isChaos) updateRoom(roomId, { roleConfig });
 
-  const assigned = distributeRoles(players, roleConfig);
+  const assigned = distributeRoles(players, roleConfig, { allowBelowMinimum: forceStart });
   for (const p of assigned) {
     updatePlayer(roomId, p.id, { role: p.role });
     await pool.query(`UPDATE players SET role = ? WHERE id = ?`, [p.role, p.id]);
@@ -89,6 +104,9 @@ export async function startGameForRoom(io, roomId, options = {}) {
   });
 
   return { ok: true, assigned };
+  } finally {
+    startingRooms.delete(roomId);
+  }
 }
 
 function findSocketByPlayerId(io, playerId) {

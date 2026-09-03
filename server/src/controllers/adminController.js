@@ -334,13 +334,18 @@ export async function forceStartRoom(req, res) {
  const { id } = req.params;
  const io = req.app.get('io');
 
- const result = await startGameForRoom(io, id, { forceStart: true });
- if (!result.ok) {
-   return res.status(400).json({ error: result.error });
- }
+ try {
+   const result = await startGameForRoom(io, id, { forceStart: true });
+   if (!result.ok) {
+     return res.status(result.status || 400).json({ error: result.error });
+   }
 
- res.json({ message: `เริ่มเกมห้อง ${id} เรียบร้อยแล้ว`, started: true });
- logAdminAction(req.user.id, req.user.username, 'room_force_start', id, getRoom(id)?.name || id, { forced: true });
+   res.json({ message: `เริ่มเกมห้อง ${id} เรียบร้อยแล้ว`, started: true });
+   logAdminAction(req.user.id, req.user.username, 'room_force_start', id, getRoom(id)?.name || id, { forced: true });
+ } catch (error) {
+   console.error(`[Admin] Error force starting room ${id}:`, error);
+   res.status(500).json({ error: 'เริ่มเกมไม่สำเร็จ' });
+ }
 }
 
 /**

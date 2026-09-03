@@ -457,7 +457,7 @@ function UsersTable({ users, onEditUser, onDeleteUser, onBanUser, onUnbanUser, c
   );
 }
 
-function RoomsList({ rooms, onCloseRoom }) {
+function RoomsList({ rooms, onCloseRoom, onForceStartRoom }) {
   return (
     <div className="admin-table-container custom-scrollbar">
       <table className="admin-table">
@@ -480,6 +480,9 @@ function RoomsList({ rooms, onCloseRoom }) {
               <td>{room.gameMode}</td>
               <td>{room.playerCount} / {room.maxPlayers}</td>
               <td className="actions">
+                {room.status === 'waiting' && (
+                  <button className="action-btn primary" onClick={() => onForceStartRoom(room)}>Force Start</button>
+                )}
                 <button className="action-btn danger" onClick={() => onCloseRoom(room)}>Close Room</button>
               </td>
             </tr>
@@ -854,6 +857,7 @@ export default function AdminPage() {
 
   // State for room closing
   const [roomToClose, setRoomToClose] = useState(null);
+  const [roomToForceStart, setRoomToForceStart] = useState(null);
 
   // State for user deletion
   const [userToDelete, setUserToDelete] = useState(null);
@@ -1414,6 +1418,7 @@ export default function AdminPage() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'บังคับเริ่มเกมไม่สำเร็จ');
       toast.success(`เริ่มเกมห้อง "${room.name}" เรียบร้อยแล้ว`);
+      setRoomToForceStart(null);
       fetchRooms();
     } catch (err) {
       setApiError(err.message);
@@ -1425,6 +1430,18 @@ export default function AdminPage() {
 
   const handleCloseRoom = (room) => {
     setRoomToClose(room);
+  };
+
+  const handleRequestForceStart = (room) => {
+    setRoomToForceStart(room);
+  };
+
+  const handleCancelForceStart = () => {
+    setRoomToForceStart(null);
+  };
+
+  const handleConfirmForceStart = () => {
+    if (roomToForceStart) handleForceStartRoom(roomToForceStart);
   };
 
   const handleConfirmCloseRoom = async () => {
@@ -1605,7 +1622,7 @@ export default function AdminPage() {
             )}
             {!apiLoading && !apiError && activeTab === 'rooms' && (
               <>
-                <RoomsList rooms={rooms} onCloseRoom={handleCloseRoom} />
+                <RoomsList rooms={rooms} onCloseRoom={handleCloseRoom} onForceStartRoom={handleRequestForceStart} />
                 <Pagination currentPage={roomPagination.page} totalPages={roomPagination.totalPages} onPageChange={(page) => setRoomPagination(p => ({ ...p, page }))} />
               </>
             )}
@@ -1748,6 +1765,23 @@ export default function AdminPage() {
         danger
         onConfirm={handleConfirmDeleteFortuneCard}
         onCancel={() => setFortuneCardToDelete(null)}
+      />
+      <ConfirmModal
+        open={!!roomToForceStart}
+        title="ต้องการบังคับเริ่มเกมห้องนี้หรือไม่?"
+        message={
+          <span>
+            Room Name: <strong>{roomToForceStart?.name}</strong><br />
+            Room Code: <strong>{roomToForceStart?.id}</strong><br />
+            Players: <strong>{roomToForceStart?.playerCount} / {roomToForceStart?.maxPlayers}</strong><br />
+            Game Mode: <strong>{roomToForceStart?.gameMode}</strong><br />
+            Room Status: <strong>{roomToForceStart?.status}</strong>
+          </span>
+        }
+        confirmLabel="Force Start"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmForceStart}
+        onCancel={handleCancelForceStart}
       />
       <ConfirmModal
         open={!!roomToClose}

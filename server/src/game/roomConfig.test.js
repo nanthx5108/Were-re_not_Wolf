@@ -7,7 +7,7 @@ import {
   buildChaosRoleConfig,
   DEFAULT_PHASE_DURATIONS,
 } from './roomConfig.js';
-import { buildRoleList } from './Roledistributor.js';
+import { buildRoleList, distributeRoles } from './Roledistributor.js';
 
 test('missing config falls back to the preset for that room size', () => {
   const { config, error } = normalizeRoomConfig(undefined, 6);
@@ -99,6 +99,17 @@ test('buildRoleList fills the remaining seats with villagers', () => {
   assert.equal(roles.length, 8);
   assert.equal(roles.filter(r => r === 'werewolf').length, 2);
   assert.equal(roles.filter(r => r === 'villager').length, 3);
+});
+
+test('force-start role distribution supports a below-minimum room without changing normal validation', () => {
+  const players = [{ id: 'p1', nickname: 'Tester' }];
+  assert.throws(
+    () => distributeRoles(players, { werewolf: 1 }),
+    /outside allowed range/
+  );
+
+  const assigned = distributeRoles(players, { werewolf: 1 }, { allowBelowMinimum: true });
+  assert.deepEqual(assigned.map(player => player.role), ['werewolf']);
 });
 
 test('chaos role config always validates and obeys the wolf cap', () => {
