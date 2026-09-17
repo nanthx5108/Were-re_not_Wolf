@@ -11,7 +11,9 @@ export default function ChatBox({ showWerewolfChannel = false, showHead = true, 
   const { user } = useAuth();
   const [input,   setInput]   = useState('');
   const [channel, setChannel] = useState('village');
+  const messagesRef = useRef(null);
   const bottomRef = useRef(null);
+  const wasAtBottomRef = useRef(true);
   const typingTimer = useRef(null);
   const isTypingRef = useRef(false);
   const alivePlayers = players.filter(p => p.isAlive && p.id !== playerId);
@@ -45,8 +47,16 @@ export default function ChatBox({ showWerewolfChannel = false, showHead = true, 
   }, [clientEffect]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!wasAtBottomRef.current) return;
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
+
+  function handleMessagesScroll() {
+    const element = messagesRef.current;
+    if (!element) return;
+    const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+    wasAtBottomRef.current = distanceFromBottom < 48;
+  }
 
   useEffect(() => {
     if (!isDead) return;
@@ -149,7 +159,11 @@ export default function ChatBox({ showWerewolfChannel = false, showHead = true, 
         </div>
       )}
 
-      <div className="gpc-messages custom-scrollbar">
+      <div
+        ref={messagesRef}
+        className="gpc-messages custom-scrollbar"
+        onScroll={handleMessagesScroll}
+      >
         {messages.length === 0 && (
           <p className="gpc-empty">หมู่บ้านยังเงียบอยู่…</p>
         )}

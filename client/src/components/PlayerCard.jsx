@@ -1,5 +1,6 @@
 import React from 'react';
 import '../styles/PlayerCard.css';
+import defaultAvatar from '../assets/ui/default_avatar.png';
 
 const ROLE_ICONS = {
   villager:  'Villager',
@@ -18,7 +19,12 @@ export default function PlayerCard({ player, isMe, isHost, myRole, showRole = fa
       className={`player-card ${player.isAlive ? 'alive' : 'dead'} ${isMe ? 'is-me' : ''}`}
       style={offline ? { opacity: 0.5 } : undefined}
     >
-      <span className="player-avatar">{player.isAlive ? 'Alive' : 'Dead'}</span>
+      <img
+        src={player.avatarUrl || defaultAvatar}
+        alt=""
+        className="player-avatar"
+        onError={(event) => { event.currentTarget.src = defaultAvatar; }}
+      />
 
       <div className="player-info">
         <span className="player-name">

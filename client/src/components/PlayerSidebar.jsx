@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { useGameData } from '../context/GameDataContext.jsx';
+import defaultAvatar from '../assets/ui/default_avatar.png';
 
 const SIDEBAR_LIMIT = 6;
-
-function initialOf(nickname) {
-  return (nickname || '?').trim().charAt(0).toUpperCase() || '?';
-}
 
 /**
  * จัดลำดับความสำคัญของผู้เล่น:
@@ -56,7 +53,11 @@ function PlayerRow({ player, isMe, isHost }) {
   return (
     <div className={`gps-row${isMe ? ' is-me' : ''}${player.isTyping ? ' is-active' : ''}${player.isAlive ? '' : ' is-dead'}`}>
       <div className="gps-avatar">
-        {initialOf(player.nickname)}
+        <img
+          src={player.avatarUrl || defaultAvatar}
+          alt=""
+          onError={(event) => { event.currentTarget.src = defaultAvatar; }}
+        />
         {!player.isAlive && <span className="gps-avatar-cross" aria-hidden="true">✕</span>}
       </div>
       <div className="gps-meta">

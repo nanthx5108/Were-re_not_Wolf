@@ -14,12 +14,14 @@ export function createRoom({ id, name, hostId, maxPlayers = 8, isPrivate = false
     phase:       'lobby',
     round:       1,
     phaseEndsAt: null,
+    lastGameResult: null,
     maxPlayers,
     isPrivate,
     roleConfig,
     phaseDurations,
     fortuneCards: new Map(),
     fortuneInventory: new Map(),
+    pendingFortuneCards: new Map(),
     usedWhispers: new Set(), // For 'whisper' card
     usedExtraTime: new Set(), // For 'injury_time' card
     revealRoleOnDeath: revealRoleOnDeath === true,
@@ -55,6 +57,7 @@ export function addPlayerToRoom(roomId, player) {
   room.players.set(player.id, {
     id:          player.id,
     nickname:    player.nickname,
+    avatarUrl:   player.avatarUrl || null,
     role:        player.role || null,
     isBot:       !!player.isBot,
     isAlive:     true,
@@ -122,6 +125,7 @@ export function serializeRoom(roomId) {
     players: getPlayersArray(roomId).map(p => ({
       id:          p.id,
       nickname:    p.nickname,
+      avatarUrl:   p.avatarUrl || null,
       isAlive:     p.isAlive,
       isConnected: p.isConnected !== false,
       ...(room.revealRoleOnDeath === true && p.isAlive === false ? { revealedRole: p.role } : {}),

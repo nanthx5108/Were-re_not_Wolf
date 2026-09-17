@@ -41,6 +41,7 @@ mock.module('../services/gameDataService.js', {
 });
 
 const { advancePhase, clearPhaseTimer } = await import('./phaseManager.js');
+const { startGameForRoom } = await import('./startGame.js');
 const { createRoom, addPlayerToRoom, updatePlayer, updateRoom, getRoom, deleteRoom } =
   await import('./gameStore.js');
 const { initVoting, castVote } = await import('./voteManager.js');
@@ -88,6 +89,7 @@ test('first night advances directly to day one without resolving night actions',
     addPlayerToRoom(roomId, { id, nickname: id, socketId: `sock-${id}` });
     updatePlayer(roomId, id, { role });
   });
+
   updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT_ZERO, round: 0 });
   t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); });
 
@@ -100,6 +102,26 @@ test('first night advances directly to day one without resolving night actions',
   assert.equal(room.nightResult, undefined);
   assert.equal(emitted.some(e => e.event === 'night:result'), false);
   assert.equal(emitted.some(e => e.event === 'morning:event'), false);
+});
+
+test('force start launches a below-minimum room with a valid fallback role setup', async t => {
+  const roomId = 'room-force-start';
+  createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 8, gameMode: 'classic' });
+  addPlayerToRoom(roomId, { id: 'p0', nickname: 'p0', socketId: 'sock-p0' });
+  addPlayerToRoom(roomId, { id: 'p1', nickname: 'p1', socketId: 'sock-p1' });
+  t.after(() => deleteRoom(roomId));
+
+  const { io } = makeIo();
+  const normalStart = await startGameForRoom(io, roomId, { callerPlayerId: 'p0' });
+  assert.equal(normalStart.ok, false);
+  assert.equal(normalStart.status, 422);
+  assert.equal(getRoom(roomId).status, 'waiting');
+
+  const forcedStart = await startGameForRoom(io, roomId, { forceStart: true });
+  assert.equal(forcedStart.ok, true);
+  assert.equal(getRoom(roomId).status, 'in_progress');
+  assert.equal(getRoom(roomId).phase, PHASES.NIGHT_ZERO);
+  assert.equal(forcedStart.assigned.filter(player => player.role === 'werewolf').length, 1);
 });
 
 test('voting phase resolves and advances to results without crashing', async t => {

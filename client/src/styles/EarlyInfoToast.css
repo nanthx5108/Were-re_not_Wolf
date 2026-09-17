@@ -5,7 +5,9 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 80;
-  width: 320px;
+  width: min(320px, calc(100vw - 2 * var(--mobile-padding, 12px)));
+  max-height: calc(100dvh - 110px - var(--safe-bottom, 0px));
+  overflow-y: auto;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   display: flex;
@@ -40,4 +42,11 @@
   line-height: 1.5;
   color: var(--text-secondary);
   text-align: center;
+}
+
+@media (max-width: 767px) {
+  .eit-toast {
+    top: calc(72px + env(safe-area-inset-top, 0px));
+    padding: var(--space-3);
+  }
 }

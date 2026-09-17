@@ -174,6 +174,20 @@
 @media (max-width: 560px) {
   .online-text { display: none; }
   .online-badge { padding: 8px; }
+  .home-topbar {
+    padding-left: var(--mobile-padding);
+    padding-right: var(--mobile-padding);
+  }
+
+  .home-auth-actions {
+    gap: 6px;
+  }
+
+  .top-btn {
+    min-height: var(--touch-target);
+    padding: 8px 10px;
+    font-size: 0.72rem;
+  }
 }
 
 .home-topbar,

@@ -313,15 +313,31 @@ async function _advancePhase(io, roomId) {
         const card = drawFortuneCard(currentRoom.gameMode, luckBias);
         drawnCards.set(player.id, card);
         const playerSocket = io.sockets.sockets.get(player.socketId);
-        if (playerSocket) {
-          playerSocket.emit('fortune:card_drawn', { card });
-        }
+        let cardEvent = { card };
 
         if (card?.type === 'good') {
+          const previousInventory = currentRoom.fortuneInventory?.get(player.id);
           await persistRoomPlayerCard(roomId, player.id, card, 'inventory', 'daily_draw');
+          if (previousInventory?.current && previousInventory.current.id !== card.id) {
+            currentRoom.fortuneInventory.set(player.id, previousInventory);
+            currentRoom.fortuneCards.set(player.id, previousInventory.current);
+            currentRoom.pendingFortuneCards.set(player.id, card);
+            cardEvent = {
+              card,
+              pendingInventoryChoice: true,
+              inventory: previousInventory,
+            };
+          } else {
+            cardEvent = {
+              card,
+              inventory: currentRoom.fortuneInventory?.get(player.id) || null,
+            };
+          }
         } else {
           await persistRoomPlayerCard(roomId, player.id, card, 'active', 'daily_draw');
         }
+
+        playerSocket?.emit('fortune:card_drawn', cardEvent);
 
         if (cardMatchesAny(card, ['confused', 'สับสนกับตัวเอง', 'self_confused', 'confusion', 'confused_self'])) {
           updatePlayer(roomId, player.id, { isConfusedThisRound: true, hasConfusedRecurrence: true });
@@ -329,10 +345,22 @@ async function _advancePhase(io, roomId) {
           updatePlayer(roomId, player.id, { hasConfusedRecurrence: false });
         }
       }
+      for (const player of alivePlayers) {
+        const inventory = currentRoom.fortuneInventory?.get(player.id);
+        const activeCard = currentRoom.pendingFortuneCards?.has(player.id)
+          ? inventory?.current
+          : drawnCards.get(player.id);
+        if (activeCard) drawnCards.set(player.id, activeCard);
+      }
       updateRoom(roomId, { fortuneCards: drawnCards });
       consumeLuckBias(roomId);
     } else {
-      updateRoom(roomId, { fortuneCards: new Map(), fortuneInventory: new Map(), activeLuckBias: null });
+      updateRoom(roomId, {
+        fortuneCards: new Map(),
+        fortuneInventory: new Map(),
+        pendingFortuneCards: new Map(),
+        activeLuckBias: null,
+      });
     }
   }
 
@@ -483,14 +511,19 @@ export async function _endGameAndBroadcast(io, roomId, win) {
     }
   }
 
-  updateRoom(roomId, { winner: win.winner, memory: { ...(room.memory || {}), turningPoint: room.memory?.turningPoint || null } });
-
-  io.to(roomId).emit('game:ended', {
+  const gameResult = {
     winner: win.winner,
     message: win.message,
     reveal,
     highlights: dedupedHighlights.slice(0, 4),
+  };
+  updateRoom(roomId, {
+    winner: win.winner,
+    lastGameResult: gameResult,
+    memory: { ...(room.memory || {}), turningPoint: room.memory?.turningPoint || null },
   });
+
+  io.to(roomId).emit('game:ended', gameResult);
   io.to(roomId).emit('chat:message', {
     id:      `sys-end-${Date.now()}`,
     channel: CHANNELS.SYSTEM,

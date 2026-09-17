@@ -5,6 +5,7 @@ import React, {
 import { socket } from '../socket/socket.jsx';
 import { useToast } from '../components/ToastContext.jsx';
 import soundManager from '../sound/soundManager.js';
+import { useAuth } from './AuthContext.jsx';
 
 export const SOCKET_EVENTS = Object.freeze({
   ROOM_JOIN:            'room:join',
@@ -45,6 +46,8 @@ export const SOCKET_EVENTS = Object.freeze({
   FORTUNE_REALTIME_VOTE_COUNT: 'fortune:realtime_vote_count',
   PHASE_REQUEST_EXTRA_TIME: 'phase:request_extra_time',
   FORTUNE_CARD_DRAWN:   'fortune:card_drawn',
+  FORTUNE_INVENTORY_UPDATED: 'fortune:inventory_updated',
+  FORTUNE_INVENTORY_CHOICE: 'fortune:inventory_choice',
   GAME_ENDED:           'game:ended',
   GAME_RESUMED:         'game:resumed',
   ROOM_CLOSED:          'room:closed',
@@ -69,6 +72,7 @@ const restored = loadSession();
 const initialState = {
   playerId:   restored?.playerId ?? null,
   nickname:   restored?.nickname ?? null,
+  avatarUrl:  restored?.avatarUrl ?? null,
   roomId:     restored?.roomId ?? null,
   room:       null,
   myRole:     null,
@@ -95,6 +99,7 @@ const initialState = {
   realtimeVoteCounts: null, // For 'magic_eyes' card
   myFortuneCard:  null, // System 3: การ์ดโชคดี/ร้ายประจำรอบ
   fortuneInventory: null,
+  fortunePendingChoice: null,
   nightZero:      { readyCount: 0, total: 0 },   // ความคืบหน้า "ดูแล้ว" ในคืนที่ 0
   typingIds:      [],   // ผู้เล่นที่กำลังพิมพ์ — ใช้จัดลำดับ sidebar
   roomClosed:     false, // เจ้าของห้องปิดห้อง — ใช้เด้งผู้เล่นที่เหลือกลับหน้าแรก
@@ -110,7 +115,7 @@ function gameReducer(state, action) {
   switch (action.type) {
 
     case 'SET_IDENTITY':
-      return { ...state, playerId: action.playerId, nickname: action.nickname };
+      return { ...state, playerId: action.playerId, nickname: action.nickname, avatarUrl: action.avatarUrl ?? null };
 
     case 'ROOM_CLOSED':
       return { ...state, room: null, gameResult: null, roomClosed: true };
@@ -296,7 +301,19 @@ function gameReducer(state, action) {
 
     case 'FORTUNE_CARD_DRAWN':
       if (state.room?.gameMode !== 'chaos') return state;
-      return { ...state, myFortuneCard: action.payload.card };
+      return {
+        ...state,
+        myFortuneCard: action.payload.card,
+        fortuneInventory: action.payload.inventory ?? state.fortuneInventory,
+        fortunePendingChoice: action.payload.pendingInventoryChoice ? action.payload.card : null,
+      };
+    case 'FORTUNE_INVENTORY_UPDATED':
+      return {
+        ...state,
+        fortuneInventory: action.payload.inventory ?? null,
+        fortunePendingChoice: null,
+        myFortuneCard: action.payload.inventory?.current ?? state.myFortuneCard,
+      };
 
     case 'CLEAR_FORTUNE_CARD':
       return { ...state, myFortuneCard: null };
@@ -338,6 +355,7 @@ function gameReducer(state, action) {
     case 'GAME_ENDED':
       return {
         ...state,
+        myRole: action.myRole ?? state.myRole,
         gameResult: { winner: action.winner, message: action.message, reveal: action.reveal ?? [] },
         highlights: action.highlights ?? [],
       };
@@ -353,6 +371,7 @@ function gameReducer(state, action) {
 const GameContext = createContext(null);
 
 export function GameProvider({ children }) {
+  const { user } = useAuth();
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const { addToast } = useToast();
 
@@ -420,6 +439,7 @@ export function GameProvider({ children }) {
           }, 4200);
         }
       },
+      [SOCKET_EVENTS.FORTUNE_INVENTORY_UPDATED]: (payload) => dispatch({ type: 'FORTUNE_INVENTORY_UPDATED', payload }),
       [SOCKET_EVENTS.GAME_RESUMED]:         (data)          => dispatch({ type: 'GAME_RESUMED', ...data }),
       [SOCKET_EVENTS.GAME_ENDED]:           (payload) => {
         const winner = payload?.winner;
@@ -445,13 +465,19 @@ export function GameProvider({ children }) {
     };
   }, [addToast]);
 
-  const setIdentity   = useCallback((pid, nick) => dispatch({ type: 'SET_IDENTITY', playerId: pid, nickname: nick }), []);
+  const setIdentity   = useCallback((pid, nick) => dispatch({
+    type: 'SET_IDENTITY',
+    playerId: pid,
+    nickname: nick,
+    avatarUrl: user?.avatarUrl ?? null,
+  }), [user?.avatarUrl]);
 
   const joinRoom      = useCallback((roomId, playerId, nickname) => {
-    saveSession({ roomId, playerId, nickname });
+    const avatarUrl = user?.avatarUrl ?? null;
+    saveSession({ roomId, playerId, nickname, avatarUrl });
     if (!socket.connected) socket.connect();
-    socket.emit(SOCKET_EVENTS.ROOM_JOIN, { roomId, playerId, nickname });
-  }, []);
+    socket.emit(SOCKET_EVENTS.ROOM_JOIN, { roomId, playerId, nickname, avatarUrl });
+  }, [user?.avatarUrl]);
 
   const leaveRoom     = useCallback(() => {
     soundManager.playSfx('/assets/audio/SFX-Chat.mp3', 0.3);
@@ -497,6 +523,9 @@ export function GameProvider({ children }) {
   }, []);
   const clearCensorNote = useCallback(() => dispatch({ type: 'CLEAR_CENSOR_NOTE' }), []);
   const loadDeadHistory = useCallback(() => socket.emit(SOCKET_EVENTS.CHAT_DEAD_HISTORY), []);
+  const chooseFortuneInventory = useCallback((keepNew) => {
+    socket.emit(SOCKET_EVENTS.FORTUNE_INVENTORY_CHOICE, { keepNew });
+  }, []);
 
   const isDead = useMemo(() => Boolean(
     state.room?.status === 'in_progress' &&
@@ -510,8 +539,8 @@ export function GameProvider({ children }) {
     setIdentity, joinRoom, leaveRoom,
     sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase, requestExtraTime,
     castVote, submitNightAction, updateRoomConfig,
-    clearCensorNote, loadDeadHistory,
-  }), [state, isDead, setIdentity, joinRoom, leaveRoom, sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase, requestExtraTime, castVote, submitNightAction, updateRoomConfig, clearCensorNote, loadDeadHistory, state.room?.players]);
+    clearCensorNote, loadDeadHistory, chooseFortuneInventory,
+  }), [state, isDead, setIdentity, joinRoom, leaveRoom, sendMessage, sendTyping, sendStopTyping, startGame, markReady, advancePhase, requestExtraTime, castVote, submitNightAction, updateRoomConfig, clearCensorNote, loadDeadHistory, chooseFortuneInventory, state.room?.players]);
 
   return (
     <GameContext.Provider value={contextValue}>

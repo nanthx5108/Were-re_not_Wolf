@@ -18,7 +18,7 @@ mock.module('../services/gameSettingsService.js', {
 const { registerSocketHandlers } = await import('./socketHandlers.js');
 const { canJoinRoom, getRoomPlayerLimit } = await import('../game/roomCapacity.js');
 const { PLAYER_LIMITS } = await import('../game/constants.js');
-const { createRoom, addPlayerToRoom, updatePlayer, updateRoom, deleteRoom } =
+const { createRoom, addPlayerToRoom, updatePlayer, updateRoom, getRoom, deleteRoom } =
   await import('../game/gameStore.js');
 
 test('uses the room-specific max player count when checking capacity', () => {
@@ -156,4 +156,129 @@ test('profanity is censored before the message is broadcast', async t => {
   assert.ok(!/fucking/i.test(msg.data.content));
   assert.ok(msg.data.content.includes('wolf'));
   assert.equal(alive.emits.filter(e => e.event === 'chat:censored').length, 1);
+});
+
+test('rejoining an active room resumes the same player and private game state', async t => {
+  const roomId = 'room-reconnect';
+  createRoom({ id: roomId, name: roomId, hostId: 'alive', maxPlayers: 8, gameMode: 'chaos' });
+  addPlayerToRoom(roomId, { id: 'alive', nickname: 'alive', socketId: 'old-socket' });
+  updatePlayer(roomId, 'alive', { role: 'seer', isConnected: false, socketId: null });
+  updateRoom(roomId, {
+    status: 'in_progress',
+    phase: 'day',
+    round: 2,
+    phaseEndsAt: Date.now() + 45_000,
+    fortuneCards: new Map([['alive', { id: 'lucky', type: 'good' }]]),
+    fortuneInventory: new Map([['alive', { current: { id: 'lucky', type: 'good' }, history: [] }]]),
+  });
+  t.after(() => deleteRoom(roomId));
+
+  const reconnect = makeSocket(roomId, 'alive');
+  reconnect.socket.id = 'new-socket';
+  const sockets = new Map([['new-socket', { emit: () => {} }]]);
+  const io = {
+    to: () => ({ emit: () => {} }),
+    sockets: { sockets },
+  };
+  registerSocketHandlers(reconnect.socket, io);
+
+  await reconnect.handlers['room:join']({
+    roomId,
+    playerId: 'alive',
+    nickname: 'alive',
+    avatarUrl: null,
+  });
+
+  const roomState = reconnect.emits.find(event => event.event === 'room:state');
+  const resumed = reconnect.emits.find(event => event.event === 'game:resumed');
+  assert.ok(roomState);
+  assert.ok(resumed);
+  assert.equal(roomState.data.players.length, 1);
+  assert.equal(resumed.data.myRole, 'seer');
+  assert.equal(resumed.data.phase, 'day');
+  assert.equal(resumed.data.round, 2);
+  assert.equal(resumed.data.myFortuneCard.id, 'lucky');
+  assert.equal(resumed.data.fortuneInventory.current.id, 'lucky');
+  assert.equal(getRoom(roomId).players.size, 1);
+  assert.equal(getRoom(roomId).players.get('alive').isConnected, true);
+  assert.equal(getRoom(roomId).players.get('alive').socketId, 'new-socket');
+});
+
+test('rejoining after game end restores the result and the player role', async t => {
+  const roomId = 'room-reconnect-finished';
+  createRoom({ id: roomId, name: roomId, hostId: 'alive', maxPlayers: 8 });
+  addPlayerToRoom(roomId, { id: 'alive', nickname: 'alive', socketId: null });
+  updatePlayer(roomId, 'alive', { role: 'villager', isConnected: false, socketId: null });
+  updateRoom(roomId, {
+    status: 'finished',
+    phase: 'ended',
+    lastGameResult: {
+      winner: 'village',
+      message: 'Village wins',
+      reveal: [{ id: 'alive', nickname: 'alive', role: 'villager', isAlive: true }],
+      highlights: [],
+    },
+  });
+  t.after(() => deleteRoom(roomId));
+
+  const reconnect = makeSocket(roomId, 'alive');
+  reconnect.socket.id = 'finished-socket';
+  const io = {
+    to: () => ({ emit: () => {} }),
+    sockets: { sockets: new Map([['finished-socket', { emit: () => {} }]]) },
+  };
+  registerSocketHandlers(reconnect.socket, io);
+
+  await reconnect.handlers['room:join']({ roomId, playerId: 'alive', nickname: 'alive' });
+
+  const ended = reconnect.emits.find(event => event.event === 'game:ended');
+  assert.equal(ended.data.winner, 'village');
+  assert.equal(ended.data.myRole, 'villager');
+  assert.equal(ended.data.reveal[0].role, 'villager');
+});
+
+test('a stale socket disconnect cannot take a reconnected player offline', async t => {
+  const roomId = 'room-stale-disconnect';
+  createRoom({ id: roomId, name: roomId, hostId: 'alive', maxPlayers: 8 });
+  addPlayerToRoom(roomId, { id: 'alive', nickname: 'alive', socketId: 'new-socket' });
+  updateRoom(roomId, { status: 'in_progress', phase: 'day' });
+  t.after(() => deleteRoom(roomId));
+
+  const stale = makeSocket(roomId, 'alive');
+  stale.socket.id = 'old-socket';
+  const io = { to: () => ({ emit: () => {} }), sockets: { sockets: new Map() } };
+  registerSocketHandlers(stale.socket, io);
+
+  await stale.handlers.disconnect();
+
+  assert.equal(getRoom(roomId).players.get('alive').isConnected, true);
+  assert.equal(getRoom(roomId).players.get('alive').socketId, 'new-socket');
+});
+
+test('werewolf night target updates are delivered only to werewolves', async t => {
+  const roomId = 'room-private-night-action';
+  createRoom({ id: roomId, name: roomId, hostId: 'wolf', maxPlayers: 8 });
+  for (const [id, role] of [['wolf', 'werewolf'], ['wolf-two', 'werewolf'], ['seer', 'seer'], ['villager', 'villager']]) {
+    addPlayerToRoom(roomId, { id, nickname: id, socketId: `sock-${id}` });
+    updatePlayer(roomId, id, { role });
+  }
+  updateRoom(roomId, { status: 'in_progress', phase: 'night' });
+  t.after(() => deleteRoom(roomId));
+
+  const delivered = [];
+  const sockets = new Map();
+  for (const id of ['wolf', 'wolf-two', 'seer', 'villager']) {
+    sockets.set(`sock-${id}`, { emit: (event, data) => delivered.push({ id, event, data }) });
+  }
+  const io = { to: () => ({ emit: () => {} }), sockets: { sockets } };
+  const wolf = makeSocket(roomId, 'wolf');
+  registerSocketHandlers(wolf.socket, io);
+
+  await wolf.handlers['night:action']({ targetId: 'villager' });
+
+  assert.deepEqual(
+    delivered.filter(event => event.event === 'night:action:update').map(event => event.id).sort(),
+    ['wolf', 'wolf-two']
+  );
+  assert.equal(delivered.some(event => event.id === 'seer' || event.id === 'villager'), false);
 });

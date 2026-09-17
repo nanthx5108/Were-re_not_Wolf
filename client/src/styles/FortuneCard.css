@@ -5,10 +5,12 @@
 
 .fc-card {
   position: fixed;
-  bottom: var(--space-5);
-  right: var(--space-5);
+  bottom: calc(var(--space-5) + var(--safe-bottom, 0px));
+  right: max(var(--space-5), env(safe-area-inset-right, 0px));
   z-index: 50;
-  width: 280px;
+  width: min(280px, calc(100vw - 2 * var(--mobile-padding, 12px)));
+  max-height: calc(100dvh - var(--space-5) * 2 - var(--safe-bottom, 0px));
+  overflow-y: auto;
   padding: var(--space-4);
   border-radius: var(--radius-lg);
   display: flex;
@@ -55,6 +57,37 @@
   font-size: 0.82rem;
   line-height: 1.5;
   color: var(--text-secondary);
+}
+
+.fc-flip,
+.fc-choice-actions button {
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  color: var(--gold-bright);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+.fc-flip:hover,
+.fc-choice-actions button:hover { background: rgba(var(--accent-rgb), 0.2); }
+.fc-choice {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-2);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.fc-choice-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+@media (max-width: 767px) {
+  .fc-card {
+    bottom: calc(var(--mobile-padding) + var(--safe-bottom, 0px));
+    right: var(--mobile-padding);
+    padding: var(--space-3);
+  }
+
+  .fc-choice-actions button,
+  .fc-flip {
+    min-height: var(--touch-target);
+  }
 }
 
 /* Good card variant (Gold/Amber) */

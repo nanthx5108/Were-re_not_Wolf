@@ -19,6 +19,33 @@
   gap: 12px;
 }
 
+.vp-countdown {
+  margin-left: auto;
+  min-width: 68px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(192, 90, 78, 0.12);
+  color: var(--phase-voting);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.vp-countdown-value { font-family: var(--font-meta); font-size: 1.35rem; font-weight: 700; }
+.vp-countdown-label { font-size: 0.62rem; color: var(--color-text-muted); margin-top: 3px; }
+.vp-countdown.is-urgent {
+  border-color: var(--phase-voting);
+  box-shadow: 0 0 12px rgba(192, 90, 78, 0.28);
+  animation: vote-countdown-pulse 900ms ease-in-out infinite alternate;
+}
+.vp-countdown.is-ended { color: var(--text-muted); background: rgba(255,255,255,0.04); }
+
+@keyframes vote-countdown-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.04); }
+}
+
 .vp-icon {
   font-size: 2rem;
   line-height: 1;
@@ -127,7 +154,12 @@
 }
 
 .vp-avatar {
-  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border-default);
+  object-fit: cover;
 }
 
 .vp-name {
@@ -150,6 +182,8 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  object-fit: cover;
+  overflow: hidden;
 }
 
 .vp-vote-count {

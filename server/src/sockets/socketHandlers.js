@@ -40,7 +40,7 @@ export function registerSocketHandlers(socket, io) {
     next();
   });
 
-  socket.on('room:join', async ({ roomId, playerId, nickname }) => {
+  socket.on('room:join', async ({ roomId, playerId, nickname, avatarUrl }) => {
     try {
       const room = getRoom(roomId);
       if (!room) return socket.emit('error', { message: 'Room not found.' });
@@ -56,7 +56,7 @@ export function registerSocketHandlers(socket, io) {
         return socket.emit('error', { message: 'Room is full.' });
       }
 
-      addPlayerToRoom(roomId, { id: playerId, nickname, socketId: socket.id });
+      addPlayerToRoom(roomId, { id: playerId, nickname, avatarUrl, socketId: socket.id });
       await pool.query(`UPDATE players SET socket_id = ? WHERE id = ?`, [socket.id, playerId]);
 
       socket.join(roomId);
@@ -317,6 +317,46 @@ export function registerSocketHandlers(socket, io) {
     });
   });
 
+  socket.on('fortune:inventory_choice', async ({ keepNew } = {}) => {
+    const { roomId, playerId } = socket.data || {};
+    const room = roomId ? getRoom(roomId) : null;
+    if (!room || room.gameMode !== GAME_MODES.CHAOS) return;
+
+    const pendingCard = room.pendingFortuneCards?.get(playerId);
+    if (!pendingCard || pendingCard.type !== 'good') {
+      return socket.emit('error', { message: 'ไม่มีการ์ดโชคดีที่รอการเลือก' });
+    }
+
+    const inventory = room.fortuneInventory || new Map();
+    const previous = inventory.get(playerId)?.current || null;
+    if (keepNew) {
+      inventory.set(playerId, {
+        current: pendingCard,
+        history: [...(inventory.get(playerId)?.history || []), String(pendingCard.id)].slice(-5),
+        lastDrawnAt: new Date().toISOString(),
+      });
+      room.fortuneCards?.set(playerId, pendingCard);
+      if (previous?.id) {
+        await pool.query(
+          `UPDATE room_player_cards SET status = 'discarded' WHERE room_id = ? AND player_id = ? AND card_id = ?`,
+          [roomId, playerId, Number(previous.id)]
+        );
+      }
+    } else {
+      room.fortuneCards?.set(playerId, previous);
+      await pool.query(
+        `UPDATE room_player_cards SET status = 'discarded' WHERE room_id = ? AND player_id = ? AND card_id = ?`,
+        [roomId, playerId, Number(pendingCard.id)]
+      );
+    }
+    room.pendingFortuneCards?.delete(playerId);
+    updateRoom(roomId, { fortuneInventory: inventory });
+    socket.emit('fortune:inventory_updated', {
+      inventory: inventory.get(playerId) || null,
+      pendingCard: null,
+    });
+  });
+
   socket.on('vote:cast', async ({ targetId }) => {
     const { roomId, playerId } = socket.data || {};
     if (!roomId || !playerId) return;
@@ -333,6 +373,10 @@ export function registerSocketHandlers(socket, io) {
     const target = room.players.get(targetId);
     if (!target || !target.isAlive) return socket.emit('error', { message: 'ไม่สามารถโหวตผู้เล่นที่ไม่มีอยู่จริงหรือตายไปแล้วได้' });
     if (targetId === playerId) return socket.emit('error', { message: 'โหวตให้ตัวเองไม่ได้' });
+
+    if (room.phaseEndsAt && room.phaseEndsAt <= Date.now()) {
+      return socket.emit('error', { message: 'หมดเวลาโหวตแล้ว' });
+    }
 
     const playerCard = isChaosRoom(room) ? room.fortuneCards?.get(playerId) : null;
     const isOpportunist = cardMatchesAny(playerCard, ['opportunist', 'หน้าไหว้หลังหลอก', 'change_vote', 'vote_switch', 'second_chance_vote']);
@@ -586,6 +630,11 @@ async function handleRejoin(socket, io, roomId, playerId) {
         ? (room.fortuneInventory?.get(playerId) || null)
         : null,
     });
+  } else if (room.status === 'finished' && room.lastGameResult) {
+    socket.emit('game:ended', {
+      ...room.lastGameResult,
+      myRole: player.role,
+    });
   }
 
   io.to(roomId).emit('room:players_updated', serializeRoom(roomId).players);
@@ -626,6 +675,8 @@ async function handleDisconnect(socket, io) {
 
   const room = getRoom(roomId);
   if (!room) return;
+  const player = room.players.get(playerId);
+  if (!player || (player.socketId && player.socketId !== socket.id)) return;
 
   if (room.status !== 'in_progress') {
     if (room.hostId === playerId) {

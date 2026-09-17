@@ -12,6 +12,30 @@
   min-height: 320px;
 }
 
+@media (max-width: 767px) {
+  .admin-floating-window {
+    inset: max(8px, env(safe-area-inset-top, 0px))
+      max(8px, env(safe-area-inset-right, 0px))
+      max(8px, env(safe-area-inset-bottom, 0px))
+      max(8px, env(safe-area-inset-left, 0px)) !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0;
+    min-height: 0;
+    max-width: none;
+    max-height: calc(100dvh - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
+  .admin-floating-window.is-maximized {
+    inset: 0 !important;
+    border-radius: 0;
+  }
+
+  .admin-floating-window .admin-page {
+    min-width: 0;
+  }
+}
+
 .admin-floating-window.is-minimized {
   min-height: 0;
   height: auto !important;

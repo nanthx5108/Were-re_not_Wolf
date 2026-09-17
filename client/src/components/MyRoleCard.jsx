@@ -11,7 +11,6 @@ export default function MyRoleCard() {
   const { roleMap } = useGameData();
   const sound = useSound();
   const [open, setOpen] = useState(false);
-  // ภาพการ์ดอาจยังไม่ถูกวางใน public/roles/ — ถ้าโหลดไม่ขึ้นให้ถอยไปใช้อีโมจิแทน
   const [artFailed, setArtFailed] = useState(false);
   const [backFailed, setBackFailed] = useState(false);
 
@@ -22,6 +21,7 @@ export default function MyRoleCard() {
   }, [myRole, sound, open]);
 
   const roleInfo = roleMap.get(String(myRole).toLowerCase());
+  const roleAsset = `/roles/${String(myRole).toLowerCase()}.png`;
 
   if (!myRole) return null;
 
@@ -58,12 +58,18 @@ export default function MyRoleCard() {
         </div>
 
         <div className="gpr-face gpr-face-front">
-          {roleInfo?.card_image && !artFailed ? (
+          {!artFailed ? (
             <img
               className="gpr-art"
-              src={roleInfo?.card_image || `/roles/${String(myRole).toLowerCase()}.png`}
-              alt={`การ์ด${roleInfo?.name_th}`}
-              onError={() => setArtFailed(true)}
+              src={roleInfo?.card_image || roleAsset}
+              alt={`การ์ด${roleInfo?.name_th || myRole}`}
+              onError={(event) => {
+                if (event.currentTarget.src.endsWith(roleAsset)) {
+                  setArtFailed(true);
+                  return;
+                }
+                event.currentTarget.src = roleAsset;
+              }}
             />
           ) : null}
           <div className="gpr-content">

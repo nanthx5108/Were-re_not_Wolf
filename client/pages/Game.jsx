@@ -15,6 +15,7 @@ import FortuneInfoPanel from '../src/components/FortuneInfoPanel.jsx';
 import HighlightTimeline from '../src/components/HighlightTimeline.jsx';
 import FortuneEffects from '../src/components/FortuneEffects.jsx';
 import FortuneCard from '../src/components/FortuneCard.jsx';
+import defaultAvatar from '../src/assets/ui/default_avatar.png';
 
 const ROLE_LABEL = {
   villager:  '🧑‍🌾 Villager',
@@ -193,6 +194,7 @@ export default function Game() {
 
   const showVoteTimer  = isVoting && !isDead;
   const canNightAct    = isNight && !isDead && NIGHT_ACTION_ROLES.includes(myRole) && !myNightAction;
+  const myPlayer = players.find(player => player.id === playerId);
 
   return (
     <div className={`gp-page gp-phase-${room.phase}`}>
@@ -281,7 +283,12 @@ export default function Game() {
 
         <div className="gpch gp-panel">
           <div className="gpch-frame">
-            <span className="gpch-silhouette" aria-hidden="true">🧍</span>
+            <img
+              src={myPlayer?.avatarUrl || defaultAvatar}
+              alt=""
+              className="gpch-avatar"
+              onError={(event) => { event.currentTarget.src = defaultAvatar; }}
+            />
             <span className="gpch-note">ตัวละครของเจ้า</span>
           </div>
         </div>

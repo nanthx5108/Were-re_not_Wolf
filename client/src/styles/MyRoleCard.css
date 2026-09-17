@@ -11,6 +11,7 @@
   background: transparent;
   border: none;
   padding: 0;
+  max-width: 100%;
 }
 
 .gpr-card {
@@ -58,6 +59,7 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+  user-select: none;
 }
 
 .gpr-art-back {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSound } from '../context/SoundContext.jsx';
+import defaultAvatar from '../assets/ui/default_avatar.png';
 import '../styles/VotingPanel.css';
 
 export default function VotingPanel({ players = [], playerId, votes, onVote, myFortuneCard, realtimeVoteCounts, phaseEndsAt, className = '' }) {
@@ -13,6 +14,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote, myF
   const [hasChangedVote, setHasChangedVote] = useState(false);
 
   useEffect(() => {
+    setHasChangedVote(false);
     if (!phaseEndsAt) { setRemaining(0); return; }
     const tick = () => setRemaining(Math.max(0, Math.ceil((phaseEndsAt - Date.now()) / 1000)));
     tick();
@@ -45,6 +47,15 @@ export default function VotingPanel({ players = [], playerId, votes, onVote, myF
           <p className="vp-title">โหวตคนที่สงสัย</p>
           <p className="vp-sub">ใครคือหมาป่าที่ซ่อนอยู่?</p>
         </div>
+        <div
+          className={`vp-countdown${remaining <= 5 && remaining > 0 ? ' is-urgent' : ''}${remaining === 0 ? ' is-ended' : ''}`}
+          role="timer"
+          aria-live="polite"
+          aria-label={remaining > 0 ? `เหลือเวลาโหวต ${remaining} วินาที` : 'หมดเวลาโหวตแล้ว'}
+        >
+          <span className="vp-countdown-value">{remaining}</span>
+          <span className="vp-countdown-label">วินาที</span>
+        </div>
       </div>
 
       <div className="vp-progress-row">
@@ -74,7 +85,12 @@ export default function VotingPanel({ players = [], playerId, votes, onVote, myF
           return (
             <div key={p.id} className={`vp-row ${isMyTarget ? 'is-my-target' : ''}`}>
               <div className="vp-player-info">
-                <span className="vp-avatar">Player</span>
+                <img
+                  src={p.avatarUrl || defaultAvatar}
+                  alt=""
+                  className="vp-avatar"
+                  onError={(event) => { event.currentTarget.src = defaultAvatar; }}
+                />
                 <span className="vp-name">{p.nickname}</span>
                 {hasVoted && <span className="vp-voted-badge">โหวตแล้ว</span>}
               </div>
@@ -87,7 +103,7 @@ export default function VotingPanel({ players = [], playerId, votes, onVote, myF
                 )}
                 <button
                   onClick={() => handleVote(p.id)}
-                  disabled={alreadyVoted && !canChangeVote}
+                  disabled={remaining === 0 || (alreadyVoted && !canChangeVote)}
                   className={`vp-vote-btn ${isMyTarget ? 'is-selected' : ''}`}
                 >
                   {isMyTarget ? 'เลือกแล้ว' : 'โหวต'}

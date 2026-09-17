@@ -1,4 +1,5 @@
 .gp-page {
+  height: 100dvh;
   min-height: 100dvh;
   background-color: var(--bg-void);
   color: var(--text-primary);
@@ -13,6 +14,7 @@
     "log    log     log"
     "chat   center  side";
   align-items: stretch;
+  overflow: hidden;
   animation: gp-page-in 420ms ease both;
 }
 
@@ -202,7 +204,7 @@
 }
 
 .gp-log    { grid-area: log; padding: var(--space-2) var(--space-4); }
-.gp-chat   { grid-area: chat; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; }
+.gp-chat   { grid-area: chat; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; overflow: hidden; }
 .gp-center { grid-area: center; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; }
 .gp-side   { grid-area: side; display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; }
 
@@ -521,7 +523,9 @@
   color: var(--on-accent);
   background: radial-gradient(circle at 35% 30%, var(--color-accent), var(--color-accent-dim));
   border: 1px solid var(--border-default);
+  overflow: hidden;
 }
+.gps-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .gps-row.is-dead .gps-avatar {
   filter: grayscale(1) brightness(0.7);
 }
@@ -630,6 +634,12 @@
   overflow: hidden;
 }
 .gpch-silhouette { font-size: 4rem; opacity: 0.35; filter: grayscale(1); }
+.gpch-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.92;
+}
 .gpch-note {
   position: absolute;
   bottom: 10px;
@@ -809,6 +819,9 @@
 
 @media (max-width: 1024px) {
   .gp-page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
     grid-template-columns: 1fr;
     grid-template-areas:
       "top"
@@ -894,10 +907,12 @@
 
   .gp-chat {
     gap: 10px;
+    overflow: visible;
   }
 
   .gp-chat > .gpc {
-    min-height: 42dvh;
+    height: min(520px, 60dvh);
+    min-height: 300px;
   }
 
   .gpch-frame {
