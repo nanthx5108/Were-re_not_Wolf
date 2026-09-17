@@ -26,6 +26,8 @@ export function submitNightAction(roomId, playerId, { targetId } = {}) {
   const player = room.players.get(playerId);
   if (!player || !player.isAlive) return null;
   if (!targetId || targetId === playerId) return null;
+  const target = room.players.get(targetId);
+  if (!target || !target.isAlive) return null;
 
   if (!room.nightActions || typeof room.nightActions !== 'object') {
     room.nightActions = {};

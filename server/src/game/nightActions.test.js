@@ -69,3 +69,12 @@ test('a dead bodyguard gets no blocked targets', (t) => {
   assert.equal(submitNightAction(roomId, 'p0', { targetId: 'p3' }), null, 'คนตายทำ action ไม่ได้');
   assert.equal(getRoom(roomId).players.get('p0').isAlive, false);
 });
+
+test('night actions reject missing and dead targets', (t) => {
+  const roomId = setupRoom(['seer', 'werewolf', 'villager', 'villager']);
+  t.after(() => deleteRoom(roomId));
+
+  assert.equal(submitNightAction(roomId, 'p0', { targetId: 'missing' }), null);
+  updatePlayer(roomId, 'p2', { isAlive: false });
+  assert.equal(submitNightAction(roomId, 'p0', { targetId: 'p2' }), null);
+});

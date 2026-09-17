@@ -40,11 +40,12 @@ mock.module('../services/gameDataService.js', {
   },
 });
 
-const { advancePhase, clearPhaseTimer } = await import('./phaseManager.js');
+const { advancePhase, clearPhaseTimer, getPhaseDurationMs } = await import('./phaseManager.js');
 const { startGameForRoom } = await import('./startGame.js');
 const { createRoom, addPlayerToRoom, updatePlayer, updateRoom, getRoom, deleteRoom } =
   await import('./gameStore.js');
 const { initVoting, castVote } = await import('./voteManager.js');
+const { initNightActions, submitNightAction } = await import('./nightActions.js');
 const { PHASES } = await import('./constants.js');
 const { getPostGameHighlights } = await import('./highlightService.js');
 
@@ -149,6 +150,34 @@ test('voting phase resolves and advances to results without crashing', async t =
   );
 });
 
+test('chaos broken-home fortune reads vote data without crashing the loop', async t => {
+  const roomId = 'room-chaos-broken-home';
+  createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 4, gameMode: 'chaos' });
+  ['werewolf', 'villager', 'villager', 'villager'].forEach((role, i) => {
+    const id = `p${i}`;
+    addPlayerToRoom(roomId, { id, nickname: id, socketId: `sock-${id}` });
+    updatePlayer(roomId, id, { role });
+  });
+  const room = getRoom(roomId);
+  room.fortuneCards.set('p1', { id: 'broken_home', type: 'good' });
+  updateRoom(roomId, { status: 'in_progress', phase: PHASES.VOTING, round: 1 });
+  initVoting(roomId);
+  t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); });
+
+  const harness = makeIo();
+  harness.attachSocket('sock-p1');
+  const { io, privateEmits } = harness;
+  castVote(roomId, 'p0', 'p2');
+  castVote(roomId, 'p1', 'p2');
+  castVote(roomId, 'p2', 'p1');
+  castVote(roomId, 'p3', 'p2');
+
+  await advancePhase(io, roomId);
+
+  assert.equal(getRoom(roomId).phase, PHASES.RESULTS);
+  assert.ok(privateEmits.some(event => event.event === 'fortune:private_info'));
+});
+
 test('classic day transition does not create chaos state', async t => {
   const roomId = 'room-classic-no-chaos';
   createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 4, gameMode: 'classic' });
@@ -156,6 +185,46 @@ test('classic day transition does not create chaos state', async t => {
     const id = `p${i}`;
     addPlayerToRoom(roomId, { id, nickname: id, socketId: `sock-${id}` });
     updatePlayer(roomId, id, { role });
+  });
+
+  test('night role actions resolve protection, seer information, and silencing', async t => {
+    const roomId = 'room-role-abilities';
+    createRoom({ id: roomId, name: roomId, hostId: 'p0', maxPlayers: 5, gameMode: 'classic' });
+    ['bodyguard', 'werewolf', 'seer', 'silencer', 'villager'].forEach((role, i) => {
+      const id = `p${i}`;
+      addPlayerToRoom(roomId, { id, nickname: id, socketId: `sock-${id}` });
+      updatePlayer(roomId, id, { role });
+    });
+    updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT, round: 1 });
+    initNightActions(roomId);
+    submitNightAction(roomId, 'p0', { targetId: 'p4' });
+    submitNightAction(roomId, 'p1', { targetId: 'p4' });
+    submitNightAction(roomId, 'p2', { targetId: 'p1' });
+    submitNightAction(roomId, 'p3', { targetId: 'p4' });
+    t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); });
+
+    const harness = makeIo();
+    harness.attachSocket('sock-p2');
+    await advancePhase(harness.io, roomId);
+
+    const room = getRoom(roomId);
+    assert.equal(room.phase, PHASES.DAY);
+    assert.equal(room.players.get('p3').isAlive, true, 'bodyguard should prevent the kill');
+    assert.equal(room.silencedPlayerId, 'p4');
+    assert.ok(harness.privateEmits.some(event => event.event === 'night:seer_result'));
+  });
+
+  test('phase timers use Classic and Chaos voting durations', (t) => {
+    const classicId = 'room-timer-classic';
+    const chaosId = 'room-timer-chaos';
+    createRoom({ id: classicId, name: classicId, hostId: 'p0', maxPlayers: 4, gameMode: 'classic' });
+    createRoom({ id: chaosId, name: chaosId, hostId: 'p0', maxPlayers: 4, gameMode: 'chaos' });
+    updateRoom(chaosId, { phaseDurations: { night: 25, day: 90, voting: 25 } });
+    t.after(() => { deleteRoom(classicId); deleteRoom(chaosId); });
+
+    assert.equal(getPhaseDurationMs(classicId, PHASES.VOTING), 30_000);
+    assert.equal(getPhaseDurationMs(chaosId, PHASES.VOTING), 25_000);
+    assert.equal(getPhaseDurationMs(classicId, PHASES.RESULTS), 10_000);
   });
   updateRoom(roomId, { status: 'in_progress', phase: PHASES.NIGHT, round: 1, nightResult: {} });
   t.after(() => { clearPhaseTimer(roomId); deleteRoom(roomId); });

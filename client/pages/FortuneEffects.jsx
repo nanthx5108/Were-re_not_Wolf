@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import '../styles/FortuneEffects.css';
+import '../src/styles/FortuneEffects.css';
 
 const BLUR_INTENSITY = {
   low: '2px',

@@ -17,6 +17,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express(); 
 
 export const IS_PROD  = process.env.NODE_ENV === 'production';
+if (IS_PROD && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET must be configured in production.');
+}
 const SESSION_SECRET  = process.env.SESSION_SECRET || 'wolf-secret-change-in-prod';
 const CLIENT_DIST     = path.join(__dirname, '../../client/dist');
 const SERVES_CLIENT   = fs.existsSync(CLIENT_DIST);

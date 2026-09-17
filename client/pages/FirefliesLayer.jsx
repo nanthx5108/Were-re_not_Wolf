@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import '../../styles/HomePage.css'; // Assuming styles are shared or imported globally
+import '../src/styles/HomePage.css';
 
 export default function FirefliesLayer() {
   const flies = useMemo(() =>

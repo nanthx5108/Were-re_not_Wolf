@@ -158,6 +158,62 @@ test('profanity is censored before the message is broadcast', async t => {
   assert.equal(alive.emits.filter(e => e.event === 'chat:censored').length, 1);
 });
 
+test('whispers use the target player socket and reject unknown channels', async t => {
+  const roomId = 'room-chat-whisper';
+  createRoom({ id: roomId, name: roomId, hostId: 'alive', maxPlayers: 8, gameMode: 'chaos' });
+  addPlayerToRoom(roomId, { id: 'alive', nickname: 'alive', socketId: 'sock-alive' });
+  addPlayerToRoom(roomId, { id: 'ghost-a', nickname: 'ghost-a', socketId: 'sock-ghost-a' });
+  updatePlayer(roomId, 'alive', { role: 'villager' });
+  updatePlayer(roomId, 'ghost-a', { role: 'villager' });
+  updateRoom(roomId, {
+    status: 'in_progress',
+    phase: 'day',
+    fortuneCards: new Map([['alive', { id: 'whisper', type: 'good' }]]),
+  });
+  t.after(() => deleteRoom(roomId));
+
+  const privateEmits = [];
+  const sockets = new Map([
+    ['sock-alive', { emit: (event, data) => privateEmits.push({ socketId: 'sock-alive', event, data }) }],
+    ['sock-ghost-a', { emit: (event, data) => privateEmits.push({ socketId: 'sock-ghost-a', event, data }) }],
+  ]);
+  const io = {
+    to: () => ({ emit: () => {} }),
+    sockets: { sockets },
+  };
+  const alive = makeSocket(roomId, 'alive');
+  registerSocketHandlers(alive.socket, io);
+
+  await alive.handlers['chat:send']({
+    content: 'secret',
+    channel: 'village',
+    options: { isWhisper: true },
+    targetPlayerId: 'ghost-a',
+  });
+  await alive.handlers['chat:send']({ content: 'spoof', channel: 'unknown' });
+
+  assert.ok(privateEmits.some(event => event.socketId === 'sock-ghost-a' && event.data.content === 'secret'));
+  assert.ok(alive.emits.some(event => event.event === 'chat:message' && event.data.content === 'secret'));
+  assert.equal(alive.emits.filter(event => event.event === 'error').length, 1);
+});
+
+test('admin actions require an authenticated admin session', async t => {
+  const roomId = 'room-admin-auth';
+  createRoom({ id: roomId, name: roomId, hostId: 'alive', maxPlayers: 8 });
+  addPlayerToRoom(roomId, { id: 'alive', nickname: 'alive', socketId: 'sock-alive' });
+  t.after(() => deleteRoom(roomId));
+
+  const { io } = makeIo();
+  const socket = makeSocket(roomId, 'alive');
+  socket.socket.request = { session: { userId: 'not-an-admin' } };
+  registerSocketHandlers(socket.socket, io);
+
+  await socket.handlers['admin:action']({ type: 'get_state' });
+
+  assert.equal(socket.emits.at(-1).event, 'error');
+  assert.match(socket.emits.at(-1).data.message, /ผู้ดูแลระบบ/);
+});
+
 test('rejoining an active room resumes the same player and private game state', async t => {
   const roomId = 'room-reconnect';
   createRoom({ id: roomId, name: roomId, hostId: 'alive', maxPlayers: 8, gameMode: 'chaos' });

@@ -5,7 +5,7 @@ import {
   serializeRoom, serializeRoomForPlayer, serializeRoomForAdmin, updateRoom,
 } from '../game/gameStore.js';
 import { distributeRoles }   from '../game/Roledistributor.js';
-import { PLAYER_LIMITS, CHANNELS, PHASES } from '../game/constants.js';
+import { PLAYER_LIMITS, CHANNELS, PHASES, getRoles } from '../game/constants.js';
 import { canJoinRoom, getRoomPlayerLimit } from '../game/roomCapacity.js';
 import {
   validateConfigForPlayerCount, buildDefaultRoleConfig, normalizeRoomConfig,
@@ -13,12 +13,13 @@ import {
 } from '../game/roomConfig.js';
 import {
   startPhaseTimer, advancePhase, getPhaseDurationMs, getTimeRemaining,
+  resolveEarlyNightAction,
   endGameIfDecided, scheduleRoomAbandon, cancelRoomAbandon, _endGameAndBroadcast,
 } from '../game/phaseManager.js';
 import { startGameForRoom } from '../game/startGame.js';
 import { castVote, hasAllVoted } from '../game/voteManager.js';
 import { teardownRoom } from '../game/roomMaintenance.js';
-import { initNightActions, submitNightAction, resolveNightActions, getBlockedProtectTargets } from '../game/nightActions.js';
+import { initNightActions, submitNightAction, getBlockedProtectTargets } from '../game/nightActions.js';
 import { censorProfanity } from '../game/profanity.js';
 import { getUserByIdService } from '../services/authService.js';
 
@@ -124,7 +125,8 @@ export function registerSocketHandlers(socket, io) {
     if (censored) socket.emit('chat:censored', { message: 'คำหยาบในข้อความของเจ้าถูกกลบไว้แล้ว' });
 
     if (finalOptions.isWhisper) {
-      const targetSocket = io.sockets.sockets.get(targetPlayerId);
+      const target = room.players.get(targetPlayerId);
+      const targetSocket = target?.socketId ? io.sockets.sockets.get(target.socketId) : null;
       if (targetSocket) targetSocket.emit('chat:message', message);
       socket.emit('chat:message', message); // Send to self
       return;
@@ -267,13 +269,7 @@ export function registerSocketHandlers(socket, io) {
     socket.emit('night:action:ack', { targetId });
 
     if (isDayEarlyAction) {
-      const result = await resolveNightActions(roomId);
-      if (result) {
-        io.to(roomId).emit('night:result', {
-          killedId: result.killedId,
-          killedNickname: result.killedNickname,
-        });
-      }
+      await resolveEarlyNightAction(io, roomId);
       return;
     }
 
@@ -448,7 +444,7 @@ export function registerSocketHandlers(socket, io) {
   // ── ระบบควบคุมแอดมินภายในหน้าเล่นเกม ──
   // ตรวจสิทธิ์จาก session ที่แชร์กับ Express (socket.request.session) ไม่เชื่อ client
   // ส่งมาตรงๆ เพื่อกัน client ปลอมตัวเป็นแอดมิน
-  socket.on('admin:action', async ({ type, payload = {} }) => {
+  socket.on('admin:action', async ({ type, payload = {} } = {}) => {
     try {
       const userId = socket.request?.session?.userId;
       if (!userId) return socket.emit('error', { message: 'จำเป็นต้องเข้าสู่ระบบ' });
@@ -473,7 +469,10 @@ export function registerSocketHandlers(socket, io) {
           break;
 
         case 'add_time': {
-          const extraMs = Number(payload.ms) || 30_000;
+          const requestedMs = Number(payload.ms);
+          const extraMs = Number.isFinite(requestedMs)
+            ? Math.min(Math.max(requestedMs, 1_000), 300_000)
+            : 30_000;
           const remaining = getTimeRemaining(roomId) ?? 0;
           startPhaseTimer(io, roomId, room.phase, remaining + extraMs);
           io.to(roomId).emit('phase:changed', {
@@ -539,6 +538,9 @@ export function registerSocketHandlers(socket, io) {
         case 'set_role': {
           const target = room.players.get(payload.targetPlayerId);
           if (!target) return socket.emit('error', { message: 'ไม่พบผู้เล่น' });
+          if (!Object.values(getRoles()).includes(payload.role)) {
+            return socket.emit('error', { message: 'ไม่พบ role นี้' });
+          }
           updatePlayer(roomId, payload.targetPlayerId, { role: payload.role });
           break;
         }
@@ -573,8 +575,11 @@ export function registerSocketHandlers(socket, io) {
         }
 
         case 'end_game': {
-          const winner = payload.winner || 'draw';
-          const message = payload.message || 'แอดมินสั่งจบเกม';
+          const allowedWinners = new Set(['village', 'werewolf', 'fool', 'draw', 'none']);
+          const winner = allowedWinners.has(payload.winner) ? payload.winner : 'draw';
+          const message = typeof payload.message === 'string' && payload.message.trim()
+            ? payload.message.trim().slice(0, 300)
+            : 'แอดมินสั่งจบเกม';
           await _endGameAndBroadcast(io, roomId, { winner, message });
           break;
         }
@@ -780,6 +785,10 @@ function isChaosRoom(room) {
 }
 
 function getChatValidationError(room, player, channel) {
+  if (!Object.values(CHANNELS).includes(channel)) {
+    return 'ไม่พบช่องแชทนี้';
+  }
+
   if (player.isMutedByAdmin) {
     return 'แอดมินปิดปากเจ้าไว้';
   }

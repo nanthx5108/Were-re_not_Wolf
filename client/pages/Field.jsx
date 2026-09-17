@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/HomePage.css';
+import '../src/styles/HomePage.css';
 
 export default function Field({ label, id, value, onChange, placeholder, max, autoFocus, extraClassName = '' }) {
   return (

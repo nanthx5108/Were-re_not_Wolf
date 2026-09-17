@@ -928,6 +928,24 @@
     max-height: calc(100dvh - 24px - var(--safe-bottom));
     overflow-y: auto;
   }
+
+  .gpc-form {
+    flex-wrap: wrap;
+  }
+
+  .gpc-select,
+  .gpc-input,
+  .gpc-send {
+    min-height: var(--touch-target);
+  }
+
+  .gpc-input {
+    min-width: 0;
+  }
+
+  .gpc-form .gpc-input {
+    flex: 1 1 0;
+  }
 }
 
 @media (min-width: 768px) and (max-width: 1199px) and (orientation: landscape) {

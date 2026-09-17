@@ -164,7 +164,7 @@ export function startPhaseTimer(io, roomId, phase, durationOverrideMs) {
           for (const player of playersWithCard) {
             const s = player.socketId ? io.sockets.sockets.get(player.socketId) : null;
             if (s) {
-              s.emit('fortune:realtime_vote_count', { counts: currentRoom.votes.counts || {} });
+              s.emit('fortune:realtime_vote_count', { counts: getVoteData(roomId).counts });
             }
           }
         }, 800);
@@ -415,13 +415,23 @@ export function sendBlockedProtectTargets(io, roomId) {
 
 function _notifySilenced(io, roomId, result) {
   if (!result?.silencedId) return;
-  const target = getRoom(roomId)?.players.get(result.silencedId);
+  const room = getRoom(roomId);
+  const target = room?.players.get(result.silencedId);
+  if (target?.isAlive) updateRoom(roomId, { silencedPlayerId: result.silencedId });
   const s = target?.socketId ? io.sockets.sockets.get(target.socketId) : null;
   if (s) {
     s.emit('chat:silenced', {
       message: 'คอของเจ้าแห้งผาก พูดไม่ออกสักคำ วันนี้เจ้าพิมพ์อะไรไม่ได้เลย',
     });
   }
+}
+
+export async function resolveEarlyNightAction(io, roomId) {
+  const result = await _resolveNightActionsAndBroadcast(io, roomId);
+  const room = getRoom(roomId);
+  if (room) room.nightActions = {};
+  if (result) await endGameIfDecided(io, roomId);
+  return result;
 }
 
 function _broadcastMorningEvent(io, roomId, morning, round) {
@@ -716,26 +726,29 @@ async function _resolveVotingAndBroadcast(io, roomId) {
   });
 
   if (playersWithCard.length > 0) {
+    const { voteMap } = getVoteData(roomId);
     const sortedTally = Object.entries(tally)
-      .map(([targetId, voters]) => ({ targetId, voteCount: voters.length }))
+      .map(([targetId, voteCount]) => ({ targetId, voteCount }))
       .sort((a, b) => b.voteCount - a.voteCount);
 
     const topVotedIds = sortedTally.slice(0, 2).map(item => item.targetId);
 
     const voteInfo = [];
-    const voteMap = room.votes.voteMap || {};
     for (const voterId of topVotedIds) {
-      const voter = room.players.get(voterId);
-      if (!voter) continue;
-
-      const targetId = voteMap[voterId];
-      const target = targetId ? room.players.get(targetId) : null;
+      const target = room.players.get(voterId);
+      if (!target) continue;
 
       voteInfo.push({
-        voterId: voter.id,
-        voterNickname: voter.nickname,
-        targetId: target?.id || null,
-        targetNickname: target?.nickname || '???',
+        targetId: target.id,
+        targetNickname: target.nickname,
+        voteCount: tally[voterId] || 0,
+        voters: Object.entries(voteMap)
+          .filter(([, targetId]) => targetId === voterId)
+          .map(([voterId]) => {
+            const voter = room.players.get(voterId);
+            return voter ? { id: voter.id, nickname: voter.nickname } : null;
+          })
+          .filter(Boolean),
       });
     }
 
