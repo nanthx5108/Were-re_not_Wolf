@@ -209,7 +209,7 @@ test('classic day transition does not create chaos state', async t => {
 
     const room = getRoom(roomId);
     assert.equal(room.phase, PHASES.DAY);
-    assert.equal(room.players.get('p3').isAlive, true, 'bodyguard should prevent the kill');
+    assert.equal(room.players.get('p4').isAlive, true, 'bodyguard should prevent the kill');
     assert.equal(room.silencedPlayerId, 'p4');
     assert.ok(harness.privateEmits.some(event => event.event === 'night:seer_result'));
   });
